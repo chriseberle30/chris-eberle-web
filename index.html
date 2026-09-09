@@ -7,7 +7,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23121048'/%3E%3Ctext x='32' y='42' font-family='Arial, sans-serif' font-weight='700' font-size='26' fill='white' text-anchor='middle'%3ECE%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600&family=Sacramento&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg:#ffffff; --ink:#111113; --ink-soft:#6b6d76; --line:#e6e6ea; --line-strong:#111113;
@@ -147,6 +147,7 @@
 
   .back-link{display:block;background:none;border:none;color:var(--ink-soft);font-size:13.5px;cursor:pointer;padding:0;margin-bottom:14px;text-align:left;}
   .fork-grid{display:flex;flex-direction:column;gap:14px;}
+  .signature{text-align:center;font-family:'Sacramento',cursive;font-size:38px;color:var(--brand);margin-top:36px;transform:rotate(-2deg);}
   .fork-card{border:1px solid var(--line);border-radius:var(--radius-lg);background:#fff;padding:20px 20px;cursor:pointer;transition:border-color .15s ease, transform .1s ease;display:flex;align-items:center;justify-content:space-between;gap:12px;}
   .fork-card:active{transform:scale(.98);}
   .fork-card:hover{border-color:var(--brand);}
@@ -241,9 +242,8 @@
         <svg class="fork-chevron" width="9" height="15" viewBox="0 0 9 15" fill="none"><path d="M1 1L7.5 7.5L1 14" stroke="#c9c9d1" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </div>
     </div>
+    <div class="signature">@Eberle30</div>
   </section>
-
-  <section class="screen" id="screen-1">
     <button class="back-link" onclick="goStep('fork')">‹ Volver</button>
     <p class="eyebrow">Servicio técnico especializado en iPhone</p>
     <h1 class="title">¿Qué modelo tenés?</h1>

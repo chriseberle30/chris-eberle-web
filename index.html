@@ -95,7 +95,7 @@ textarea{min-height:80px;resize:vertical}.form{display:grid;grid-template-column
 <div id="results"></div>
 </section>
 
-<section id="orden" style="display:none"><div class="card"><h2 style="margin-top:0">Nueva orden</h2>
+<section id="orden" style="display:none"><div class="card"><h2 id="orderFormTitle" style="margin-top:0">Nueva orden</h2>
 <form id="orderForm" class="form">
 <div><label>Cliente</label><input id="cliente" required></div><div><label>Teléfono</label><input id="telefono" required></div>
 <div><label>Marca</label><input id="marca"></div><div><label>Modelo</label><input id="modelo" required></div>
@@ -131,7 +131,7 @@ textarea{min-height:80px;resize:vertical}.form{display:grid;grid-template-column
 <div><label>Entrega estimada</label><input id="entrega" type="date"></div>
 <div class="full"><label>Observaciones para el técnico 🔒</label><textarea id="obsTecnico" placeholder="Ej.: limpiar cámaras, revisar tornillos..."></textarea><div class="sub">Dato interno. No se imprime.</div></div>
 <div class="full"><label>Observaciones para el cliente</label><textarea id="obs"></textarea></div>
-<div class="full actions"><button class="btn" type="submit">Crear orden</button><button class="btn secondary" type="button" onclick="resetOrder()">Limpiar</button></div>
+<div class="full actions"><button id="orderSubmitBtn" class="btn" type="submit">Crear orden</button><button class="btn secondary" type="button" onclick="resetOrder()">Limpiar</button></div>
 </form></div></section>
 
 <section id="ordenes" style="display:none"><div class="card"><h2 style="margin-top:0">Órdenes</h2><input id="orderSearch" placeholder="Buscar por número, cliente, teléfono o modelo" oninput="renderOrders()"></div><div id="orders"></div></section>
@@ -389,16 +389,32 @@ function renderSearch(){
 function newFromPrice(id){const p=prices.find(x=>x.id===id);show("orden");marca.value=p.marca;modelo.value=p.modelo;trabajo.value=p.reparacion;total.value=p.precio;}
 
 document.getElementById("orderForm").onsubmit=e=>{
-e.preventDefault();const n=(orders.length?Math.max(...orders.map(o=>o.n)):0)+1;
+e.preventDefault();
+const editingId=window.editingOrderId;
+if(editingId){
+  const o=orders.find(x=>x.n===editingId);
+  if(!o)return;
+  o.cliente=cliente.value;o.telefono=telefono.value;o.marca=marca.value;o.modelo=modelo.value;o.imei=imei.value;o.local=local.value;o.desbloqueo=desbloqueo.value;o.unlockType=unlockMode;o.patron=pattern.join("-");o.estado=estado.value;o.falla=falla.value;o.trabajo=trabajo.value;o.total=+total.value||0;o.sena=+sena.value||0;o.pago=pago.value;o.entrega=entrega.value;o.obsTecnico=obsTecnico.value;o.obs=obs.value;
+  saveOrders();window.editingOrderId=null;resetOrder();renderOrders();renderDashboard();show("ordenes");return;
+}
+const n=(orders.length?Math.max(...orders.map(o=>o.n)):0)+1;
 const o={n,cliente:cliente.value,telefono:telefono.value,marca:marca.value,modelo:modelo.value,imei:imei.value,local:local.value,desbloqueo:desbloqueo.value,unlockType:unlockMode,patron:pattern.join("-"),estado:estado.value,falla:falla.value,trabajo:trabajo.value,total:+total.value||0,sena:+sena.value||0,pago:pago.value,entrega:entrega.value,obsTecnico:obsTecnico.value,obs:obs.value,costos:[],fecha:new Date().toLocaleDateString("es-AR")};
 orders.unshift(o);saveOrders();afterOrderId=o.n;resetOrder();show("orden",document.querySelectorAll("nav button")[2]);renderOrders();renderDashboard();openAfterOrder(o.n);
 };
+function editOrder(n){
+ const o=orders.find(x=>x.n===n);if(!o)return;
+ window.editingOrderId=n;
+ cliente.value=o.cliente||"";telefono.value=o.telefono||"";marca.value=o.marca||"";modelo.value=o.modelo||"";imei.value=o.imei||"";local.value=o.local||local.value;estado.value=o.estado||"Recibido";falla.value=o.falla||"";trabajo.value=o.trabajo||"";total.value=o.total||0;sena.value=o.sena||0;pago.value=o.pago||"Sin pago";entrega.value=o.entrega||"";obsTecnico.value=o.obsTecnico||"";obs.value=o.obs||"";
+ desbloqueo.value=o.desbloqueo||"";unlockMode=o.unlockType||"codigo";pattern=(o.patron||"").split("-").filter(x=>x!=="").map(Number);setUnlockMode(unlockMode);document.querySelectorAll(".pattern-dot").forEach(d=>d.classList.toggle("selected",pattern.includes(Number(d.dataset.i))));document.getElementById("patternStatus").textContent=pattern.length?`Patrón: ${pattern.map(x=>x+1).join(" → ")}`:"";
+ document.getElementById("orderFormTitle").textContent=`Editar orden #${String(n).padStart(4,"0")}`;document.getElementById("orderSubmitBtn").textContent="Guardar cambios";show("orden");window.scrollTo({top:0,behavior:"smooth"});
+}
+
 function orderCard(o){return `<div class="card"><div class="order"><div><b>#${String(o.n).padStart(4,"0")}</b><h3>${o.cliente}</h3><div>${o.marca} ${o.modelo} · ${o.trabajo||"Sin trabajo indicado"}</div><div class="sub">${o.local} · ${o.telefono} · Ingreso ${o.fecha}</div>
 <div class="sub" style="margin-top:5px">🔒 Código/patrón: <button class="btn secondary" style="padding:4px 8px;font-size:11px" onclick="toggleUnlock(${o.n},this)">Mostrar</button> <span id="unlock-${o.n}" style="display:none;font-weight:600"></span></div>
 <div class="sub" style="margin-top:5px">🛠️ Obs. técnico: <button class="btn secondary" style="padding:4px 8px;font-size:11px" onclick="toggleTechObs(${o.n},this)">Mostrar</button> <span id="techobs-${o.n}" style="display:none;font-weight:600"></span></div>
 </div><div><select onchange="setStatus(${o.n},this.value)" style="width:auto;padding:6px 8px;font-size:12px;border-radius:8px">${ESTADOS.map(s=>`<option ${o.estado===s?"selected":""}>${s}</option>`).join("")}</select><div style="margin-top:6px"><span class="status-badge ${statusClass(o.estado)}">${o.estado}</span></div><div class="price">${money(o.total)}</div></div></div><hr>
 <div><b>Seña:</b> ${money(o.sena)} · <b>Saldo:</b> ${money(Math.max(0,o.total-o.sena))}</div>
-<div style="margin-top:10px"><b>Costos:</b> ${money((o.costos||[]).reduce((a,c)=>a+(+c.importe||0),0))} · <b>Ganancia bruta:</b> ${money(Math.max(0,(+o.total||0)-((o.costos||[]).reduce((a,c)=>a+(+c.importe||0),0))))}</div><div class="actions" style="margin-top:12px"><button class="btn secondary" onclick="manageCosts(${o.n})">💰 Costos</button><button class="btn" onclick="printTicket(${o.n})">🖨️ Ticket cliente</button><button class="btn secondary" onclick="printTechnician(${o.n})">🔧 Orden técnico</button><button class="btn danger" onclick="deleteOrder(${o.n})">Eliminar</button></div></div>`}
+<div style="margin-top:10px"><b>Costos:</b> ${money((o.costos||[]).reduce((a,c)=>a+(+c.importe||0),0))} · <b>Ganancia bruta:</b> ${money(Math.max(0,(+o.total||0)-((o.costos||[]).reduce((a,c)=>a+(+c.importe||0),0))))}</div><div class="actions" style="margin-top:12px"><button class="btn secondary" type="button" onclick="editOrder(${o.n})">✏️ Editar</button><button class="btn secondary" type="button" onclick="manageCosts(${o.n})">💰 Costos</button><button class="btn" onclick="printTicket(${o.n})">🖨️ Ticket cliente</button><button class="btn secondary" onclick="printTechnician(${o.n})">🔧 Orden técnico</button><button class="btn danger" onclick="deleteOrder(${o.n})">Eliminar</button></div></div>`}
 function renderOrders(){const q=(document.getElementById("orderSearch")?.value||"").toLowerCase();const arr=orders.filter(o=>JSON.stringify(o).toLowerCase().includes(q));document.getElementById("orders").innerHTML=arr.map(orderCard).join("")||'<div class="card empty">No hay órdenes.</div>';}
 const ESTADOS=["Recibido","Pendiente","Esperando repuesto","En reparación","Listo","Entregado","Cancelado"];
 function setStatus(n,val){const o=orders.find(x=>x.n===n);o.estado=val;saveOrders();}
@@ -502,8 +518,11 @@ function savePattern(){
   document.getElementById("patternStatus").textContent="✓ Patrón guardado";
 }
 function resetOrder(){
+  window.editingOrderId=null;
   document.getElementById("orderForm").reset();
   total.value=0;sena.value=0;
+  document.getElementById("orderFormTitle").textContent="Nueva orden";
+  document.getElementById("orderSubmitBtn").textContent="Crear orden";
   clearPattern();unlockMode="codigo";setUnlockMode("codigo");
 }
 
@@ -564,8 +583,8 @@ function printTechnician(n){
 <div><label>Importe</label><input id="costAmount" type="number" min="0" placeholder="38000"></div>
 </div>
 <div class="actions" style="margin-top:12px">
-<button class="btn" onclick="addOrderCost()">+ Agregar costo</button>
-<button class="btn secondary" onclick="closeCostModal()">Cerrar</button>
+<button class="btn" type="button" onclick="addOrderCost()">+ Agregar costo</button>
+<button class="btn secondary" type="button" onclick="closeCostModal()">Cerrar</button>
 </div>
 </div></div>
 <div id="afterOrderModal" class="modal-back">
@@ -620,7 +639,15 @@ document.getElementById("saleForm").onsubmit=e=>{
 };
 function renderSales(){
  const el=document.getElementById("salesList");
- el.innerHTML=sales.map(s=>`<div class="card"><div class="order"><div><b>VENTA #${String(s.n).padStart(4,"0")}</b><h3>${s.producto} × ${s.cantidad}</h3><div class="sub">${s.cliente||"Consumidor final"} · ${s.local} · ${s.fecha}</div></div><div><div class="price">${money(s.total)}</div><div class="sub">Garantía hasta ${s.warranty}</div></div></div><div class="actions" style="margin-top:10px"><button class="btn" onclick="printSaleTicket(${s.n})">🖨️ Ticket</button></div></div>`).join("")||'<div class="card empty">Todavía no hay ventas.</div>';
+ el.innerHTML=sales.map(s=>`<div class="card"><div class="order"><div><b>VENTA #${String(s.n).padStart(4,"0")}</b><h3>${s.producto} × ${s.cantidad}</h3><div class="sub">${s.cliente||"Consumidor final"} · ${s.local} · ${s.fecha}</div></div><div><div class="price">${money(s.total)}</div><div class="sub">Garantía hasta ${s.warranty}</div></div></div><div class="actions" style="margin-top:10px"><button class="btn" onclick="printSaleTicket(${s.n})">🖨️ Ticket</button><button class="btn danger" onclick="deleteSale(${s.n})">Eliminar</button></div></div>`).join("")||'<div class="card empty">Todavía no hay ventas.</div>';
+}
+function deleteSale(n){
+ const s=sales.find(x=>x.n===n);if(!s)return;
+ if(!confirm(`¿Eliminar la venta #${String(n).padStart(4,"0")} y devolver ${s.cantidad} unidad(es) al stock?`))return;
+ const product=stock.find(x=>x.id===s.productoId);
+ if(product) product.cantidad+=s.cantidad;
+ sales=sales.filter(x=>x.n!==n);
+ saveStock();saveSales();renderSales();renderStock();renderSaleProducts();renderDashboard();renderMovements();
 }
 function printSaleTicket(n){
  const s=sales.find(x=>x.n===n);if(!s)return;const w=window.open("","_blank");
@@ -714,7 +741,7 @@ function manageCosts(n){
   window.costOrderId=n;
   document.getElementById("costOrderInfo").textContent=`Orden #${String(n).padStart(4,"0")} · ${o.cliente} · ${o.marca} ${o.modelo} · Cobrado: ${money(o.total)}`;
   renderCostModal();
-  document.getElementById("costModal").style.display="flex";
+  document.getElementById("costModal").style.display="flex";document.getElementById("costConcept").focus();
 }
 function renderCostModal(){
   const o=orders.find(x=>x.n===window.costOrderId);if(!o)return;

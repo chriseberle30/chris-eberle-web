@@ -629,24 +629,54 @@ function downloadPriceTemplate(){
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="plantilla_precios_e30.csv";a.click();URL.revokeObjectURL(a.href);
 }
 
-function printTechnician(n){
-  const o=orders.find(x=>x.n===n);if(!o)return;
-  const saldo=Math.max(0,o.total-o.sena),w=window.open("","_blank");
-  const unlock=o.unlockType==="patron"&&o.patron?`Patrón: ${o.patron.split("-").map(x=>Number(x)+1).join(" → ")}`:`Código: ${o.desbloqueo||"No informado"}`;
-  w.document.write(`<html><head><title>Orden técnico #${o.n}</title><style>@page{size:80mm auto;margin:0}body{margin:0}.ticket{width:80mm;padding:3mm;font-family:monospace;font-size:13px;line-height:1.28}.c{text-align:center}.line{border-top:1px dashed #000;margin:8px 0}.private{font-size:12px;font-weight:bold}.note{white-space:pre-wrap}
-</style></head><body><div class="ticket">
-<div class="c"><b>E30 | ORDEN INTERNA</b><br>${o.local}<br>Tel: 11 4445-8553 · @eberle30</div><div class="line"></div>
-<b>ORDEN #${String(o.n).padStart(4,"0")}</b><br>Fecha: ${o.fecha}<br>Cliente: ${o.cliente}<br>Tel: ${o.telefono}<br>Equipo: ${o.marca} ${o.modelo}<br>${o.imei?`IMEI: ${o.imei}<br>`:""}
-<div class="line"></div><div class="private">🔒 ${unlock}</div>
-<div class="line"></div>Falla: ${o.falla||"-"}<br>Trabajo: ${o.trabajo||"-"}<br>Estado: ${o.estado}<br>${o.entrega?`Entrega estimada: ${o.entrega}<br>`:""}
-<div class="line"></div><b>OBSERVACIONES TÉCNICAS:</b><div class="note">${o.obsTecnico||"Sin observaciones internas."}</div>
-<div class="line"></div>Total: ${money(o.total)}<br>Seña: ${money(o.sena)}<br>Saldo: ${money(saldo)}
-</div><script>window.onload=()=>window.print()<\/script>
-
-</body></html>`);
-  w.document.close();
+async function qzPrintRaw(data,jobName){
+  try{
+    if(!window.qz) throw new Error("QZ Tray no se cargo. Verifica que QZ Tray este abierto.");
+    if(!qz.websocket.isActive()) await qz.websocket.connect();
+    const printer=await qz.printers.find("XP-80C (copy 1)");
+    const config=qz.configs.create(printer,{margins:0,jobName:jobName||"E30"});
+    await qz.print(config,[{type:"raw",format:"command",flavor:"plain",data}]);
+    return true;
+  }catch(err){
+    console.error("E30 QZ",err);
+    alert("No se pudo imprimir con QZ Tray:\n\n"+(err?.message||err));
+    return false;
+  }
+}
+function escTicketText(v){return String(v??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[\r\n]+/g," ").trim();}
+function escWrap(txt,width=48){
+  txt=escTicketText(txt); if(!txt)return [""];
+  const words=txt.split(/\s+/),out=[];let line="";
+  for(const w of words){if(!line){line=w;continue;}if((line+" "+w).length<=width)line+=" "+w;else{out.push(line);line=w;}}
+  if(line)out.push(line);return out;
 }
 
+async function printTechnician(n){
+  const o=orders.find(x=>x.n===n);if(!o)return;
+  const saldo=Math.max(0,(o.total||0)-(o.sena||0));
+  const ESC="\x1B",LF="\n";let d=ESC+"@";
+  d+=ESC+"a"+"\x01"+ESC+"E"+"\x01"+"E30 | ORDEN INTERNA"+ESC+"E"+"\x00"+LF;
+  d+=escTicketText(o.local)+LF+"Tel: 11 4445-8553  @eberle30"+LF;
+  d+="-----------------------------------------------"+LF;
+  d+=ESC+"a"+"\x00"+ESC+"E"+"\x01"+"ORDEN #"+String(o.n).padStart(4,"0")+ESC+"E"+"\x00"+LF;
+  d+="Fecha: "+escTicketText(o.fecha)+LF+"Cliente: "+escTicketText(o.cliente)+LF+"Tel: "+escTicketText(o.telefono)+LF;
+  d+="Equipo: "+escTicketText((o.marca||"")+" "+(o.modelo||""))+LF;
+  if(o.imei)d+="IMEI: "+escTicketText(o.imei)+LF;
+  d+="-----------------------------------------------"+LF;
+  const unlock=o.unlockType==="patron"&&o.patron?`Patron: ${o.patron.split("-").map(x=>Number(x)+1).join(" -> ")}`:`Codigo: ${o.desbloqueo||"No informado"}`;
+  d+=ESC+"E"+"\x01"+"[ PRIVADO ] "+escTicketText(unlock)+ESC+"E"+"\x00"+LF;
+  d+="-----------------------------------------------"+LF;
+  d+="Falla:"+LF;escWrap(o.falla||"-",46).forEach(x=>d+="  "+x+LF);
+  d+="Trabajo:"+LF;escWrap(o.trabajo||"-",46).forEach(x=>d+="  "+x+LF);
+  d+="Estado: "+escTicketText(o.estado)+LF;
+  if(o.entrega)d+="Entrega estimada: "+escTicketText(o.entrega)+LF;
+  d+="-----------------------------------------------"+LF;
+  d+=ESC+"E"+"\x01"+"OBSERVACIONES TECNICAS:"+ESC+"E"+"\x00"+LF;
+  escWrap(o.obsTecnico||"Sin observaciones internas.",46).forEach(x=>d+=x+LF);
+  d+="-----------------------------------------------"+LF;
+  d+="Total: "+money(o.total)+LF+"Sena: "+money(o.sena)+LF+"Saldo: "+money(saldo)+LF+LF+LF;
+  await qzPrintRaw(d,`E30 Orden tecnica #${o.n}`);
+}
 
 function resetStockForm(){document.getElementById("stockForm").reset();sCosto.value=0;sVenta.value=0;sCantidad.value=0;}
 document.getElementById("stockForm").onsubmit=e=>{
@@ -698,11 +728,25 @@ function deleteSale(n){
  sales=sales.filter(x=>x.n!==n);
  saveStock();saveSales();renderSales();renderStock();renderSaleProducts();renderDashboard();renderMovements();
 }
-function printSaleTicket(n){
- const s=sales.find(x=>x.n===n);if(!s)return;const w=window.open("","_blank");
- w.document.write(`<html><head><title>Venta #${s.n}</title><style>@page{size:80mm auto;margin:0}body{margin:0}.ticket{width:80mm;padding:3mm;font-family:monospace;font-size:13px;line-height:1.28}.c{text-align:center}.line{border-top:1px dashed #000;margin:8px 0}.total{font-size:17px;font-weight:bold}.note{font-size:10px;line-height:1.35}
-</style></head><body><div class="ticket"><div class="c"><b>E30 | TÉCNICO DE CELULARES</b><br>${s.local}<br>Tel: 11 4445-8553 · Instagram: @eberle30</div><div class="line"></div><div class="c"><b>COMPROBANTE DE VENTA #${String(s.n).padStart(4,"0")}</b></div><div class="line"></div>Fecha: ${s.fecha}<br>${s.cliente?`Cliente: ${s.cliente}<br>`:""}${s.telefono?`Tel: ${s.telefono}<br>`:""}Producto: ${s.producto}<br>Cantidad: ${s.cantidad}<br>Precio unit.: ${money(s.unit)}<div class="line"></div><span class="total">TOTAL: ${money(s.total)}</span><br>Pago: ${s.pago}<div class="line"></div><b>GARANTÍA: 7 DÍAS</b><br>Válida hasta: ${s.warranty}<div class="line"></div><div class="note">La garantía corresponde al accesorio vendido y cubre fallas de funcionamiento. No cubre daños por golpes, humedad, uso indebido o manipulación.</div><div class="line c">Conserve este comprobante</div></div><script>window.onload=()=>window.print()<\/script></body></html>`);
- w.document.close();
+async function printSaleTicket(n){
+  const s=sales.find(x=>x.n===n);if(!s)return;
+  const ESC="\x1B",LF="\n";let d=ESC+"@";
+  d+=ESC+"a"+"\x01"+ESC+"E"+"\x01"+"E30 | TECNICO DE CELULARES"+ESC+"E"+"\x00"+LF;
+  d+=escTicketText(s.local)+LF+"Tel: 11 4445-8553  @eberle30"+LF;
+  d+="-----------------------------------------------"+LF;
+  d+=ESC+"E"+"\x01"+"COMPROBANTE DE VENTA #"+String(s.n).padStart(4,"0")+ESC+"E"+"\x00"+LF;
+  d+="-----------------------------------------------"+LF;
+  d+="Fecha: "+escTicketText(s.fecha)+LF;
+  if(s.cliente)d+="Cliente: "+escTicketText(s.cliente)+LF;
+  if(s.telefono)d+="Tel: "+escTicketText(s.telefono)+LF;
+  d+="Producto: "+escTicketText(s.producto)+LF+"Cantidad: "+s.cantidad+LF+"Precio unit.: "+money(s.unit)+LF;
+  d+="-----------------------------------------------"+LF;
+  d+=ESC+"E"+"\x01"+"TOTAL: "+money(s.total)+ESC+"E"+"\x00"+LF+"Pago: "+escTicketText(s.pago)+LF;
+  d+="-----------------------------------------------"+LF+"GARANTIA: 7 DIAS"+LF+"Valida hasta: "+escTicketText(s.warranty)+LF;
+  d+="-----------------------------------------------"+LF;
+  escWrap("La garantia corresponde al accesorio vendido y cubre fallas de funcionamiento. No cubre danos por golpes, humedad, uso indebido o manipulacion.",46).forEach(x=>d+=x+LF);
+  d+="-----------------------------------------------"+LF+"Conserve este comprobante"+LF+LF+LF;
+  await qzPrintRaw(d,`E30 Venta #${s.n}`);
 }
 
 function statusClass(s){
@@ -870,19 +914,23 @@ document.getElementById("reportBreakdown").innerHTML=`<h3 style="margin-top:0">D
   <div style="padding:8px 0;border-bottom:1px solid var(--line)">Costos de reparaciones: <b>${money(costos)}</b></div>
   <div style="padding:8px 0"><b>Resultado bruto: ${money(ganancia)}</b></div>`;
 }
-function printBudget(n){
-const o=budgets.find(x=>x.n===n),w=window.open("","_blank");
-w.document.write(`<html><head><title>Presupuesto #${o.n}</title><style>@page{size:80mm auto;margin:0}body{margin:0}.ticket{width:80mm;padding:3mm;font-family:monospace;font-size:13px;line-height:1.28}.c{text-align:center}.line{border-top:1px dashed #000;margin:8px 0}.total{font-size:17px;font-weight:bold}.note{font-size:10px;line-height:1.35}
-</style></head><body><div class="ticket">
-<div class="c"><b>E30 | TÉCNICO DE CELULARES</b><br>${o.local}<br>Tel: 11 4445-8553 · Instagram: @eberle30</div>
-<div class="line"></div><div class="c"><b>PRESUPUESTO #${String(o.n).padStart(4,"0")}</b></div><div class="line"></div>
-Cliente: ${o.cliente}<br>Tel: ${o.telefono||"-"}<br>Equipo: ${o.marca} ${o.modelo}<br><br>
-${o.concepto}<br><span class="total">${money(o.precio)}</span>
-${o.obsEquipo?`<div class="line"></div>Estado del equipo: ${o.obsEquipo}`:""}
-<div class="line"></div>Emitido: ${o.emitida}<br><b>Válido hasta: ${o.valida}</b>
-<div class="line"></div><div class="note">Presupuesto válido por 7 días. Precio sujeto a disponibilidad y variación de costos de repuestos.</div>
-<div class="line c">Conserve este comprobante</div></div><script>window.onload=()=>window.print()<\/script></body></html>`);
-w.document.close();
+async function printBudget(n){
+  const o=budgets.find(x=>x.n===n);if(!o)return;
+  const ESC="\x1B",LF="\n";let d=ESC+"@";
+  d+=ESC+"a"+"\x01"+ESC+"E"+"\x01"+"E30 | TECNICO DE CELULARES"+ESC+"E"+"\x00"+LF;
+  d+=escTicketText(o.local)+LF+"Tel: 11 4445-8553  @eberle30"+LF;
+  d+="-----------------------------------------------"+LF;
+  d+=ESC+"E"+"\x01"+"PRESUPUESTO #"+String(o.n).padStart(4,"0")+ESC+"E"+"\x00"+LF;
+  d+="-----------------------------------------------"+LF;
+  d+="Cliente: "+escTicketText(o.cliente)+LF+"Tel: "+escTicketText(o.telefono||"-")+LF+"Equipo: "+escTicketText((o.marca||"")+" "+(o.modelo||""))+LF+LF;
+  escWrap(o.concepto||"-",46).forEach(x=>d+=x+LF);
+  d+=ESC+"E"+"\x01"+money(o.precio)+ESC+"E"+"\x00"+LF;
+  if(o.obsEquipo){d+="-----------------------------------------------"+LF+"Estado del equipo:"+LF;escWrap(o.obsEquipo,46).forEach(x=>d+=x+LF);}
+  d+="-----------------------------------------------"+LF+"Emitido: "+escTicketText(o.emitida)+LF+"Valido hasta: "+escTicketText(o.valida)+LF;
+  d+="-----------------------------------------------"+LF;
+  escWrap("Presupuesto valido por 7 dias. Precio sujeto a disponibilidad y variacion de costos de repuestos.",46).forEach(x=>d+=x+LF);
+  d+="-----------------------------------------------"+LF+"Conserve este comprobante"+LF+LF+LF;
+  await qzPrintRaw(d,`E30 Presupuesto #${o.n}`);
 }
 
 async function printTicket(n){

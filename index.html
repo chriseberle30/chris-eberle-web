@@ -635,10 +635,26 @@ function downloadPriceTemplate(){
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="plantilla_precios_e30.csv";a.click();URL.revokeObjectURL(a.href);
 }
 
+function queueEncode(data){
+  const bytes=new Uint8Array(String(data??"").length);
+  for(let i=0;i<bytes.length;i++) bytes[i]=String(data??"").charCodeAt(i)&255;
+  let bin="";
+  const chunk=0x8000;
+  for(let i=0;i<bytes.length;i+=chunk) bin+=String.fromCharCode(...bytes.subarray(i,Math.min(i+chunk,bytes.length)));
+  return btoa(bin);
+}
+function queueDecode(dataBase64){
+  const bin=atob(dataBase64||"");
+  let out="";
+  const chunk=0x8000;
+  for(let i=0;i<bin.length;i+=chunk) out+=String.fromCharCode(...bin.slice(i,i+chunk).split("").map(c=>c.charCodeAt(0)));
+  return out;
+}
 async function enqueuePrint(data,jobName){
   const id="p"+Date.now()+"-"+Math.random().toString(36).slice(2,8);
   const key="e30-print-job-"+id;
-  const value={id,status:"pending",created:new Date().toISOString(),jobName:jobName||"E30",data,attempts:0};
+  // Guardamos los comandos ESC/POS como Base64. Así Supabase no recibe   ni otros bytes de control que JSONB rechaza.
+  const value={id,status:"pending",created:new Date().toISOString(),jobName:jobName||"E30",dataBase64:queueEncode(data),attempts:0};
   await kvSet(key,value);
   const verify=await kvGet(key);
   if(!verify||verify.id!==id||verify.status!=="pending") throw new Error("El trabajo no quedó guardado en la cola.");
@@ -744,7 +760,7 @@ async function processPrintQueue(){
     console.log("E30: trabajo de impresión detectado",job.id,job.jobName);
     await updatePrintJob(job,{status:"printing",started:new Date().toISOString(),attempts:(job.attempts||0)+1});
     try{
-      await qzPrintRaw(job.data,job.jobName,false);
+      await qzPrintRaw(job.dataBase64?queueDecode(job.dataBase64):job.data,job.jobName,false);
       await updatePrintJob(job,{status:"done",printed:new Date().toISOString()});
       setPrinterStatus(`impreso · ${job.jobName||"E30"} · ${new Date().toLocaleTimeString("es-AR")}`);
     }catch(err){

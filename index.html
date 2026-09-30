@@ -65,7 +65,7 @@ textarea{min-height:80px;resize:vertical}.form{display:grid;grid-template-column
 <header><div><div class="brand">E30 | Técnico de celulares</div><div class="sub">Gestión de servicio técnico</div></div><div class="sub">Privado</div></header>
 <nav>
 <button class="active" onclick="show('dashboard',this)">🏠 Inicio</button>
-<button onclick="show('buscar',this)">🔎 Buscar</button>
+<button onclick="focusPriceSearch(this)">🔎 Buscar precios</button>
 <button onclick="show('orden',this)">➕ Nueva orden</button>
 <button onclick="show('ordenes',this)">📋 Órdenes</button>
 <button onclick="show('clientes',this)">👤 Clientes</button>
@@ -79,6 +79,12 @@ textarea{min-height:80px;resize:vertical}.form{display:grid;grid-template-column
 
 
 <section id="dashboard">
+<div class="card" style="padding:18px;margin-bottom:14px">
+<h2 style="margin:0 0 6px;font-size:22px">🔎 Buscar precio</h2>
+<div class="sub" style="margin-bottom:10px">Consultá rápido cuánto cobrar por una reparación.</div>
+<input id="search" class="search" style="font-size:18px;padding:15px" placeholder="Ej.: iPhone 13 pantalla, Moto G31 módulo..." oninput="renderSearch()" autofocus>
+</div>
+<div id="results"></div>
 <div class="card"><h2 style="margin-top:0">Hoy</h2>
 <div class="stat-grid">
 <div class="stat"><div class="sub">Reparaciones</div><b id="dashRep">0</b></div>
@@ -88,11 +94,6 @@ textarea{min-height:80px;resize:vertical}.form{display:grid;grid-template-column
 </div></div>
 <div class="card"><h3 style="margin-top:0">Últimas órdenes</h3><div id="dashOrders"></div></div>
 <div class="card"><h3 style="margin-top:0">Stock bajo</h3><div id="dashStock"></div></div>
-</section>
-
-<section id="buscar">
-<div class="card"><h2 style="margin-top:0">¿Qué necesitás consultar?</h2><input id="search" class="search" placeholder="Ej.: Moto G31, módulo G31, iPhone 13 pantalla..." oninput="renderSearch()"></div>
-<div id="results"></div>
 </section>
 
 <section id="orden" style="display:none"><div class="card"><h2 id="orderFormTitle" style="margin-top:0">Nueva orden</h2>
@@ -223,6 +224,7 @@ textarea{min-height:80px;resize:vertical}.form{display:grid;grid-template-column
 <section id="ventas" style="display:none">
 <div class="card"><h2 style="margin-top:0">🛒 Nueva venta</h2>
 <form id="saleForm" class="form">
+<div class="full"><label>Buscar producto</label><input id="saleProductSearch" placeholder="Escribí para buscar: funda, cargador, vidrio..." oninput="renderSaleProducts()"></div>
 <div class="full"><label>Producto</label><select id="saleProduct" required></select></div>
 <div><label>Cantidad</label><input id="saleQty" type="number" min="1" value="1" required></div>
 <div><label>Precio unitario</label><input id="salePrice" type="number" min="0" required></div>
@@ -366,7 +368,7 @@ function enterApp(){
   authed=true;
   document.getElementById("loginScreen").style.display="none";
   document.getElementById("appRoot").style.display="block";
-  orders.forEach(o=>{if(!o.costos)o.costos=[];});document.getElementById("rMes").value=new Date().toISOString().slice(0,7);renderSearch();renderDashboard();
+  orders.forEach(o=>{if(!o.costos)o.costos=[];});document.getElementById("rMes").value=new Date().toISOString().slice(0,7);renderSearch();renderDashboard();setTimeout(()=>document.getElementById("search")?.focus(),100);
 }
 (async function init(){
   await loadAll();
@@ -374,6 +376,14 @@ function enterApp(){
 })();
 
 function show(id,btn){document.querySelectorAll("section").forEach(x=>x.style.display="none");document.getElementById(id).style.display="block";document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));if(btn)btn.classList.add("active");if(id==="dashboard")renderDashboard();if(id==="ordenes")renderOrders();if(id==="clientes")renderClients();if(id==="precios")renderPrices();if(id==="presupuestos")renderBudgets();if(id==="stock")renderStock();if(id==="ventas"){renderSaleProducts();renderSales();}if(id==="movimientos")renderMovements();}
+
+function focusPriceSearch(btn){
+  show("dashboard",null);
+  document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));
+  if(btn)btn.classList.add("active");
+  const el=document.getElementById("search");
+  if(el){el.focus();el.select();}
+}
 
 function renderSearch(){
   const q=document.getElementById("search").value.toLowerCase().trim();
@@ -621,13 +631,16 @@ function deleteStock(id){if(!confirm("¿Eliminar este producto del stock?"))retu
 
 function renderSaleProducts(){
  const sel=document.getElementById("saleProduct");if(!sel)return;
- const active=stock.filter(x=>x.activo!==false&&x.cantidad>0);
- sel.innerHTML=active.length?active.map(x=>`<option value="${x.id}">${x.producto} — ${money(x.venta)} · Stock ${x.cantidad}</option>`).join(""):'<option value="">Primero cargá productos con stock</option>';
+ const q=(document.getElementById("saleProductSearch")?.value||"").toLowerCase().trim();
+ const active=stock.filter(x=>x.activo!==false&&x.cantidad>0).filter(x=>!q||`${x.producto} ${x.categoria||""}`.toLowerCase().includes(q));
+ const current=sel.value;
+ sel.innerHTML=active.length?active.map(x=>`<option value="${x.id}">${x.producto} — ${money(x.venta)} · Stock ${x.cantidad}</option>`).join(""):'<option value="">No hay productos que coincidan</option>';
+ if(active.some(x=>String(x.id)===String(current))) sel.value=current;
  updateSalePrice();
 }
 function updateSalePrice(){const x=stock.find(p=>p.id===+(document.getElementById("saleProduct")?.value||0));if(x)document.getElementById("salePrice").value=x.venta;}
 document.addEventListener("change",e=>{if(e.target&&e.target.id==="saleProduct")updateSalePrice();});
-function resetSaleForm(){document.getElementById("saleForm").reset();saleQty.value=1;updateSalePrice();}
+function resetSaleForm(){document.getElementById("saleForm").reset();saleQty.value=1;document.getElementById("saleProductSearch").value="";renderSaleProducts();}
 document.getElementById("saleForm").onsubmit=e=>{
  e.preventDefault();
  const x=stock.find(p=>p.id===+saleProduct.value),qty=+saleQty.value||0,unit=+salePrice.value||0;
@@ -739,9 +752,12 @@ function manageCosts(n){
   const o=orders.find(x=>x.n===n);if(!o)return;
   if(!o.costos)o.costos=[];
   window.costOrderId=n;
-  document.getElementById("costOrderInfo").textContent=`Orden #${String(n).padStart(4,"0")} · ${o.cliente} · ${o.marca} ${o.modelo} · Cobrado: ${money(o.total)}`;
+  const modal=document.getElementById("costModal");
+  if(!modal){alert("No se pudo abrir el módulo de costos.");return;}
+  document.getElementById("costOrderInfo").textContent=`Orden #${String(n).padStart(4,"0")} · ${o.cliente} · ${o.marca} ${o.modelo} · Total: ${money(o.total)}`;
   renderCostModal();
-  document.getElementById("costModal").style.display="flex";document.getElementById("costConcept").focus();
+  modal.style.display="flex";
+  setTimeout(()=>document.getElementById("costConcept")?.focus(),50);
 }
 function renderCostModal(){
   const o=orders.find(x=>x.n===window.costOrderId);if(!o)return;
@@ -755,7 +771,7 @@ function addOrderCost(){
   if(!concept||amount<=0){alert("Ingresá concepto e importe.");return;}
   if(!o.costos)o.costos=[];
   o.costos.push({concepto:concept,importe:amount});
-  saveOrders();document.getElementById("costConcept").value="";document.getElementById("costAmount").value="";renderCostModal();renderOrders();renderDashboard();
+  saveOrders();document.getElementById("costConcept").value="";document.getElementById("costAmount").value="";renderCostModal();renderOrders();renderDashboard();document.getElementById("costConcept")?.focus();
 }
 function deleteOrderCost(i){
   const o=orders.find(x=>x.n===window.costOrderId);if(!o)return;

@@ -78,6 +78,7 @@ textarea{min-height:80px;resize:vertical}.form{display:grid;grid-template-column
 <button onclick="show('reportes',this)">📊 Reportes</button>
 <button onclick="show('precios',this)">💲 Precios</button>
 <button onclick="show('presupuestos',this)">🧾 Presupuestos</button>
+<button onclick="togglePrinterReceiver()" id="printerBtn">🖨️ Activar impresora</button>
 </nav>
 
 
@@ -406,7 +407,7 @@ function enterApp(){
   document.getElementById("loginScreen").style.display="none";
   document.getElementById("appRoot").style.display="block";
   document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));document.querySelectorAll("nav button")[1]?.classList.add("active");
-  orders.forEach(o=>{if(!o.costos)o.costos=[];});document.getElementById("rMes").value=new Date().toISOString().slice(0,7);renderSearch();renderDashboard();toggleGremioField();setTimeout(()=>document.getElementById("search")?.focus(),100);
+  orders.forEach(o=>{if(!o.costos)o.costos=[];});document.getElementById("rMes").value=new Date().toISOString().slice(0,7);renderSearch();renderDashboard();toggleGremioField();setTimeout(()=>document.getElementById("search")?.focus(),100);;setTimeout(restorePrinterReceiver,500);
 }
 (async function init(){
   await loadAll();
@@ -629,9 +630,17 @@ function downloadPriceTemplate(){
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="plantilla_precios_e30.csv";a.click();URL.revokeObjectURL(a.href);
 }
 
-async function qzPrintRaw(data,jobName){
+async function enqueuePrint(data,jobName){
+  const queue=(await kvGet("e30-print-queue"))||[];
+  const id="p"+Date.now()+"-"+Math.random().toString(36).slice(2,8);
+  queue.push({id,status:"pending",created:new Date().toISOString(),jobName:jobName||"E30",data,attempts:0});
+  const keep=queue.slice(-30);
+  await kvSet("e30-print-queue",keep);
+  return id;
+}
+async function qzPrintRaw(data,jobName,allowQueue=true){
   try{
-    if(!window.qz) throw new Error("QZ Tray no se cargo. Verifica que QZ Tray este abierto.");
+    if(!window.qz) throw new Error("QZ_NOT_AVAILABLE");
     if(!qz.websocket.isActive()) await qz.websocket.connect();
     const printer=await qz.printers.find("XP-80C (copy 1)");
     const config=qz.configs.create(printer,{margins:0,jobName:jobName||"E30"});
@@ -639,9 +648,78 @@ async function qzPrintRaw(data,jobName){
     return true;
   }catch(err){
     console.error("E30 QZ",err);
-    alert("No se pudo imprimir con QZ Tray:\n\n"+(err?.message||err));
-    return false;
+    if(allowQueue){
+      try{
+        await enqueuePrint(data,jobName);
+        alert("🖨️ Trabajo enviado a la cola de impresión.\n\nLa PC con E30 en modo impresora lo imprimirá automáticamente.");
+        return true;
+      }catch(queueErr){
+        alert("No se pudo imprimir ni enviar a la cola:\n\n"+(queueErr?.message||queueErr));
+        return false;
+      }
+    }
+    throw err;
   }
+}
+let printerReceiver=false,printerTimer=null,printerBusy=false;
+async function processPrintQueue(){
+  if(!printerReceiver||printerBusy)return;
+  printerBusy=true;
+  try{
+    const queue=(await kvGet("e30-print-queue"))||[];
+    const job=queue.find(x=>x.status==="pending");
+    if(!job)return;
+    job.status="printing";job.started=new Date().toISOString();job.attempts=(job.attempts||0)+1;
+    await kvSet("e30-print-queue",queue);
+    try{
+      await qzPrintRaw(job.data,job.jobName,false);
+      const latest=(await kvGet("e30-print-queue"))||[];
+      const idx=latest.findIndex(x=>x.id===job.id);
+      if(idx>=0){latest[idx].status="done";latest[idx].printed=new Date().toISOString();}
+      await kvSet("e30-print-queue",latest.slice(-30));
+    }catch(err){
+      const latest=(await kvGet("e30-print-queue"))||[];
+      const idx=latest.findIndex(x=>x.id===job.id);
+      if(idx>=0){latest[idx].status="pending";latest[idx].lastError=err?.message||String(err);}
+      await kvSet("e30-print-queue",latest.slice(-30));
+    }
+  }catch(err){console.error("E30 print queue",err)}
+  finally{printerBusy=false}
+}
+async function togglePrinterReceiver(){
+  if(printerReceiver){
+    printerReceiver=false;
+    if(printerTimer)clearInterval(printerTimer);printerTimer=null;
+    localStorage.setItem("e30-printer-receiver","0");
+    const b=document.getElementById("printerBtn");if(b)b.textContent="🖨️ Activar impresora";
+    return;
+  }
+  try{
+    if(!window.qz)throw new Error("QZ Tray no está cargado.");
+    if(!qz.websocket.isActive())await qz.websocket.connect();
+    const printer=await qz.printers.find("XP-80C (copy 1)");
+    if(!printer)throw new Error("No se encontró XP-80C (copy 1).");
+    printerReceiver=true;
+    localStorage.setItem("e30-printer-receiver","1");
+    const b=document.getElementById("printerBtn");if(b)b.textContent="🟢 Impresora activa";
+    await processPrintQueue();
+    if(printerTimer)clearInterval(printerTimer);
+    printerTimer=setInterval(processPrintQueue,2000);
+    alert("🟢 Modo impresora activado.\n\nEsta PC queda escuchando trabajos enviados desde celulares u otras PCs.");
+  }catch(err){
+    alert("No se pudo activar la impresora:\n\n"+(err?.message||err));
+  }
+}
+async function restorePrinterReceiver(){
+  if(localStorage.getItem("e30-printer-receiver")!=="1")return;
+  try{
+    if(!window.qz||!qz.websocket.isActive())await qz.websocket.connect();
+    const printer=await qz.printers.find("XP-80C (copy 1)");if(!printer)return;
+    printerReceiver=true;
+    const b=document.getElementById("printerBtn");if(b)b.textContent="🟢 Impresora activa";
+    await processPrintQueue();
+    if(printerTimer)clearInterval(printerTimer);printerTimer=setInterval(processPrintQueue,2000);
+  }catch(err){console.warn("E30 receiver not restored",err)}
 }
 function escTicketText(v){return String(v??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[\r\n]+/g," ").trim();}
 function escWrap(txt,width=48){
@@ -987,16 +1065,7 @@ async function printTicket(n){
   terms.forEach(t=>wrap(t).forEach(x=>d+=x+LF));
   d+="-----------------------------------------------"+LF;
   d+=ESC+"a"+"\x01"+"Conserve este comprobante"+LF+LF+LF+LF;
-  try{
-    if(!window.qz) throw new Error("QZ Tray no se cargo. Verifica que QZ Tray este abierto.");
-    if(!qz.websocket.isActive()) await qz.websocket.connect();
-    const printer=await qz.printers.find("XP-80C (copy 1)");
-    const config=qz.configs.create(printer,{margins:0,jobName:`E30 Orden #${o.n}`});
-    await qz.print(config,[{type:"raw",format:"command",flavor:"plain",data:d}]);
-  }catch(err){
-    console.error("E30 QZ",err);
-    alert("No se pudo imprimir con QZ Tray:\n\n"+(err?.message||err));
-  }
+  await qzPrintRaw(d,`E30 Orden #${o.n}`);
 }
 </script>
 </body>

@@ -308,7 +308,7 @@ const SUPABASE_URL="https://edeaijyayhhijyyjksss.supabase.co";
 const SUPABASE_KEY="sb_publishable_jIYqZUl28NXA4NCqL3K_uA_nbiQRcPf";
 function sbHeaders(extra){return Object.assign({apikey:SUPABASE_KEY,Authorization:"Bearer "+SUPABASE_KEY,"Content-Type":"application/json"},extra||{});}
 async function kvGet(key){
-  const res=await fetch(`${SUPABASE_URL}/rest/v1/e30_kv?key=eq.${encodeURIComponent(key)}&select=value`,{headers:sbHeaders()});
+  const res=await fetch(`${SUPABASE_URL}/rest/v1/e30_kv?key=eq.${encodeURIComponent(key)}&select=value`,{headers:sbHeaders({"Cache-Control":"no-cache","Pragma":"no-cache"}),cache:"no-store"});
   if(!res.ok) throw new Error("read failed "+res.status);
   const rows=await res.json();
   return (rows&&rows[0])?rows[0].value:null;
@@ -669,6 +669,7 @@ async function processPrintQueue(){
     const queue=(await kvGet("e30-print-queue"))||[];
     const job=queue.find(x=>x.status==="pending");
     if(!job)return;
+    console.log("E30: trabajo de impresión detectado",job.id,job.jobName);
     job.status="printing";job.started=new Date().toISOString();job.attempts=(job.attempts||0)+1;
     await kvSet("e30-print-queue",queue);
     try{
@@ -701,10 +702,10 @@ async function togglePrinterReceiver(){
     if(!printer)throw new Error("No se encontró XP-80C (copy 1).");
     printerReceiver=true;
     localStorage.setItem("e30-printer-receiver","1");
-    const b=document.getElementById("printerBtn");if(b)b.textContent="🟢 Impresora activa";
+    const b=document.getElementById("printerBtn");if(b)b.textContent="🟢 Impresora activa · escuchando";
     await processPrintQueue();
     if(printerTimer)clearInterval(printerTimer);
-    printerTimer=setInterval(processPrintQueue,2000);
+    printerTimer=setInterval(processPrintQueue,1000);
     alert("🟢 Modo impresora activado.\n\nEsta PC queda escuchando trabajos enviados desde celulares u otras PCs.");
   }catch(err){
     alert("No se pudo activar la impresora:\n\n"+(err?.message||err));
@@ -716,9 +717,9 @@ async function restorePrinterReceiver(){
     if(!window.qz||!qz.websocket.isActive())await qz.websocket.connect();
     const printer=await qz.printers.find("XP-80C (copy 1)");if(!printer)return;
     printerReceiver=true;
-    const b=document.getElementById("printerBtn");if(b)b.textContent="🟢 Impresora activa";
+    const b=document.getElementById("printerBtn");if(b)b.textContent="🟢 Impresora activa · escuchando";
     await processPrintQueue();
-    if(printerTimer)clearInterval(printerTimer);printerTimer=setInterval(processPrintQueue,2000);
+    if(printerTimer)clearInterval(printerTimer);printerTimer=setInterval(processPrintQueue,1000);
   }catch(err){console.warn("E30 receiver not restored",err)}
 }
 function escTicketText(v){return String(v??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[\r\n]+/g," ").trim();}

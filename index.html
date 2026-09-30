@@ -715,11 +715,12 @@ async function qzPrintRaw(data,jobName,allowQueue=true){
   }
 }
 let printerReceiver=false,printerTimer=null,printerBusy=false;
-async function sendTestPrintJob(){
+async async function sendTestPrintJob(){
   try{
     const id="test-"+Date.now();
     const key="e30-print-job-"+id;
-    const value={id,status:"pending",created:new Date().toISOString(),jobName:"PRUEBA COLA E30",data:"\nE\x01\x1Ba\x01E30 PRUEBA DE COLA\n\n",attempts:0};
+    const testData="\n\x1bE\x01\x1ba\x01E30 PRUEBA DE COLA\n\n";
+    const value={id,status:"pending",created:new Date().toISOString(),jobName:"PRUEBA COLA E30",dataBase64:queueEncode(testData),attempts:0};
     await kvSet(key,value);
     const verify=await kvGet(key);
     if(!verify || verify.id!==id) throw new Error("Supabase no confirmó el trabajo");

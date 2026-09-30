@@ -79,7 +79,10 @@ textarea{min-height:80px;resize:vertical}.form{display:grid;grid-template-column
 <button onclick="show('precios',this)">💲 Precios</button>
 <button onclick="show('presupuestos',this)">🧾 Presupuestos</button>
 <button onclick="togglePrinterReceiver()" id="printerBtn">🖨️ Activar impresora</button>
+
+
 </nav>
+<div id="printerStatus" class="card" style="display:none;padding:10px 14px;margin-top:-8px;margin-bottom:14px;font-size:13px"><b>🖨️ Receptor:</b> <span id="printerStatusText">—</span></div>
 
 
 <section id="dashboard">
@@ -314,7 +317,9 @@ async function kvGet(key){
   return (rows&&rows[0])?rows[0].value:null;
 }
 async function kvSet(key,value){
-  await fetch(`${SUPABASE_URL}/rest/v1/e30_kv`,{method:"POST",headers:sbHeaders({Prefer:"resolution=merge-duplicates"}),body:JSON.stringify([{key,value}])});
+  const res=await fetch(`${SUPABASE_URL}/rest/v1/e30_kv?on_conflict=key`,{method:"POST",headers:sbHeaders({Prefer:"resolution=merge-duplicates,return=representation"}),body:JSON.stringify([{key,value}])});
+  if(!res.ok){const t=await res.text().catch(()=>"");throw new Error("write failed "+res.status+(t?" — "+t.slice(0,180):""));}
+  return true;
 }
 async function sha256Hex(str){const buf=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(str));return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");}
 
@@ -631,14 +636,46 @@ function downloadPriceTemplate(){
 }
 
 async function enqueuePrint(data,jobName){
-  const queue=(await kvGet("e30-print-queue"))||[];
   const id="p"+Date.now()+"-"+Math.random().toString(36).slice(2,8);
-  queue.push({id,status:"pending",created:new Date().toISOString(),jobName:jobName||"E30",data,attempts:0});
-  const keep=queue.slice(-30);
-  await kvSet("e30-print-queue",keep);
+  const key="e30-print-job-"+id;
+  const value={id,status:"pending",created:new Date().toISOString(),jobName:jobName||"E30",data,attempts:0};
+  await kvSet(key,value);
+  const verify=await kvGet(key);
+  if(!verify||verify.id!==id||verify.status!=="pending") throw new Error("El trabajo no quedó guardado en la cola.");
   return id;
 }
+async function getPrintJobs(){
+  // Leemos las filas directamente y filtramos en el navegador.
+  // Así evitamos depender del operador LIKE del endpoint REST.
+  const url=`${SUPABASE_URL}/rest/v1/e30_kv?select=key,value&limit=500`;
+  const res=await fetch(url,{headers:sbHeaders({"Cache-Control":"no-cache","Pragma":"no-cache","Accept":"application/json"}),cache:"no-store"});
+  if(!res.ok){const t=await res.text().catch(()=>"");throw new Error("queue read failed "+res.status+(t?" — "+t.slice(0,180):""));}
+  const rows=await res.json();
+  return Array.isArray(rows)?rows.filter(r=>String(r.key||"").startsWith("e30-print-job-")).map(r=>({key:r.key,...(r.value||{})})).filter(x=>x.id):[];
+}
+async function updatePrintJob(job,patch){
+  const value=Object.assign({},job);delete value.key;Object.assign(value,patch);
+  await kvSet(job.key,value);
+  return value;
+}
+function isMobileClient(){
+  return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (navigator.maxTouchPoints>1 && window.innerWidth<1000);
+}
 async function qzPrintRaw(data,jobName,allowQueue=true){
+  // En celular NO intentamos conectar con QZ Tray: el trabajo va directo a Supabase.
+  // La PC con el receptor activo lo toma y lo manda a la XP-80C.
+  if(isMobileClient()){
+    if(!allowQueue) throw new Error("QUEUE_ONLY_CLIENT");
+    try{
+      await enqueuePrint(data,jobName);
+      alert("🖨️ Trabajo enviado a la cola de impresión.\n\nLa PC con E30 en modo impresora lo imprimirá automáticamente.");
+      return true;
+    }catch(queueErr){
+      alert("No se pudo enviar a la cola de impresión:\n\n"+(queueErr?.message||queueErr));
+      return false;
+    }
+  }
+  // En PC mantenemos la impresión directa por QZ Tray.
   try{
     if(!window.qz) throw new Error("QZ_NOT_AVAILABLE");
     if(!qz.websocket.isActive()) await qz.websocket.connect();
@@ -662,31 +699,67 @@ async function qzPrintRaw(data,jobName,allowQueue=true){
   }
 }
 let printerReceiver=false,printerTimer=null,printerBusy=false;
+async function sendTestPrintJob(){
+  try{
+    const id="test-"+Date.now();
+    const key="e30-print-job-"+id;
+    const value={id,status:"pending",created:new Date().toISOString(),jobName:"PRUEBA COLA E30",data:"\nE\x01\x1Ba\x01E30 PRUEBA DE COLA\n\n",attempts:0};
+    await kvSet(key,value);
+    const verify=await kvGet(key);
+    if(!verify || verify.id!==id) throw new Error("Supabase no confirmó el trabajo");
+    alert("TRABAJO DE PRUEBA CREADO\n\n"+key+"\n\nAhora mirá la PC: debería pasar de 0 a 1 trabajo pendiente y, si el receptor está activo, imprimir la prueba.");
+  }catch(err){
+    alert("NO SE PUDO CREAR LA PRUEBA\n\n"+(err?.message||String(err)));
+  }
+}
+async function diagnosePrintQueue(){
+  try{
+    const url=`${SUPABASE_URL}/rest/v1/e30_kv?select=key,value&limit=500`;
+    const res=await fetch(url,{headers:sbHeaders({"Cache-Control":"no-cache","Pragma":"no-cache","Accept":"application/json"}),cache:"no-store"});
+    const text=await res.text();
+    if(!res.ok){
+      alert("DIAGNÓSTICO COLA\n\nHTTP "+res.status+"\n\n"+text.slice(0,1000));
+      return;
+    }
+    let rows=[]; try{rows=JSON.parse(text)}catch(e){alert("DIAGNÓSTICO COLA\n\nLa respuesta no es JSON:\n\n"+text.slice(0,1000));return;}
+    const all=Array.isArray(rows)?rows:[];
+    const jobs=all.filter(r=>String(r.key||"").startsWith("e30-print-job-"));
+    const pending=jobs.filter(r=>r.value&&r.value.status==="pending");
+    const sample=jobs.slice(0,10).map(r=>({key:r.key,status:r.value?.status,id:r.value?.id,jobName:r.value?.jobName,created:r.value?.created}));
+    console.log("E30 DIAGNOSTICO COLA",{totalFilas:all.length,trabajos:jobs.length,pendientes:pending.length,sample});
+    alert("DIAGNÓSTICO COLA\n\nFilas e30_kv visibles: "+all.length+"\nTrabajos e30-print-job: "+jobs.length+"\nPendientes: "+pending.length+"\n\n"+(jobs.length?JSON.stringify(sample,null,2):"NO APARECE NINGÚN TRABAJO e30-print-job-"));
+  }catch(err){
+    alert("DIAGNÓSTICO COLA\n\nError leyendo Supabase:\n\n"+(err?.message||String(err)));
+  }
+}
 async function processPrintQueue(){
   if(!printerReceiver||printerBusy)return;
   printerBusy=true;
   try{
-    const queue=(await kvGet("e30-print-queue"))||[];
-    const job=queue.find(x=>x.status==="pending");
+    const jobs=await getPrintJobs();
+    const pending=jobs.filter(x=>x.status==="pending").sort((a,b)=>String(a.created).localeCompare(String(b.created)));
+    setPrinterStatus(`escuchando · ${pending.length} trabajo(s) pendiente(s) · ${new Date().toLocaleTimeString("es-AR")}`);
+    const job=pending[0];
     if(!job)return;
     console.log("E30: trabajo de impresión detectado",job.id,job.jobName);
-    job.status="printing";job.started=new Date().toISOString();job.attempts=(job.attempts||0)+1;
-    await kvSet("e30-print-queue",queue);
+    await updatePrintJob(job,{status:"printing",started:new Date().toISOString(),attempts:(job.attempts||0)+1});
     try{
       await qzPrintRaw(job.data,job.jobName,false);
-      const latest=(await kvGet("e30-print-queue"))||[];
-      const idx=latest.findIndex(x=>x.id===job.id);
-      if(idx>=0){latest[idx].status="done";latest[idx].printed=new Date().toISOString();}
-      await kvSet("e30-print-queue",latest.slice(-30));
+      await updatePrintJob(job,{status:"done",printed:new Date().toISOString()});
+      setPrinterStatus(`impreso · ${job.jobName||"E30"} · ${new Date().toLocaleTimeString("es-AR")}`);
     }catch(err){
-      const latest=(await kvGet("e30-print-queue"))||[];
-      const idx=latest.findIndex(x=>x.id===job.id);
-      if(idx>=0){latest[idx].status="pending";latest[idx].lastError=err?.message||String(err);}
-      await kvSet("e30-print-queue",latest.slice(-30));
+      await updatePrintJob(job,{status:"pending",lastError:err?.message||String(err)});
+      setPrinterStatus(`error de impresión · ${err?.message||err}`);
     }
-  }catch(err){console.error("E30 print queue",err)}
+  }catch(err){console.error("E30 print queue",err);setPrinterStatus("error: "+(err?.message||String(err)))}
   finally{printerBusy=false}
 }
+function setPrinterStatus(text){
+  const box=document.getElementById("printerStatus"),el=document.getElementById("printerStatusText");
+  if(box)box.style.display="block";
+  if(el)el.textContent=text;
+}
+
 async function togglePrinterReceiver(){
   if(printerReceiver){
     printerReceiver=false;
@@ -703,6 +776,7 @@ async function togglePrinterReceiver(){
     printerReceiver=true;
     localStorage.setItem("e30-printer-receiver","1");
     const b=document.getElementById("printerBtn");if(b)b.textContent="🟢 Impresora activa · escuchando";
+    setPrinterStatus("conectada · buscando trabajos...");
     await processPrintQueue();
     if(printerTimer)clearInterval(printerTimer);
     printerTimer=setInterval(processPrintQueue,1000);
@@ -718,6 +792,7 @@ async function restorePrinterReceiver(){
     const printer=await qz.printers.find("XP-80C (copy 1)");if(!printer)return;
     printerReceiver=true;
     const b=document.getElementById("printerBtn");if(b)b.textContent="🟢 Impresora activa · escuchando";
+    setPrinterStatus("conectada · buscando trabajos...");
     await processPrintQueue();
     if(printerTimer)clearInterval(printerTimer);printerTimer=setInterval(processPrintQueue,1000);
   }catch(err){console.warn("E30 receiver not restored",err)}

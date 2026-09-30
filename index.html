@@ -67,7 +67,6 @@ textarea{min-height:80px;resize:vertical}.form{display:grid;grid-template-column
 <div class="app" id="appRoot" style="display:none">
 <header><div><div class="brand">E30 | Técnico de celulares</div><div class="sub">Gestión de servicio técnico</div></div><div class="sub">Privado</div></header>
 <nav>
-<button type="button" onclick="e30TestQZ()">🧪 Probar QZ</button>
 <button onclick="show('dashboard',this)">🏠 Inicio</button>
 <button class="active" onclick="focusPriceSearch(this)">🔎 Buscar precios</button>
 <button onclick="show('orden',this)">➕ Nueva orden</button>
@@ -79,6 +78,7 @@ textarea{min-height:80px;resize:vertical}.form{display:grid;grid-template-column
 <button onclick="show('reportes',this)">📊 Reportes</button>
 <button onclick="show('precios',this)">💲 Precios</button>
 <button onclick="show('presupuestos',this)">🧾 Presupuestos</button>
+<button type="button" onclick="e30TestQZ()">🧪 Probar QZ</button>
 </nav>
 
 
@@ -644,7 +644,7 @@ function printTechnician(n){
 <div class="line"></div>Total: ${money(o.total)}<br>Seña: ${money(o.sena)}<br>Saldo: ${money(saldo)}
 </div><script>window.onload=()=>window.print()<\/script>
 
-\n<script>\nconst E30_QZ_PRINTER = "XP-80X (copy 1)";\nasync function e30TestQZ(){\n  try{\n    if(!window.qz){ throw new Error("QZ Tray no está cargado en esta página."); }\n    if(!qz.websocket.isActive()){ await qz.websocket.connect(); }\n    const printers=await qz.printers.find();\n    console.log("QZ impresoras:",printers);\n    const printer=printers.find(p=>String(p).trim()===E30_QZ_PRINTER) || E30_QZ_PRINTER;\n    const config=qz.configs.create(printer,{margins:0,jobName:"E30 TEST QZ"});\n    const html=`<html><head><meta charset="utf-8"><style>body{margin:0}.ticket{width:80mm;padding:3mm;font-family:monospace;font-size:14px;line-height:1.3;text-align:center}</style></head><body><div class="ticket"><b>E30 | PRUEBA QZ</b><br><br>Impresora: ${printer}<br>QZ Tray OK<br><br>Si estás leyendo esto,<br>la impresión directa funciona.<br><br>30/09/2026</div></body></html>`;\n    const data=[{type:'pixel',format:'html',flavor:'plain',data:html,options:{pageWidth:80}}];\n    await qz.print(config,data);\n    alert("QZ envió la prueba a " + printer + ".");\n  }catch(err){\n    console.error(err);\n    alert("Falló la prueba QZ:\\n\\n"+(err?.message||err));\n  }\n}\n</script>\n</body></html>`);
+</body></html>`);
   w.document.close();
 }
 
@@ -905,6 +905,25 @@ ${o.obsEquipo?`<div class="line"></div>Estado del equipo: ${o.obsEquipo}`:""}
 </div><div class="line c">Conserve este comprobante</div></div><script>window.onload=()=>window.print()<\/script></body></html>`);
 w.document.close();
 }
+
+async function e30TestQZ(){
+  try{
+    if(!window.qz) throw new Error("QZ Tray no está cargado.");
+    if(!qz.websocket.isActive()) await qz.websocket.connect();
+    const printers=await qz.printers.find();
+    const wanted="XP-80X (copy 1)";
+    const printer=printers.find(p=>String(p).trim()===wanted) || printers[0];
+    if(!printer) throw new Error("QZ no encontró ninguna impresora.");
+    const config=qz.configs.create(printer,{margins:0,jobName:"E30 TEST QZ"});
+    const html=`<html><head><meta charset="utf-8"><style>@page{size:80mm auto;margin:0}body{margin:0}.ticket{width:80mm;padding:3mm;font-family:monospace;font-size:14px;line-height:1.3;text-align:center}</style></head><body><div class="ticket"><b>E30 | PRUEBA QZ</b><br><br>Impresora: ${printer}<br>QZ Tray OK<br><br>Si estás leyendo esto,<br>la impresión directa funciona.<br><br>30/09/2026</div></body></html>`;
+    await qz.print(config,[{type:"pixel",format:"html",flavor:"plain",data:html,options:{pageWidth:80}}]);
+    alert("QZ envió la prueba a: " + printer);
+  }catch(err){
+    console.error("E30 QZ",err);
+    alert("Falló la prueba QZ:\n\n"+(err && err.message ? err.message : err));
+  }
+}
+
 </script>
 </body>
 </html>

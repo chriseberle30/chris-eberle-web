@@ -52,6 +52,7 @@ textarea{min-height:80px;resize:vertical}.form{display:grid;grid-template-column
 
 .quick-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 14px}.quick-action{border:1px solid var(--line);background:#fff;border-radius:16px;padding:15px 8px;display:flex;flex-direction:column;align-items:center;gap:6px;color:#17171b}.quick-action span{font-size:24px}.quick-action b{font-size:13px}.order-filters{display:flex;gap:7px;overflow:auto;padding-bottom:2px}.filter-btn{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 11px;white-space:nowrap;font-size:12px}.filter-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}.cost-warning{border-color:#f0b429;background:#fffaf0}.cost-line{margin-top:10px}.cost-warning{color:#9a6700}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/qz-tray@2.3.0/qz-tray.js"></script>
 </head>
 <body>
 
@@ -66,6 +67,7 @@ textarea{min-height:80px;resize:vertical}.form{display:grid;grid-template-column
 <div class="app" id="appRoot" style="display:none">
 <header><div><div class="brand">E30 | Técnico de celulares</div><div class="sub">Gestión de servicio técnico</div></div><div class="sub">Privado</div></header>
 <nav>
+<button type="button" onclick="e30TestQZ()">🧪 Probar QZ</button>
 <button onclick="show('dashboard',this)">🏠 Inicio</button>
 <button class="active" onclick="focusPriceSearch(this)">🔎 Buscar precios</button>
 <button onclick="show('orden',this)">➕ Nueva orden</button>
@@ -642,7 +644,7 @@ function printTechnician(n){
 <div class="line"></div>Total: ${money(o.total)}<br>Seña: ${money(o.sena)}<br>Saldo: ${money(saldo)}
 </div><script>window.onload=()=>window.print()<\/script>
 
-</body></html>`);
+\n<script>\nconst E30_QZ_PRINTER = "XP-80X (copy 1)";\nasync function e30TestQZ(){\n  try{\n    if(!window.qz){ throw new Error("QZ Tray no está cargado en esta página."); }\n    if(!qz.websocket.isActive()){ await qz.websocket.connect(); }\n    const printers=await qz.printers.find();\n    console.log("QZ impresoras:",printers);\n    const printer=printers.find(p=>String(p).trim()===E30_QZ_PRINTER) || E30_QZ_PRINTER;\n    const config=qz.configs.create(printer,{margins:0,jobName:"E30 TEST QZ"});\n    const html=`<html><head><meta charset="utf-8"><style>body{margin:0}.ticket{width:80mm;padding:3mm;font-family:monospace;font-size:14px;line-height:1.3;text-align:center}</style></head><body><div class="ticket"><b>E30 | PRUEBA QZ</b><br><br>Impresora: ${printer}<br>QZ Tray OK<br><br>Si estás leyendo esto,<br>la impresión directa funciona.<br><br>30/09/2026</div></body></html>`;\n    const data=[{type:'pixel',format:'html',flavor:'plain',data:html,options:{pageWidth:80}}];\n    await qz.print(config,data);\n    alert("QZ envió la prueba a " + printer + ".");\n  }catch(err){\n    console.error(err);\n    alert("Falló la prueba QZ:\\n\\n"+(err?.message||err));\n  }\n}\n</script>\n</body></html>`);
   w.document.close();
 }
 

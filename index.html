@@ -31,6 +31,24 @@ textarea{min-height:80px;resize:vertical}.form{display:grid;grid-template-column
 .pattern-dot.selected::before{background:var(--blue);border-color:var(--blue)}
 .pattern-dot.selected::after{content:attr(data-num);position:absolute;color:#fff;font-size:12px;font-weight:700}
 .pattern-help{text-align:center;color:var(--muted);font-size:12px}
+
+.stock-low{border-color:#d97706;background:#fffaf0}.stock-zero{border-color:#b42318;background:#fff5f5}.small-muted{font-size:12px;color:var(--muted)}
+''
+.status-badge{display:inline-block;border-radius:999px;padding:5px 9px;font-size:12px;font-weight:700}
+.status-recibido{background:#fff4cc;color:#7a5b00}
+.status-pendiente{background:#fff4cc;color:#7a5b00}
+.status-esperando{background:#fff0d9;color:#8a4b00}
+.status-reparacion{background:#e7efff;color:#234d9b}
+.status-listo{background:#e3f6e8;color:#176b36}
+.status-entregado{background:#eeeeF2;color:#555}
+.status-cancelado{background:#fce8e8;color:#a11}
+.stat-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px}
+.stat b{display:block;font-size:24px;color:var(--blue);margin-top:4px}
+.client-row{display:flex;justify-content:space-between;gap:12px;align-items:center}
+@media(max-width:700px){.stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.client-row{flex-direction:column;align-items:flex-start}}
+.modal-back{position:fixed;inset:0;background:#0007;display:none;align-items:center;justify-content:center;padding:18px;z-index:20}
+.modal{background:#fff;border-radius:18px;padding:20px;max-width:420px;width:100%;box-shadow:0 12px 40px #0003}
 </style>
 </head>
 <body>
@@ -46,12 +64,31 @@ textarea{min-height:80px;resize:vertical}.form{display:grid;grid-template-column
 <div class="app" id="appRoot" style="display:none">
 <header><div><div class="brand">E30 | Técnico de celulares</div><div class="sub">Gestión de servicio técnico</div></div><div class="sub">Privado</div></header>
 <nav>
-<button class="active" onclick="show('buscar',this)">🔎 Buscar</button>
+<button class="active" onclick="show('dashboard',this)">🏠 Inicio</button>
+<button onclick="show('buscar',this)">🔎 Buscar</button>
 <button onclick="show('orden',this)">➕ Nueva orden</button>
 <button onclick="show('ordenes',this)">📋 Órdenes</button>
-<button onclick="show('precios',this)">💰 Precios</button>
+<button onclick="show('clientes',this)">👤 Clientes</button>
+<button onclick="show('stock',this)">📦 Stock</button>
+<button onclick="show('ventas',this)">🛒 Ventas</button>
+<button onclick="show('movimientos',this)">💰 Movimientos</button>
+<button onclick="show('reportes',this)">📊 Reportes</button>
+<button onclick="show('precios',this)">💲 Precios</button>
 <button onclick="show('presupuestos',this)">🧾 Presupuestos</button>
 </nav>
+
+
+<section id="dashboard">
+<div class="card"><h2 style="margin-top:0">Hoy</h2>
+<div class="stat-grid">
+<div class="stat"><div class="sub">Reparaciones</div><b id="dashRep">0</b></div>
+<div class="stat"><div class="sub">Facturado</div><b id="dashFact">$ 0</b></div>
+<div class="stat"><div class="sub">Pendientes</div><b id="dashPend">0</b></div>
+<div class="stat"><div class="sub">Listos</div><b id="dashListos">0</b></div>
+</div></div>
+<div class="card"><h3 style="margin-top:0">Últimas órdenes</h3><div id="dashOrders"></div></div>
+<div class="card"><h3 style="margin-top:0">Stock bajo</h3><div id="dashStock"></div></div>
+</section>
 
 <section id="buscar">
 <div class="card"><h2 style="margin-top:0">¿Qué necesitás consultar?</h2><input id="search" class="search" placeholder="Ej.: Moto G31, módulo G31, iPhone 13 pantalla..." oninput="renderSearch()"></div>
@@ -99,6 +136,48 @@ textarea{min-height:80px;resize:vertical}.form{display:grid;grid-template-column
 
 <section id="ordenes" style="display:none"><div class="card"><h2 style="margin-top:0">Órdenes</h2><input id="orderSearch" placeholder="Buscar por número, cliente, teléfono o modelo" oninput="renderOrders()"></div><div id="orders"></div></section>
 
+
+<section id="movimientos" style="display:none">
+<div class="card"><h2 style="margin-top:0">💰 Movimientos</h2>
+<div class="form">
+<div><label>Tipo</label><select id="mTipo"><option>Gasto</option><option>Ingreso</option></select></div>
+<div><label>Concepto</label><input id="mConcepto" placeholder="Ej.: Compra de repuestos"></div>
+<div><label>Importe</label><input id="mImporte" type="number" min="0"></div>
+<div><label>Medio de pago</label><select id="mPago"><option>Efectivo</option><option>Transferencia</option><option>Mercado Pago</option><option>Tarjeta</option><option>Otro</option></select></div>
+<div class="full"><button class="btn" type="button" onclick="addMovement()">+ Registrar movimiento</button></div>
+</div></div>
+<div class="card"><div class="stat-grid">
+<div class="stat"><div class="sub">Ingresos</div><b id="movIngresos">$ 0</b></div>
+<div class="stat"><div class="sub">Gastos</div><b id="movGastos">$ 0</b></div>
+<div class="stat"><div class="sub">Neto</div><b id="movNeto">$ 0</b></div>
+<div class="stat"><div class="sub">Ventas</div><b id="movVentas">$ 0</b></div>
+</div></div>
+<div id="movementsList"></div>
+</section>
+
+
+<section id="reportes" style="display:none">
+<div class="card"><h2 style="margin-top:0">📊 Rentabilidad</h2>
+<div class="form">
+<div><label>Mes</label><input id="rMes" type="month"></div>
+<div><label>Sucursal</label><select id="rLocal"><option value="Todas">Todas</option><option>Demóstenes 3110 — Las Flores</option><option>Piovano 2960 — Moreno</option></select></div>
+<div class="full"><button class="btn" type="button" onclick="renderReports()">Actualizar reporte</button></div>
+</div></div>
+<div class="stat-grid">
+<div class="stat"><div class="sub">Facturado</div><b id="rFacturado">$ 0</b></div>
+<div class="stat"><div class="sub">Cobrado</div><b id="rCobrado">$ 0</b></div>
+<div class="stat"><div class="sub">Costos</div><b id="rCostos">$ 0</b></div>
+<div class="stat"><div class="sub">Ganancia bruta</div><b id="rGanancia">$ 0</b></div>
+</div>
+<div class="stat-grid" style="margin-top:10px">
+<div class="stat"><div class="sub">Reparaciones</div><b id="rRep">0</b></div>
+<div class="stat"><div class="sub">Ticket promedio</div><b id="rTicket">$ 0</b></div>
+<div class="stat"><div class="sub">Ventas accesorios</div><b id="rAcc">$ 0</b></div>
+<div class="stat"><div class="sub">Margen bruto</div><b id="rMargen">0%</b></div>
+</div>
+<div id="reportBreakdown" class="card" style="margin-top:14px"></div>
+</section>
+
 <section id="precios" style="display:none">
 <div class="card"><h2 style="margin-top:0">Agregar precio</h2>
 <div class="form">
@@ -120,6 +199,40 @@ textarea{min-height:80px;resize:vertical}.form{display:grid;grid-template-column
 </div>
 <div id="prices"></div>
 </section>
+
+
+<section id="clientes" style="display:none">
+<div class="card"><h2 style="margin-top:0">👤 Clientes</h2>
+<input id="clientSearch" placeholder="Buscar por nombre o teléfono" oninput="renderClients()">
+</div>
+<div id="clientsList"></div>
+<div id="clientDetail" class="card" style="display:none"></div>
+</section>
+
+<section id="stock" style="display:none">
+<div class="card"><h2 style="margin-top:0">📦 Stock</h2>
+<form id="stockForm" class="form">
+<div><label>Producto</label><input id="sProducto" required placeholder="Ej.: Cargador USB-C 20W"></div>
+<div><label>Categoría</label><input id="sCategoria" placeholder="Ej.: Cargadores"></div>
+<div><label>Costo</label><input id="sCosto" type="number" min="0" value="0"></div>
+<div><label>Precio de venta</label><input id="sVenta" type="number" min="0" value="0"></div>
+<div><label>Stock inicial</label><input id="sCantidad" type="number" min="0" value="0"></div>
+<div class="full actions"><button class="btn" type="submit">+ Agregar producto</button><button class="btn secondary" type="button" onclick="resetStockForm()">Limpiar</button></div>
+</form></div><div id="stockList"></div></section>
+
+<section id="ventas" style="display:none">
+<div class="card"><h2 style="margin-top:0">🛒 Nueva venta</h2>
+<form id="saleForm" class="form">
+<div class="full"><label>Producto</label><select id="saleProduct" required></select></div>
+<div><label>Cantidad</label><input id="saleQty" type="number" min="1" value="1" required></div>
+<div><label>Precio unitario</label><input id="salePrice" type="number" min="0" required></div>
+<div><label>Cliente (opcional)</label><input id="saleClient" placeholder="Nombre"></div>
+<div><label>Teléfono (opcional)</label><input id="salePhone" placeholder="11..."></div>
+<div><label>Lugar</label><select id="saleLocal"><option>Demóstenes 3110 — Las Flores</option><option>Piovano 2960 — Moreno</option></select></div>
+<div><label>Medio de pago</label><select id="salePayment"><option>Efectivo</option><option>Transferencia</option><option>Mercado Pago</option><option>Tarjeta</option><option>Otro</option></select></div>
+<div class="full"><div class="sub">Garantía del accesorio: <b>7 días</b> desde la fecha de venta.</div></div>
+<div class="full actions"><button class="btn" type="submit">Registrar venta</button><button class="btn secondary" type="button" onclick="resetSaleForm()">Limpiar</button></div>
+</form></div><div id="salesList"></div></section>
 
 <section id="presupuestos" style="display:none">
 <div class="card"><h2 style="margin-top:0">Nuevo presupuesto</h2>
@@ -198,16 +311,19 @@ const DEFAULT_PRICES=[
 {id:30,marca:"Motorola",modelo:"G31",reparacion:"Módulo",precio:60000,activo:true}
 ];
 
-let prices=[],orders=[],budgets=[],passHash=null,authed=false;
+let prices=[],orders=[],budgets=[],stock=[],sales=[],movements=[],passHash=null,authed=false,afterOrderId=null;
 const money=n=>new Intl.NumberFormat("es-AR",{style:"currency",currency:"ARS",maximumFractionDigits:0}).format(n||0);
 
 async function loadAll(attempt){
   attempt=attempt||1;
   try{
-    const [p,o,b,ph]=await Promise.all([kvGet("e30-prices"),kvGet("e30-orders"),kvGet("e30-budgets"),kvGet("e30-pass")]);
+    const [p,o,b,s,v,m,ph]=await Promise.all([kvGet("e30-prices"),kvGet("e30-orders"),kvGet("e30-budgets"),kvGet("e30-stock"),kvGet("e30-sales"),kvGet("e30-movements"),kvGet("e30-pass")]);
     prices=(p&&p.length)?p:JSON.parse(JSON.stringify(DEFAULT_PRICES));
     orders=o||[];
     budgets=b||[];
+    stock=s||[];
+    sales=v||[];
+    movements=m||[];
     passHash=ph;
   }catch(e){
     if(attempt<3){await new Promise(r=>setTimeout(r,1200));return loadAll(attempt+1);}
@@ -218,6 +334,9 @@ async function loadAll(attempt){
 function saveOrders(){kvSet("e30-orders",orders);}
 function saveBudgets(){kvSet("e30-budgets",budgets);}
 function savePrices(){kvSet("e30-prices",prices);}
+function saveStock(){kvSet("e30-stock",stock);}
+function saveSales(){kvSet("e30-sales",sales);}
+function saveMovements(){kvSet("e30-movements",movements);}
 
 function renderLogin(){
   const body=document.getElementById("loginBody");
@@ -247,14 +366,14 @@ function enterApp(){
   authed=true;
   document.getElementById("loginScreen").style.display="none";
   document.getElementById("appRoot").style.display="block";
-  renderSearch();
+  orders.forEach(o=>{if(!o.costos)o.costos=[];});document.getElementById("rMes").value=new Date().toISOString().slice(0,7);renderSearch();renderDashboard();
 }
 (async function init(){
   await loadAll();
   renderLogin();
 })();
 
-function show(id,btn){document.querySelectorAll("section").forEach(x=>x.style.display="none");document.getElementById(id).style.display="block";document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));if(btn)btn.classList.add("active");if(id==="ordenes")renderOrders();if(id==="precios")renderPrices();if(id==="presupuestos")renderBudgets();}
+function show(id,btn){document.querySelectorAll("section").forEach(x=>x.style.display="none");document.getElementById(id).style.display="block";document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));if(btn)btn.classList.add("active");if(id==="dashboard")renderDashboard();if(id==="ordenes")renderOrders();if(id==="clientes")renderClients();if(id==="precios")renderPrices();if(id==="presupuestos")renderBudgets();if(id==="stock")renderStock();if(id==="ventas"){renderSaleProducts();renderSales();}if(id==="movimientos")renderMovements();}
 
 function renderSearch(){
   const q=document.getElementById("search").value.toLowerCase().trim();
@@ -271,15 +390,15 @@ function newFromPrice(id){const p=prices.find(x=>x.id===id);show("orden");marca.
 
 document.getElementById("orderForm").onsubmit=e=>{
 e.preventDefault();const n=(orders.length?Math.max(...orders.map(o=>o.n)):0)+1;
-const o={n,cliente:cliente.value,telefono:telefono.value,marca:marca.value,modelo:modelo.value,imei:imei.value,local:local.value,desbloqueo:desbloqueo.value,unlockType:unlockMode,patron:pattern.join("-"),estado:estado.value,falla:falla.value,trabajo:trabajo.value,total:+total.value||0,sena:+sena.value||0,pago:pago.value,entrega:entrega.value,obsTecnico:obsTecnico.value,obs:obs.value,fecha:new Date().toLocaleDateString("es-AR")};
-orders.unshift(o);saveOrders();resetOrder();show("ordenes");document.querySelectorAll("nav button")[2].classList.add("active");renderOrders();
+const o={n,cliente:cliente.value,telefono:telefono.value,marca:marca.value,modelo:modelo.value,imei:imei.value,local:local.value,desbloqueo:desbloqueo.value,unlockType:unlockMode,patron:pattern.join("-"),estado:estado.value,falla:falla.value,trabajo:trabajo.value,total:+total.value||0,sena:+sena.value||0,pago:pago.value,entrega:entrega.value,obsTecnico:obsTecnico.value,obs:obs.value,costos:[],fecha:new Date().toLocaleDateString("es-AR")};
+orders.unshift(o);saveOrders();afterOrderId=o.n;resetOrder();show("orden",document.querySelectorAll("nav button")[2]);renderOrders();renderDashboard();openAfterOrder(o.n);
 };
 function orderCard(o){return `<div class="card"><div class="order"><div><b>#${String(o.n).padStart(4,"0")}</b><h3>${o.cliente}</h3><div>${o.marca} ${o.modelo} · ${o.trabajo||"Sin trabajo indicado"}</div><div class="sub">${o.local} · ${o.telefono} · Ingreso ${o.fecha}</div>
 <div class="sub" style="margin-top:5px">🔒 Código/patrón: <button class="btn secondary" style="padding:4px 8px;font-size:11px" onclick="toggleUnlock(${o.n},this)">Mostrar</button> <span id="unlock-${o.n}" style="display:none;font-weight:600"></span></div>
 <div class="sub" style="margin-top:5px">🛠️ Obs. técnico: <button class="btn secondary" style="padding:4px 8px;font-size:11px" onclick="toggleTechObs(${o.n},this)">Mostrar</button> <span id="techobs-${o.n}" style="display:none;font-weight:600"></span></div>
-</div><div><select onchange="setStatus(${o.n},this.value)" style="width:auto;padding:6px 8px;font-size:12px;border-radius:8px">${ESTADOS.map(s=>`<option ${o.estado===s?"selected":""}>${s}</option>`).join("")}</select><div class="price">${money(o.total)}</div></div></div><hr>
+</div><div><select onchange="setStatus(${o.n},this.value)" style="width:auto;padding:6px 8px;font-size:12px;border-radius:8px">${ESTADOS.map(s=>`<option ${o.estado===s?"selected":""}>${s}</option>`).join("")}</select><div style="margin-top:6px"><span class="status-badge ${statusClass(o.estado)}">${o.estado}</span></div><div class="price">${money(o.total)}</div></div></div><hr>
 <div><b>Seña:</b> ${money(o.sena)} · <b>Saldo:</b> ${money(Math.max(0,o.total-o.sena))}</div>
-<div class="actions" style="margin-top:12px"><button class="btn" onclick="printTicket(${o.n})">🖨️ Ticket cliente</button><button class="btn secondary" onclick="printTechnician(${o.n})">🔧 Orden técnico</button><button class="btn danger" onclick="deleteOrder(${o.n})">Eliminar</button></div></div>`}
+<div style="margin-top:10px"><b>Costos:</b> ${money((o.costos||[]).reduce((a,c)=>a+(+c.importe||0),0))} · <b>Ganancia bruta:</b> ${money(Math.max(0,(+o.total||0)-((o.costos||[]).reduce((a,c)=>a+(+c.importe||0),0))))}</div><div class="actions" style="margin-top:12px"><button class="btn secondary" onclick="manageCosts(${o.n})">💰 Costos</button><button class="btn" onclick="printTicket(${o.n})">🖨️ Ticket cliente</button><button class="btn secondary" onclick="printTechnician(${o.n})">🔧 Orden técnico</button><button class="btn danger" onclick="deleteOrder(${o.n})">Eliminar</button></div></div>`}
 function renderOrders(){const q=(document.getElementById("orderSearch")?.value||"").toLowerCase();const arr=orders.filter(o=>JSON.stringify(o).toLowerCase().includes(q));document.getElementById("orders").innerHTML=arr.map(orderCard).join("")||'<div class="card empty">No hay órdenes.</div>';}
 const ESTADOS=["Recibido","Pendiente","Esperando repuesto","En reparación","Listo","Entregado","Cancelado"];
 function setStatus(n,val){const o=orders.find(x=>x.n===n);o.estado=val;saveOrders();}
@@ -426,20 +545,245 @@ function printTechnician(n){
   const o=orders.find(x=>x.n===n);if(!o)return;
   const saldo=Math.max(0,o.total-o.sena),w=window.open("","_blank");
   const unlock=o.unlockType==="patron"&&o.patron?`Patrón: ${o.patron.split("-").map(x=>Number(x)+1).join(" → ")}`:`Código: ${o.desbloqueo||"No informado"}`;
-  w.document.write(`<html><head><title>Orden técnico #${o.n}</title><style>body{margin:0}.ticket{width:80mm;padding:3mm;font-family:monospace;font-size:13px;line-height:1.28}.c{text-align:center}.line{border-top:1px dashed #000;margin:8px 0}.private{font-size:12px;font-weight:bold}.note{white-space:pre-wrap}</style></head><body><div class="ticket">
+  w.document.write(`<html><head><title>Orden técnico #${o.n}</title><style>@page{size:80mm auto;margin:0}body{margin:0}.ticket{width:80mm;padding:3mm;font-family:monospace;font-size:13px;line-height:1.28}.c{text-align:center}.line{border-top:1px dashed #000;margin:8px 0}.private{font-size:12px;font-weight:bold}.note{white-space:pre-wrap}</style></head><body><div class="ticket">
 <div class="c"><b>E30 | ORDEN INTERNA</b><br>${o.local}<br>Tel: 11 4445-8553 · @eberle30</div><div class="line"></div>
 <b>ORDEN #${String(o.n).padStart(4,"0")}</b><br>Fecha: ${o.fecha}<br>Cliente: ${o.cliente}<br>Tel: ${o.telefono}<br>Equipo: ${o.marca} ${o.modelo}<br>${o.imei?`IMEI: ${o.imei}<br>`:""}
 <div class="line"></div><div class="private">🔒 ${unlock}</div>
 <div class="line"></div>Falla: ${o.falla||"-"}<br>Trabajo: ${o.trabajo||"-"}<br>Estado: ${o.estado}<br>${o.entrega?`Entrega estimada: ${o.entrega}<br>`:""}
 <div class="line"></div><b>OBSERVACIONES TÉCNICAS:</b><div class="note">${o.obsTecnico||"Sin observaciones internas."}</div>
 <div class="line"></div>Total: ${money(o.total)}<br>Seña: ${money(o.sena)}<br>Saldo: ${money(saldo)}
-</div><script>window.onload=()=>window.print()<\/script></body></html>`);
+</div><script>window.onload=()=>window.print()<\/script>
+
+<div id="costModal" class="modal-back">
+<div class="modal">
+<h2 style="margin-top:0">💰 Costos de la reparación</h2>
+<div id="costOrderInfo" class="sub" style="margin-bottom:12px"></div>
+<div id="costList"></div>
+<div class="form" style="margin-top:12px">
+<div><label>Concepto</label><input id="costConcept" placeholder="Ej.: Módulo G31"></div>
+<div><label>Importe</label><input id="costAmount" type="number" min="0" placeholder="38000"></div>
+</div>
+<div class="actions" style="margin-top:12px">
+<button class="btn" onclick="addOrderCost()">+ Agregar costo</button>
+<button class="btn secondary" onclick="closeCostModal()">Cerrar</button>
+</div>
+</div></div>
+<div id="afterOrderModal" class="modal-back">
+<div class="modal">
+<h2 style="margin-top:0">Orden creada</h2>
+<div id="afterOrderText" class="sub" style="margin-bottom:16px"></div>
+<div class="actions">
+<button class="btn" onclick="afterOrderPrintClient()">🧾 Imprimir cliente</button>
+<button class="btn secondary" onclick="afterOrderPrintTech()">🔧 Imprimir técnico</button>
+<button class="btn secondary" onclick="closeAfterOrder()">Cerrar</button>
+</div>
+</div></div>
+</body></html>`);
   w.document.close();
 }
 
+
+function resetStockForm(){document.getElementById("stockForm").reset();sCosto.value=0;sVenta.value=0;sCantidad.value=0;}
+document.getElementById("stockForm").onsubmit=e=>{
+ e.preventDefault();
+ const item={id:stock.length?Math.max(...stock.map(x=>x.id))+1:1,producto:sProducto.value.trim(),categoria:sCategoria.value.trim(),costo:+sCosto.value||0,venta:+sVenta.value||0,cantidad:+sCantidad.value||0,activo:true};
+ stock.unshift(item);saveStock();resetStockForm();renderStock();
+};
+function renderStock(){
+ const el=document.getElementById("stockList");
+ if(!stock.length){el.innerHTML='<div class="card empty">Todavía no hay productos en stock.</div>';return;}
+ el.innerHTML=stock.filter(x=>x.activo!==false).map(x=>{const cls=x.cantidad===0?" stock-zero":x.cantidad<=2?" stock-low":"";
+ return `<div class="card${cls}"><div class="order"><div><b>${x.producto}</b><div class="sub">${x.categoria||"Sin categoría"}</div><div class="small-muted">Costo: ${money(x.costo)} · Venta: ${money(x.venta)}</div></div><div style="text-align:right"><div class="price">${x.cantidad} u.</div><div class="small-muted">${x.cantidad===0?"SIN STOCK":x.cantidad<=2?"Stock bajo":"En stock"}</div></div></div><div class="actions" style="margin-top:10px"><button class="btn secondary" onclick="adjustStock(${x.id},1)">+1</button><button class="btn secondary" onclick="adjustStock(${x.id},-1)">−1</button><button class="btn secondary" onclick="editStock(${x.id})">Editar</button><button class="btn danger" onclick="deleteStock(${x.id})">Eliminar</button></div></div>`;
+ }).join("");
+}
+function adjustStock(id,delta){const x=stock.find(p=>p.id===id);if(!x)return;if(delta<0&&x.cantidad<1)return;x.cantidad=Math.max(0,x.cantidad+delta);saveStock();renderStock();renderSaleProducts();}
+function editStock(id){const x=stock.find(p=>p.id===id);if(!x)return;const producto=prompt("Producto",x.producto);if(producto===null)return;const venta=prompt("Precio de venta",x.venta);if(venta===null)return;const cantidad=prompt("Cantidad en stock",x.cantidad);if(cantidad===null)return;x.producto=producto.trim()||x.producto;x.venta=+venta||0;x.cantidad=Math.max(0,+cantidad||0);saveStock();renderStock();renderSaleProducts();}
+function deleteStock(id){if(!confirm("¿Eliminar este producto del stock?"))return;stock=stock.filter(x=>x.id!==id);saveStock();renderStock();renderSaleProducts();}
+
+function renderSaleProducts(){
+ const sel=document.getElementById("saleProduct");if(!sel)return;
+ const active=stock.filter(x=>x.activo!==false&&x.cantidad>0);
+ sel.innerHTML=active.length?active.map(x=>`<option value="${x.id}">${x.producto} — ${money(x.venta)} · Stock ${x.cantidad}</option>`).join(""):'<option value="">Primero cargá productos con stock</option>';
+ updateSalePrice();
+}
+function updateSalePrice(){const x=stock.find(p=>p.id===+(document.getElementById("saleProduct")?.value||0));if(x)document.getElementById("salePrice").value=x.venta;}
+document.addEventListener("change",e=>{if(e.target&&e.target.id==="saleProduct")updateSalePrice();});
+function resetSaleForm(){document.getElementById("saleForm").reset();saleQty.value=1;updateSalePrice();}
+document.getElementById("saleForm").onsubmit=e=>{
+ e.preventDefault();
+ const x=stock.find(p=>p.id===+saleProduct.value),qty=+saleQty.value||0,unit=+salePrice.value||0;
+ if(!x){alert("Seleccioná un producto.");return;} if(qty<1){alert("La cantidad debe ser mayor a 0.");return;} if(x.cantidad<qty){alert(`No hay stock suficiente. Disponible: ${x.cantidad}.`);return;}
+ const now=new Date(),warranty=new Date(now);warranty.setDate(warranty.getDate()+7);
+ const sale={n:sales.length?Math.max(...sales.map(s=>s.n))+1:1,productoId:x.id,producto:x.producto,cantidad:qty,unit,total:unit*qty,cliente:saleClient.value.trim(),telefono:salePhone.value.trim(),local:saleLocal.value,pago:salePayment.value,fecha:now.toLocaleDateString("es-AR"),warranty:warranty.toLocaleDateString("es-AR")};
+ x.cantidad-=qty;sales.unshift(sale);saveStock();saveSales();resetSaleForm();renderSaleProducts();renderStock();renderSales();
+ if(confirm("Venta registrada. ¿Querés imprimir el ticket ahora?"))printSaleTicket(sale.n);
+};
+function renderSales(){
+ const el=document.getElementById("salesList");
+ el.innerHTML=sales.map(s=>`<div class="card"><div class="order"><div><b>VENTA #${String(s.n).padStart(4,"0")}</b><h3>${s.producto} × ${s.cantidad}</h3><div class="sub">${s.cliente||"Consumidor final"} · ${s.local} · ${s.fecha}</div></div><div><div class="price">${money(s.total)}</div><div class="sub">Garantía hasta ${s.warranty}</div></div></div><div class="actions" style="margin-top:10px"><button class="btn" onclick="printSaleTicket(${s.n})">🖨️ Ticket</button></div></div>`).join("")||'<div class="card empty">Todavía no hay ventas.</div>';
+}
+function printSaleTicket(n){
+ const s=sales.find(x=>x.n===n);if(!s)return;const w=window.open("","_blank");
+ w.document.write(`<html><head><title>Venta #${s.n}</title><style>@page{size:80mm auto;margin:0}body{margin:0}.ticket{width:80mm;padding:3mm;font-family:monospace;font-size:13px;line-height:1.28}.c{text-align:center}.line{border-top:1px dashed #000;margin:8px 0}.total{font-size:17px;font-weight:bold}.note{font-size:10px;line-height:1.35}</style></head><body><div class="ticket"><div class="c"><b>E30 | TÉCNICO DE CELULARES</b><br>${s.local}<br>Tel: 11 4445-8553 · Instagram: @eberle30</div><div class="line"></div><div class="c"><b>COMPROBANTE DE VENTA #${String(s.n).padStart(4,"0")}</b></div><div class="line"></div>Fecha: ${s.fecha}<br>${s.cliente?`Cliente: ${s.cliente}<br>`:""}${s.telefono?`Tel: ${s.telefono}<br>`:""}Producto: ${s.producto}<br>Cantidad: ${s.cantidad}<br>Precio unit.: ${money(s.unit)}<div class="line"></div><span class="total">TOTAL: ${money(s.total)}</span><br>Pago: ${s.pago}<div class="line"></div><b>GARANTÍA: 7 DÍAS</b><br>Válida hasta: ${s.warranty}<div class="line"></div><div class="note">La garantía corresponde al accesorio vendido y cubre fallas de funcionamiento. No cubre daños por golpes, humedad, uso indebido o manipulación.</div><div class="line c">Conserve este comprobante</div></div><script>window.onload=()=>window.print()<\/script></body></html>`);
+ w.document.close();
+}
+
+function statusClass(s){
+  if(s==="Recibido")return"status-recibido";
+  if(s==="Pendiente")return"status-pendiente";
+  if(s==="Esperando repuesto")return"status-esperando";
+  if(s==="En reparación")return"status-reparacion";
+  if(s==="Listo")return"status-listo";
+  if(s==="Entregado")return"status-entregado";
+  return"status-cancelado";
+}
+function renderDashboard(){
+  const rep=orders.length;
+  const fact=orders.reduce((a,o)=>a+(+o.total||0),0)+sales.reduce((a,s)=>a+(+s.total||0),0);
+  const pend=orders.filter(o=>!["Entregado","Cancelado"].includes(o.estado)).length;
+  const listos=orders.filter(o=>o.estado==="Listo").length;
+  document.getElementById("dashRep").textContent=rep;
+  document.getElementById("dashFact").textContent=money(fact);
+  document.getElementById("dashPend").textContent=pend;
+  document.getElementById("dashListos").textContent=listos;
+  document.getElementById("dashOrders").innerHTML=orders.slice(0,5).map(o=>`<div style="padding:9px 0;border-bottom:1px solid var(--line)"><b>#${String(o.n).padStart(4,"0")}</b> · ${o.cliente} · ${o.marca} ${o.modelo} <span class="status-badge ${statusClass(o.estado)}">${o.estado}</span></div>`).join("")||'<div class="empty">Todavía no hay órdenes.</div>';
+  const low=stock.filter(x=>x.activo!==false&&x.cantidad<=2);
+  document.getElementById("dashStock").innerHTML=low.map(x=>`<div style="padding:8px 0;border-bottom:1px solid var(--line)"><b>${x.producto}</b> · ${x.cantidad} u.</div>`).join("")||'<div class="sub">No hay productos con stock bajo.</div>';
+}
+function setStatus(n,val){const o=orders.find(x=>x.n===n);if(!o)return;o.estado=val;saveOrders();renderOrders();renderDashboard();}
+
+function getClients(){
+  const map={};
+  orders.forEach(o=>{
+    const key=(o.telefono||o.cliente||"").trim().toLowerCase(); if(!key)return;
+    if(!map[key])map[key]={nombre:o.cliente||"Sin nombre",telefono:o.telefono||"",orders:[],sales:[]};
+    map[key].orders.push(o);
+  });
+  sales.forEach(s=>{
+    const key=(s.telefono||s.cliente||"").trim().toLowerCase(); if(!key)return;
+    if(!map[key])map[key]={nombre:s.cliente||"Sin nombre",telefono:s.telefono||"",orders:[],sales:[]};
+    map[key].sales.push(s);
+  });
+  return Object.values(map);
+}
+function renderClients(){
+  const q=(document.getElementById("clientSearch")?.value||"").toLowerCase().trim();
+  const arr=getClients().filter(c=>`${c.nombre} ${c.telefono}`.toLowerCase().includes(q));
+  document.getElementById("clientsList").innerHTML=arr.map(c=>{
+    const total=c.orders.length+c.sales.length;
+    return `<div class="card"><div class="client-row"><div><b>${c.nombre}</b><div class="sub">${c.telefono||"Sin teléfono"} · ${total} movimiento(s)</div></div><button class="btn secondary" onclick="showClientDetail('${encodeURIComponent(c.telefono||c.nombre)}')">Ver historial</button></div></div>`;
+  }).join("")||'<div class="card empty">No encontré clientes.</div>';
+}
+function showClientDetail(encoded){
+  const target=decodeURIComponent(encoded).toLowerCase();
+  const c=getClients().find(x=>(x.telefono||x.nombre).toLowerCase()===target);
+  const el=document.getElementById("clientDetail");if(!c){el.style.display="none";return;}
+  el.style.display="block";
+  el.innerHTML=`<h3 style="margin-top:0">${c.nombre}</h3><div class="sub">${c.telefono||"Sin teléfono"}</div><hr>
+  <b>Órdenes</b>${c.orders.map(o=>`<div style="padding:8px 0;border-bottom:1px solid var(--line)">#${String(o.n).padStart(4,"0")} · ${o.marca} ${o.modelo} · ${o.trabajo||"-"} · ${money(o.total)} · <span class="status-badge ${statusClass(o.estado)}">${o.estado}</span></div>`).join("")||'<div class="sub" style="margin:8px 0">Sin reparaciones.</div>'}
+  <div style="margin-top:12px"><b>Ventas</b>${c.sales.map(s=>`<div style="padding:8px 0;border-bottom:1px solid var(--line)">Venta #${String(s.n).padStart(4,"0")} · ${s.producto} × ${s.cantidad} · ${money(s.total)} · Garantía hasta ${s.warranty}</div>`).join("")||'<div class="sub" style="margin:8px 0">Sin ventas de accesorios.</div>'}</div>`;
+  el.scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+function addMovement(){
+  const amount=+mImporte.value||0;if(amount<=0){alert("Ingresá un importe.");return;}
+  const m={n:movements.length?Math.max(...movements.map(x=>x.n))+1:1,tipo:mTipo.value,concepto:mConcepto.value.trim()||"Sin concepto",importe:amount,pago:mPago.value,fecha:new Date().toLocaleDateString("es-AR")};
+  movements.unshift(m);saveMovements();mConcepto.value="";mImporte.value="";renderMovements();renderDashboard();
+}
+function renderMovements(){
+  const ingresos=movements.filter(m=>m.tipo==="Ingreso").reduce((a,m)=>a+m.importe,0);
+  const gastos=movements.filter(m=>m.tipo==="Gasto").reduce((a,m)=>a+m.importe,0);
+  const ventasTotal=sales.reduce((a,s)=>a+s.total,0);
+  movIngresos.textContent=money(ingresos);movGastos.textContent=money(gastos);movNeto.textContent=money(ingresos-gastos);movVentas.textContent=money(ventasTotal);
+  document.getElementById("movementsList").innerHTML=movements.map(m=>`<div class="card"><div class="order"><div><b>${m.tipo}</b><div>${m.concepto}</div><div class="sub">${m.fecha} · ${m.pago}</div></div><div class="price">${money(m.importe)}</div></div></div>`).join("")||'<div class="card empty">Todavía no hay movimientos.</div>';
+}
+
+function openAfterOrder(n){
+  const o=orders.find(x=>x.n===n);if(!o)return;
+  document.getElementById("afterOrderText").textContent=`Orden #${String(n).padStart(4,"0")} de ${o.cliente} · ${o.marca} ${o.modelo}`;
+  document.getElementById("afterOrderModal").style.display="flex";
+}
+function closeAfterOrder(){document.getElementById("afterOrderModal").style.display="none";}
+function afterOrderPrintClient(){if(afterOrderId)printTicket(afterOrderId);}
+function afterOrderPrintTech(){if(afterOrderId)printTechnician(afterOrderId);}
+
+function orderCostTotal(o){return (o.costos||[]).reduce((a,c)=>a+(+c.importe||0),0);}
+function manageCosts(n){
+  const o=orders.find(x=>x.n===n);if(!o)return;
+  if(!o.costos)o.costos=[];
+  window.costOrderId=n;
+  document.getElementById("costOrderInfo").textContent=`Orden #${String(n).padStart(4,"0")} · ${o.cliente} · ${o.marca} ${o.modelo} · Cobrado: ${money(o.total)}`;
+  renderCostModal();
+  document.getElementById("costModal").style.display="flex";
+}
+function renderCostModal(){
+  const o=orders.find(x=>x.n===window.costOrderId);if(!o)return;
+  const total=orderCostTotal(o),ganancia=Math.max(0,(+o.total||0)-total);
+  document.getElementById("costList").innerHTML=(o.costos||[]).map((c,i)=>`<div style="display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)"><span>${c.concepto}</span><b>${money(c.importe)}</b><button class="btn danger" style="padding:5px 8px" onclick="deleteOrderCost(${i})">×</button></div>`).join("")||'<div class="sub">Todavía no hay costos cargados.</div>';
+  document.getElementById("costList").innerHTML += `<div style="margin-top:12px"><b>Total costos: ${money(total)}</b> · <b>Ganancia bruta: ${money(ganancia)}</b></div>`;
+}
+function addOrderCost(){
+  const o=orders.find(x=>x.n===window.costOrderId);if(!o)return;
+  const concept=document.getElementById("costConcept").value.trim(),amount=+document.getElementById("costAmount").value||0;
+  if(!concept||amount<=0){alert("Ingresá concepto e importe.");return;}
+  if(!o.costos)o.costos=[];
+  o.costos.push({concepto:concept,importe:amount});
+  saveOrders();document.getElementById("costConcept").value="";document.getElementById("costAmount").value="";renderCostModal();renderOrders();renderDashboard();
+}
+function deleteOrderCost(i){
+  const o=orders.find(x=>x.n===window.costOrderId);if(!o)return;
+  if(!confirm("¿Eliminar este costo?"))return;
+  o.costos.splice(i,1);saveOrders();renderCostModal();renderOrders();renderDashboard();
+}
+function closeCostModal(){document.getElementById("costModal").style.display="none";}
+
+function monthKeyFromDateString(s){
+  const parts=(s||"").split("/");
+  if(parts.length===3)return `${parts[2]}-${String(parts[1]).padStart(2,"0")}`;
+  return "";
+}
+function saleMonthKey(s){
+  return monthKeyFromDateString(s.fecha);
+}
+function orderMonthKey(o){
+  return monthKeyFromDateString(o.fecha);
+}
+function renderReports(){
+  const selectedMonth=document.getElementById("rMes").value;
+  const local=document.getElementById("rLocal").value;
+  const matchesLocal=o=>local==="Todas"||o.local===local;
+  const matchesMonth=o=>!selectedMonth||orderMonthKey(o)===selectedMonth;
+  const ord=orders.filter(o=>matchesLocal(o)&&matchesMonth(o));
+  const salesFiltered=sales.filter(s=>{
+    const lm=local==="Todas"||s.local===local;
+    const mm=!selectedMonth||saleMonthKey(s)===selectedMonth;
+    return lm&&mm;
+  });
+  const fact=ord.reduce((a,o)=>a+(+o.total||0),0);
+  const cobrado=ord.reduce((a,o)=>a+Math.min(+o.total||0,+o.sena||0),0)+salesFiltered.reduce((a,s)=>a+(+s.total||0),0);
+  const costos=ord.reduce((a,o)=>a+orderCostTotal(o),0);
+  const acc=salesFiltered.reduce((a,s)=>a+(+s.total||0),0);
+  const ganancia=(fact-costos)+acc;
+  const rep=ord.length;
+  const ticket=rep?fact/rep:0;
+  const margen=(fact+acc)>0?(ganancia/(fact+acc))*100:0;
+  document.getElementById("rFacturado").textContent=money(fact+acc);
+  document.getElementById("rCobrado").textContent=money(cobrado);
+  document.getElementById("rCostos").textContent=money(costos);
+  document.getElementById("rGanancia").textContent=money(ganancia);
+  document.getElementById("rRep").textContent=rep;
+  document.getElementById("rTicket").textContent=money(ticket);
+  document.getElementById("rAcc").textContent=money(acc);
+  document.getElementById("rMargen").textContent=margen.toFixed(1)+"%";
+  document.getElementById("reportBreakdown").innerHTML=`<h3 style="margin-top:0">Detalle</h3>
+  <div style="padding:8px 0;border-bottom:1px solid var(--line)">Reparaciones facturadas: <b>${money(fact)}</b></div>
+  <div style="padding:8px 0;border-bottom:1px solid var(--line)">Ventas de accesorios: <b>${money(acc)}</b></div>
+  <div style="padding:8px 0;border-bottom:1px solid var(--line)">Costos de reparaciones: <b>${money(costos)}</b></div>
+  <div style="padding:8px 0"><b>Resultado bruto: ${money(ganancia)}</b></div>`;
+}
 function printBudget(n){
 const o=budgets.find(x=>x.n===n),w=window.open("","_blank");
-w.document.write(`<html><head><title>Presupuesto #${o.n}</title><style>body{margin:0}.ticket{width:80mm;padding:3mm;font-family:monospace;font-size:13px;line-height:1.28}.c{text-align:center}.line{border-top:1px dashed #000;margin:8px 0}.total{font-size:17px;font-weight:bold}.note{font-size:10px;line-height:1.35}</style></head><body><div class="ticket">
+w.document.write(`<html><head><title>Presupuesto #${o.n}</title><style>@page{size:80mm auto;margin:0}body{margin:0}.ticket{width:80mm;padding:3mm;font-family:monospace;font-size:13px;line-height:1.28}.c{text-align:center}.line{border-top:1px dashed #000;margin:8px 0}.total{font-size:17px;font-weight:bold}.note{font-size:10px;line-height:1.35}</style></head><body><div class="ticket">
 <div class="c"><b>E30 | TÉCNICO DE CELULARES</b><br>${o.local}<br>Tel: 11 4445-8553 · Instagram: @eberle30</div>
 <div class="line"></div><div class="c"><b>PRESUPUESTO #${String(o.n).padStart(4,"0")}</b></div><div class="line"></div>
 Cliente: ${o.cliente}<br>Tel: ${o.telefono||"-"}<br>Equipo: ${o.marca} ${o.modelo}<br><br>

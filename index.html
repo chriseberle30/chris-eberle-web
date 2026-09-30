@@ -5,7 +5,14 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>E30 | Técnico de celulares</title>
 <style>
-:root{--blue:#14104C;--bg:#f6f6f8;--line:#e6e6eb;--muted:#70717a}
+:root{--blue:#14104C;--bg:#f6f6f8;--line:#e6e6eb;--muted:#70717a;--card:#fff;--text:#17171b;--input:#fff}
+body.dark{--bg:#111217;--line:#2b2d35;--muted:#a7a9b3;--card:#1a1c22;--text:#f2f3f7;--input:#22242b}
+body.dark .card,body.dark nav button,body.dark .quick-action,body.dark .stat,body.dark .filter-btn{background:var(--card);color:var(--text)}
+body.dark input,body.dark select,body.dark textarea{background:var(--input);color:var(--text);border-color:var(--line)}
+body.dark .btn.secondary{background:#2b2d35;color:#f2f3f7}
+body.dark .search{background:var(--input);color:var(--text)}
+body{color:var(--text)}
+.card{background:var(--card)}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:#17171b}
 button,input,select,textarea{font:inherit}button{cursor:pointer}
 .app{max-width:1100px;margin:auto;padding:18px}
@@ -77,6 +84,7 @@ textarea{min-height:80px;resize:vertical}.form{display:grid;grid-template-column
 <button onclick="show('reportes',this)">📊 Reportes</button>
 <button onclick="show('precios',this)">💲 Precios</button>
 <button onclick="show('presupuestos',this)">🧾 Presupuestos</button>
+<button onclick="show('configuraciones',this)">⚙️ Configuración</button>
 </nav>
 
 
@@ -108,9 +116,9 @@ textarea{min-height:80px;resize:vertical}.form{display:grid;grid-template-column
 <div><label>Cliente</label><input id="cliente" required></div><div><label>Teléfono</label><input id="telefono" required></div>
 <div><label>Marca</label><input id="marca"></div><div><label>Modelo</label><input id="modelo" required></div>
 <div><label>IMEI (opcional)</label><input id="imei"></div>
-<div><label>Tipo de orden</label><select id="tipoOrden" onchange="toggleGremioField()"><option>Particular</option><option>Gremio</option></select></div>
+<div><label>Tipo de orden</label><select id="tipoOrden" onchange="toggleGremioField()"></select></div>
 <div id="gremioField" style="display:none"><label>Gremio / técnico</label><input id="gremio" placeholder="Ej.: Dr Cell"></div>
-<div><label>Lugar de recepción</label><select id="local"><option>Demóstenes 3110 — Las Flores</option><option>Piovano 2960 — Moreno</option></select></div>
+<div><label>Lugar de recepción</label><select id="local"></select></div>
 <div>
 <label>Código / patrón 🔒</label>
 <div class="actions">
@@ -133,20 +141,38 @@ textarea{min-height:80px;resize:vertical}.form{display:grid;grid-template-column
 </div>
 <div id="unlockModeText" class="sub" style="margin-top:5px">Dato privado. No se imprime.</div>
 </div>
-<div><label>Estado</label><select id="estado"><option>Recibido</option><option>Pendiente</option><option>Esperando repuesto</option><option>En reparación</option><option>Listo</option><option>Entregado</option><option>Cancelado</option></select></div>
+<div><label>Estado</label><select id="estado"></select></div>
 <div class="full"><label>Falla / problema</label><textarea id="falla"></textarea></div>
 <div class="full"><label>Trabajo a realizar</label><textarea id="trabajo"></textarea></div>
 <div><label>Total</label><input id="total" type="number" min="0" value="0"></div><div><label>Seña</label><input id="sena" type="number" min="0" value="0"></div>
 <div><label>Forma de pago</label><select id="pago"><option>Sin pago</option><option>Efectivo</option><option>Transferencia</option><option>Mercado Pago</option><option>Tarjeta</option><option>Otro</option></select></div>
 <div><label>Entrega estimada</label><input id="entrega" type="date"></div>
 <div class="full"><label>Observaciones internas 🔒</label><textarea id="obsTecnico" placeholder="Ej.: limpiar cámaras, revisar tornillos..."></textarea><div class="sub">Solo para vos. No se imprime.</div></div>
-<div class="full"><label>Observaciones para el cliente</label><textarea id="obs" placeholder="Ej.: se realizó limpieza interna y se recomienda no usar cargadores genéricos."></textarea><div class="sub">Queda anotado para el cliente y puede aparecer en el comprobante.</div></div>
-<div class="full"><label>Observaciones del equipo / cliente</label><textarea id="obsEquipo" placeholder="Ej.: tapa rota, pantalla marcada, equipo con golpes."></textarea><div class="sub">Estado físico o detalles informados al recibir el equipo.</div></div>
+
+<div class="full"><label>Observaciones del equipo</label><textarea id="obsEquipo" placeholder="Ej.: tapa rota, pantalla marcada, equipo con golpes."></textarea><div class="sub">Estado físico o detalles informados al recibir el equipo.</div></div>
 <div class="full actions"><button id="orderSubmitBtn" class="btn" type="submit">Crear orden</button><button class="btn secondary" type="button" onclick="resetOrder()">Limpiar</button></div>
 </form></div></section>
 
 <section id="ordenes" style="display:none"><div class="card"><h2 style="margin-top:0">Órdenes</h2><input id="orderSearch" placeholder="Buscar por número, cliente, teléfono o modelo" oninput="renderOrders()"><div class="order-filters" style="margin-top:10px"><button class="filter-btn active" data-filter="activas" onclick="setOrderFilter('activas',this)">Activas</button><button class="filter-btn" data-filter="todas" onclick="setOrderFilter('todas',this)">Todas</button><button class="filter-btn" data-filter="listas" onclick="setOrderFilter('listas',this)">Listas</button><button class="filter-btn" data-filter="esperando" onclick="setOrderFilter('esperando',this)">Esperando repuesto</button><button class="filter-btn" data-filter="entregadas" onclick="setOrderFilter('entregadas',this)">Entregadas</button></div></div><div id="orders"></div></section>
 
+
+<section id="configuraciones" style="display:none">
+<div class="card"><h2 style="margin-top:0">⚙️ Configuración</h2><div class="sub">Estos datos se guardan en este sistema y se aplican a la interfaz y a los comprobantes.</div></div>
+<div class="card"><h3 style="margin-top:0">🏪 Datos del negocio</h3><div class="form">
+<div><label>Nombre del negocio</label><input id="cfgNombre"></div>
+<div><label>Teléfono</label><input id="cfgTelefono"></div>
+<div><label>Instagram</label><input id="cfgInstagram"></div>
+<div><label>Logo / URL de imagen</label><input id="cfgLogo" placeholder="https://..."></div>
+<div><label>Las Flores</label><input id="cfgLasFlores"></div>
+<div><label>Moreno</label><input id="cfgMoreno"></div>
+<div class="full"><label>Estados de órdenes (uno por línea)</label><textarea id="cfgEstados" style="min-height:120px"></textarea></div>
+<div class="full"><label>Tipos de orden (uno por línea)</label><textarea id="cfgTipos" style="min-height:80px"></textarea></div>
+<div class="full actions"><button class="btn" onclick="saveSettings()">Guardar datos</button></div>
+</div></div>
+<div class="card"><h3 style="margin-top:0">🌙 Apariencia</h3><div class="actions"><button class="btn" onclick="toggleDarkMode()" id="darkToggleBtn">🌙 Activar modo nocturno</button></div><div class="sub" style="margin-top:8px">La elección queda guardada para la próxima vez.</div></div>
+<div class="card"><h3 style="margin-top:0">🖨️ Impresión</h3><div class="sub">Los tickets siguen configurados para impresora térmica de 80 mm. Desde acá podés cambiar los datos del encabezado usando los datos del negocio.</div></div>
+<div class="card"><h3 style="margin-top:0">📋 Órdenes</h3><div class="sub">Estados actuales: Recibido · Pendiente · Esperando repuesto · En reparación · Listo · Entregado · Cancelado</div><div class="sub" style="margin-top:6px">Tipos: Particular · Gremio</div><div class="sub" style="margin-top:6px">Sucursales: Las Flores · Moreno</div></div>
+</section>
 
 <section id="movimientos" style="display:none">
 <div class="card"><h2 style="margin-top:0">💰 Movimientos</h2>
@@ -412,7 +438,18 @@ function enterApp(){
   renderLogin();
 })();
 
-function show(id,btn){document.querySelectorAll("section").forEach(x=>x.style.display="none");document.getElementById(id).style.display="block";document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));if(btn)btn.classList.add("active");if(id==="dashboard")renderDashboard();if(id==="ordenes")renderOrders();if(id==="clientes")renderClients();if(id==="precios")renderPrices();if(id==="presupuestos")renderBudgets();if(id==="stock")renderStock();if(id==="ventas"){renderSaleProducts();renderSales();}if(id==="movimientos")renderMovements();}
+const DEFAULT_SETTINGS={nombre:"E30 | Técnico de celulares",telefono:"11 4445-8553",instagram:"@eberle30",logo:"",lasFlores:"Demóstenes 3110 — Las Flores",moreno:"Piovano 2960 — Moreno",dark:false,estados:["Recibido","Pendiente","Esperando repuesto","En reparación","Listo","Entregado","Cancelado"],tipos:["Particular","Gremio"]};
+let orderStatuses=[...DEFAULT_SETTINGS.estados];
+let orderTypes=[...DEFAULT_SETTINGS.tipos];
+let settings={...DEFAULT_SETTINGS};
+function loadSettings(){try{const raw=localStorage.getItem("e30-settings");if(raw)settings={...DEFAULT_SETTINGS,...JSON.parse(raw)};}catch(e){} orderStatuses=[...(settings.estados||DEFAULT_SETTINGS.estados)];orderTypes=[...(settings.tipos||DEFAULT_SETTINGS.tipos)];applySettings();}
+function applySettings(){document.body.classList.toggle("dark",!!settings.dark);document.querySelectorAll(".brand").forEach(x=>x.textContent=settings.nombre);document.querySelectorAll("#cfgNombre").forEach(x=>x.value=settings.nombre);document.querySelectorAll("#cfgTelefono").forEach(x=>x.value=settings.telefono);document.querySelectorAll("#cfgInstagram").forEach(x=>x.value=settings.instagram);document.querySelectorAll("#cfgLogo").forEach(x=>x.value=settings.logo);document.querySelectorAll("#cfgLasFlores").forEach(x=>x.value=settings.lasFlores);document.querySelectorAll("#cfgMoreno").forEach(x=>x.value=settings.moreno);const es=document.getElementById("cfgEstados");if(es)es.value=(settings.estados||DEFAULT_SETTINGS.estados).join("\n");const ts=document.getElementById("cfgTipos");if(ts)ts.value=(settings.tipos||DEFAULT_SETTINGS.tipos).join("\n");const b=document.getElementById("darkToggleBtn");if(b)b.textContent=settings.dark?"☀️ Activar modo día":"🌙 Activar modo nocturno";}
+function saveSettings(){settings={...settings,nombre:cfgNombre.value.trim()||DEFAULT_SETTINGS.nombre,telefono:cfgTelefono.value.trim()||DEFAULT_SETTINGS.telefono,instagram:cfgInstagram.value.trim()||DEFAULT_SETTINGS.instagram,logo:cfgLogo.value.trim(),lasFlores:cfgLasFlores.value.trim()||DEFAULT_SETTINGS.lasFlores,moreno:cfgMoreno.value.trim()||DEFAULT_SETTINGS.moreno,estados:cfgEstados.value.split(/\n|,/).map(x=>x.trim()).filter(Boolean),tipos:cfgTipos.value.split(/\n|,/).map(x=>x.trim()).filter(Boolean)};orderStatuses=[...(settings.estados.length?settings.estados:DEFAULT_SETTINGS.estados)];orderTypes=[...(settings.tipos.length?settings.tipos:DEFAULT_SETTINGS.tipos)];localStorage.setItem("e30-settings",JSON.stringify(settings));applySettings();updateLocalOptions();alert("Configuración guardada.");}
+function toggleDarkMode(){settings.dark=!settings.dark;localStorage.setItem("e30-settings",JSON.stringify(settings));applySettings();}
+function updateLocalOptions(){const sel=document.getElementById("local");if(sel){const old=sel.value;sel.innerHTML=`<option>${settings.lasFlores}</option><option>${settings.moreno}</option>`;sel.value=[settings.lasFlores,settings.moreno].includes(old)?old:settings.lasFlores;}const st=document.getElementById("estado");if(st){const old=st.value;st.innerHTML=orderStatuses.map(x=>`<option>${x}</option>`).join("");if(orderStatuses.includes(old))st.value=old;}const ty=document.getElementById("tipoOrden");if(ty){const old=ty.value;ty.innerHTML=orderTypes.map(x=>`<option>${x}</option>`).join("");if(orderTypes.includes(old))ty.value=old;}}
+loadSettings();
+updateLocalOptions();
+function show(id,btn){document.querySelectorAll("section").forEach(x=>x.style.display="none");document.getElementById(id).style.display="block";document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));if(btn)btn.classList.add("active");if(id==="dashboard")renderDashboard();if(id==="ordenes")renderOrders();if(id==="clientes")renderClients();if(id==="precios")renderPrices();if(id==="presupuestos")renderBudgets();if(id==="stock")renderStock();if(id==="ventas"){renderSaleProducts();renderSales();}if(id==="movimientos")renderMovements();if(id==="configuraciones")applySettings();}
 
 function focusPriceSearch(btn){
   show("dashboard",null);
@@ -441,7 +478,7 @@ const editingId=window.editingOrderId;
 if(editingId){
   const o=orders.find(x=>x.n===editingId);
   if(!o)return;
-  o.cliente=cliente.value;o.telefono=telefono.value;o.marca=marca.value;o.modelo=modelo.value;o.imei=imei.value;o.tipoOrden=tipoOrden.value;o.gremio=gremio.value;o.local=local.value;o.desbloqueo=desbloqueo.value;o.unlockType=unlockMode;o.patron=pattern.join("-");o.estado=estado.value;o.falla=falla.value;o.trabajo=trabajo.value;o.total=+total.value||0;o.sena=+sena.value||0;o.pago=pago.value;o.entrega=entrega.value;o.obsTecnico=obsTecnico.value;o.obs=obs.value;o.obsEquipo=obsEquipo.value;
+  o.cliente=cliente.value;o.telefono=telefono.value;o.marca=marca.value;o.modelo=modelo.value;o.imei=imei.value;o.tipoOrden=tipoOrden.value;o.gremio=gremio.value;o.local=local.value;o.desbloqueo=desbloqueo.value;o.unlockType=unlockMode;o.patron=pattern.join("-");o.estado=estado.value;o.falla=falla.value;o.trabajo=trabajo.value;o.total=+total.value||0;o.sena=+sena.value||0;o.pago=pago.value;o.entrega=entrega.value;o.obsTecnico=obsTecnico.value;o.obsEquipo=obsEquipo.value;
   saveOrders();window.editingOrderId=null;resetOrder();renderOrders();renderDashboard();show("ordenes");return;
 }
 const n=(orders.length?Math.max(...orders.map(o=>o.n)):0)+1;
@@ -451,7 +488,7 @@ orders.unshift(o);saveOrders();afterOrderId=o.n;resetOrder();renderOrders();rend
 function editOrder(n){
  const o=orders.find(x=>x.n===n);if(!o)return;
  window.editingOrderId=n;
- cliente.value=o.cliente||"";telefono.value=o.telefono||"";marca.value=o.marca||"";modelo.value=o.modelo||"";imei.value=o.imei||"";tipoOrden.value=o.tipoOrden||"Particular";gremio.value=o.gremio||"";toggleGremioField();local.value=o.local||local.value;estado.value=o.estado||"Recibido";falla.value=o.falla||"";trabajo.value=o.trabajo||"";total.value=o.total||0;sena.value=o.sena||0;pago.value=o.pago||"Sin pago";entrega.value=o.entrega||"";obsTecnico.value=o.obsTecnico||"";obs.value=o.obs||"";obsEquipo.value=o.obsEquipo||"";
+ cliente.value=o.cliente||"";telefono.value=o.telefono||"";marca.value=o.marca||"";modelo.value=o.modelo||"";imei.value=o.imei||"";tipoOrden.value=o.tipoOrden||"Particular";gremio.value=o.gremio||"";toggleGremioField();local.value=o.local||local.value;estado.value=o.estado||"Recibido";falla.value=o.falla||"";trabajo.value=o.trabajo||"";total.value=o.total||0;sena.value=o.sena||0;pago.value=o.pago||"Sin pago";entrega.value=o.entrega||"";obsTecnico.value=o.obsTecnico||"";obsEquipo.value=o.obsEquipo||"";
  desbloqueo.value=o.desbloqueo||"";unlockMode=o.unlockType||"codigo";pattern=(o.patron||"").split("-").filter(x=>x!=="").map(Number);setUnlockMode(unlockMode);document.querySelectorAll(".pattern-dot").forEach(d=>d.classList.toggle("selected",pattern.includes(Number(d.dataset.i))));document.getElementById("patternStatus").textContent=pattern.length?`Patrón: ${pattern.map(x=>x+1).join(" → ")}`:"";
  document.getElementById("orderFormTitle").textContent=`Editar orden #${String(n).padStart(4,"0")}`;document.getElementById("orderSubmitBtn").textContent="Guardar cambios";show("orden");window.scrollTo({top:0,behavior:"smooth"});
 }
@@ -469,14 +506,23 @@ function orderVisible(o){
 function orderCard(o){const ct=orderCostTotal(o),missing=ct===0&&(+o.total||0)>0;return `<div class="card ${missing?"cost-missing":""}"><div class="order"><div><b>#${String(o.n).padStart(4,"0")}</b><h3>${o.cliente}</h3><div>${o.marca} ${o.modelo} · ${o.trabajo||"Sin trabajo indicado"}</div><div class="sub">${o.local} · ${o.telefono} · ${o.tipoOrden||"Particular"}${o.tipoOrden==="Gremio"&&o.gremio?` · ${o.gremio}`:""} · Ingreso ${o.fecha}</div>
 <div class="sub" style="margin-top:5px">🔒 Código/patrón: <button class="btn secondary" style="padding:4px 8px;font-size:11px" onclick="toggleUnlock(${o.n},this)">Mostrar</button> <span id="unlock-${o.n}" style="display:none;font-weight:600"></span></div>
 <div class="sub" style="margin-top:5px">🛠️ Obs. internas: <button class="btn secondary" style="padding:4px 8px;font-size:11px" onclick="toggleTechObs(${o.n},this)">Mostrar</button> <span id="techobs-${o.n}" style="display:none;font-weight:600"></span></div>
-</div><div><select onchange="setStatus(${o.n},this.value)" style="width:auto;padding:6px 8px;font-size:12px;border-radius:8px">${ESTADOS.map(s=>`<option ${o.estado===s?"selected":""}>${s}</option>`).join("")}</select><div style="margin-top:6px"><span class="status-badge ${statusClass(o.estado)}">${o.estado}</span></div><div class="price">${money(o.total)}</div></div></div><hr>
+</div><div><select onchange="setStatus(${o.n},this.value)" style="width:auto;padding:6px 8px;font-size:12px;border-radius:8px">${orderStatuses.map(s=>`<option ${o.estado===s?"selected":""}>${s}</option>`).join("")}</select><div style="margin-top:6px"><span class="status-badge ${statusClass(o.estado)}">${o.estado}</span></div><div class="price">${money(o.total)}</div></div></div><hr>
 <div><b>Seña:</b> ${money(o.sena)} · <b>Saldo:</b> ${money(Math.max(0,o.total-o.sena))}</div>
 <div class="cost-line ${missing?"cost-warning":""}"><b>Costos:</b> ${missing?"⚠️ Falta cargar":money(ct)}${missing?"":" · <b>Ganancia bruta:</b> "+money(Math.max(0,(+o.total||0)-ct))}</div>${o.obsEquipo?`<div class="sub" style="margin-top:7px"><b>Estado del equipo:</b> ${o.obsEquipo}</div>`:""}
 <div class="actions" style="margin-top:12px"><button class="btn secondary" type="button" onclick="editOrder(${o.n})">✏️ Editar</button><button class="btn secondary" type="button" onclick="manageCosts(${o.n})">💰 Costos</button><button class="btn" onclick="printTicket(${o.n})">🖨️ Ticket cliente</button><button class="btn secondary" onclick="printTechnician(${o.n})">🔧 Orden técnico</button><button class="btn danger" onclick="deleteOrder(${o.n})">Eliminar</button></div></div>`}
 
 function renderOrders(){const q=(document.getElementById("orderSearch")?.value||"").toLowerCase();const arr=orders.filter(orderVisible).filter(o=>JSON.stringify(o).toLowerCase().includes(q));document.getElementById("orders").innerHTML=arr.map(orderCard).join("")||'<div class="card empty">No hay órdenes.</div>';}
-const ESTADOS=["Recibido","Pendiente","Esperando repuesto","En reparación","Listo","Entregado","Cancelado"];
-function setStatus(n,val){const o=orders.find(x=>x.n===n);o.estado=val;saveOrders();}
+
+function setStatus(n,val){
+  const o=orders.find(x=>x.n===n);if(!o)return;
+  o.estado=val;saveOrders();renderOrders();renderDashboard();
+  if(val==="Entregado" && (+o.total||0)>0 && orderCostTotal(o)===0){
+    setTimeout(()=>{
+      const ir=confirm(`⚠️ Orden #${String(n).padStart(4,"0")} entregada.\n\nTodavía no cargaste los costos de esta reparación.\n\n¿Querés cargarlos ahora?`);
+      if(ir) manageCosts(n);
+    },50);
+  }
+}
 function deleteOrder(n){if(confirm("¿Eliminar la orden?")){orders=orders.filter(o=>o.n!==n);saveOrders();renderOrders();}}
 function toggleUnlock(n,b){
   const o=orders.find(x=>x.n===n),el=document.getElementById("unlock-"+n);
@@ -593,7 +639,7 @@ function importBulkPrices(){
   for(let i=0;i<lines.length;i++){
     let line=lines[i];
     if(i===0 && /marca/i.test(line) && /modelo/i.test(line) && /precio/i.test(line)) continue;
-    let parts=line.includes("|")?line.split("|"):line.split(",");
+    let parts=line.includes("|")?line.split("|"):(line.includes(";")?line.split(";"):line.split(","));
     parts=parts.map(x=>x.trim().replace(/^"|"$/g,""));
     if(parts.length<4){alert(`Línea ${i+1} inválida. Usá: Marca | Modelo | Reparación | Precio`);return;}
     const [marca,modelo,reparacion,precioRaw]=parts;
@@ -614,7 +660,7 @@ function importBulkPrices(){
   alert(`Carga terminada.\nAgregados: ${added}\nActualizados: ${updated}`);
 }
 function downloadPriceTemplate(){
-  const csv="Marca,Modelo,Reparación,Precio\niPhone,13 Pro,Pantalla,280000\nSamsung,A32,Pantalla,95000\nMotorola,G31,Módulo,60000";
+  const csv="\uFEFFMarca;Modelo;Reparación;Precio\niPhone;13 Pro;Pantalla;280000\nSamsung;A32;Pantalla;95000\nMotorola;G31;Módulo;60000";
   const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="plantilla_precios_e30.csv";a.click();URL.revokeObjectURL(a.href);
 }
@@ -625,7 +671,7 @@ function printTechnician(n){
   const unlock=o.unlockType==="patron"&&o.patron?`Patrón: ${o.patron.split("-").map(x=>Number(x)+1).join(" → ")}`:`Código: ${o.desbloqueo||"No informado"}`;
   w.document.write(`<html><head><title>Orden técnico #${o.n}</title><style>@page{size:80mm auto;margin:0}body{margin:0}.ticket{width:80mm;padding:3mm;font-family:monospace;font-size:13px;line-height:1.28}.c{text-align:center}.line{border-top:1px dashed #000;margin:8px 0}.private{font-size:12px;font-weight:bold}.note{white-space:pre-wrap}
 </style></head><body><div class="ticket">
-<div class="c"><b>E30 | ORDEN INTERNA</b><br>${o.local}<br>Tel: 11 4445-8553 · @eberle30</div><div class="line"></div>
+<div class="c"><b>${settings.nombre} · ORDEN INTERNA</b><br>${o.local}<br>Tel: ${settings.telefono} · ${settings.instagram}</div><div class="line"></div>
 <b>ORDEN #${String(o.n).padStart(4,"0")}</b><br>Fecha: ${o.fecha}<br>Cliente: ${o.cliente}<br>Tel: ${o.telefono}<br>Equipo: ${o.marca} ${o.modelo}<br>${o.imei?`IMEI: ${o.imei}<br>`:""}
 <div class="line"></div><div class="private">🔒 ${unlock}</div>
 <div class="line"></div>Falla: ${o.falla||"-"}<br>Trabajo: ${o.trabajo||"-"}<br>Estado: ${o.estado}<br>${o.entrega?`Entrega estimada: ${o.entrega}<br>`:""}
@@ -691,7 +737,7 @@ function deleteSale(n){
 function printSaleTicket(n){
  const s=sales.find(x=>x.n===n);if(!s)return;const w=window.open("","_blank");
  w.document.write(`<html><head><title>Venta #${s.n}</title><style>@page{size:80mm auto;margin:0}body{margin:0}.ticket{width:80mm;padding:3mm;font-family:monospace;font-size:13px;line-height:1.28}.c{text-align:center}.line{border-top:1px dashed #000;margin:8px 0}.total{font-size:17px;font-weight:bold}.note{font-size:10px;line-height:1.35}
-</style></head><body><div class="ticket"><div class="c"><b>E30 | TÉCNICO DE CELULARES</b><br>${s.local}<br>Tel: 11 4445-8553 · Instagram: @eberle30</div><div class="line"></div><div class="c"><b>COMPROBANTE DE VENTA #${String(s.n).padStart(4,"0")}</b></div><div class="line"></div>Fecha: ${s.fecha}<br>${s.cliente?`Cliente: ${s.cliente}<br>`:""}${s.telefono?`Tel: ${s.telefono}<br>`:""}Producto: ${s.producto}<br>Cantidad: ${s.cantidad}<br>Precio unit.: ${money(s.unit)}<div class="line"></div><span class="total">TOTAL: ${money(s.total)}</span><br>Pago: ${s.pago}<div class="line"></div><b>GARANTÍA: 7 DÍAS</b><br>Válida hasta: ${s.warranty}<div class="line"></div><div class="note">La garantía corresponde al accesorio vendido y cubre fallas de funcionamiento. No cubre daños por golpes, humedad, uso indebido o manipulación.</div><div class="line c">Conserve este comprobante</div></div><script>window.onload=()=>window.print()<\/script></body></html>`);
+</style></head><body><div class="ticket"><div class="c"><b>${settings.nombre}</b><br>${s.local}<br>Tel: ${settings.telefono} · Instagram: ${settings.instagram}</div><div class="line"></div><div class="c"><b>COMPROBANTE DE VENTA #${String(s.n).padStart(4,"0")}</b></div><div class="line"></div>Fecha: ${s.fecha}<br>${s.cliente?`Cliente: ${s.cliente}<br>`:""}${s.telefono?`Tel: ${s.telefono}<br>`:""}Producto: ${s.producto}<br>Cantidad: ${s.cantidad}<br>Precio unit.: ${money(s.unit)}<div class="line"></div><span class="total">TOTAL: ${money(s.total)}</span><br>Pago: ${s.pago}<div class="line"></div><b>GARANTÍA: 7 DÍAS</b><br>Válida hasta: ${s.warranty}<div class="line"></div><div class="note">La garantía corresponde al accesorio vendido y cubre fallas de funcionamiento. No cubre daños por golpes, humedad, uso indebido o manipulación.</div><div class="line c">Conserve este comprobante</div></div><script>window.onload=()=>window.print()<\/script></body></html>`);
  w.document.close();
 }
 
@@ -864,11 +910,11 @@ function printBudget(n){
 const o=budgets.find(x=>x.n===n),w=window.open("","_blank");
 w.document.write(`<html><head><title>Presupuesto #${o.n}</title><style>@page{size:80mm auto;margin:0}body{margin:0}.ticket{width:80mm;padding:3mm;font-family:monospace;font-size:13px;line-height:1.28}.c{text-align:center}.line{border-top:1px dashed #000;margin:8px 0}.total{font-size:17px;font-weight:bold}.note{font-size:10px;line-height:1.35}
 </style></head><body><div class="ticket">
-<div class="c"><b>E30 | TÉCNICO DE CELULARES</b><br>${o.local}<br>Tel: 11 4445-8553 · Instagram: @eberle30</div>
+<div class="c"><b>${settings.nombre}</b><br>${o.local}<br>Tel: ${settings.telefono} · Instagram: ${settings.instagram}</div>
 <div class="line"></div><div class="c"><b>PRESUPUESTO #${String(o.n).padStart(4,"0")}</b></div><div class="line"></div>
 Cliente: ${o.cliente}<br>Tel: ${o.telefono||"-"}<br>Equipo: ${o.marca} ${o.modelo}<br><br>
 ${o.concepto}<br><span class="total">${money(o.precio)}</span>
-${o.obs?`<div class="line"></div>Observaciones para el cliente: ${o.obs}`:""}${o.obsEquipo?`<div class="line"></div>Estado del equipo: ${o.obsEquipo}`:""}
+${o.obsEquipo?`<div class="line"></div>Estado del equipo: ${o.obsEquipo}`:""}
 <div class="line"></div>Emitido: ${o.emitida}<br><b>Válido hasta: ${o.valida}</b>
 <div class="line"></div><div class="note">Presupuesto válido por 7 días. Precio sujeto a disponibilidad y variación de costos de repuestos.</div>
 <div class="line c">Conserve este comprobante</div></div><script>window.onload=()=>window.print()<\/script></body></html>`);
@@ -879,11 +925,11 @@ function printTicket(n){
 const o=orders.find(x=>x.n===n),saldo=Math.max(0,o.total-o.sena),w=window.open("","_blank");
 w.document.write(`<html><head><title>Orden #${o.n}</title><style>body{margin:0}.ticket{width:80mm;padding:3mm;font-family:monospace;font-size:13px;line-height:1.28}.c{text-align:center}.line{border-top:1px dashed #000;margin:8px 0}.total{font-size:16px;font-weight:bold}.terms{font-size:9px;line-height:1.3;border-top:1px dashed #000;margin-top:10px;padding-top:8px}
 </style></head><body><div class="ticket">
-<div class="c"><b>E30 | TÉCNICO DE CELULARES</b><br>${o.local}<br>Tel: 11 4445-8553 · Instagram: @eberle30</div><div class="line"></div>
+<div class="c"><b>${settings.nombre}</b><br>${o.local}<br>Tel: ${settings.telefono} · Instagram: ${settings.instagram}</div><div class="line"></div>
 <b>ORDEN #${String(o.n).padStart(4,"0")}</b><br>Fecha: ${o.fecha}<br>Cliente: ${o.cliente}<br>Tel: ${o.telefono}<br>Equipo: ${o.marca} ${o.modelo}<br>${o.imei?`IMEI: ${o.imei}<br>`:""}
 Falla: ${o.falla||"-"}<br>Trabajo: ${o.trabajo||"-"}<br>Estado: ${o.estado}<br>${o.entrega?`Entrega estimada: ${o.entrega}<br>`:""}
 <div class="line"></div>Total: ${money(o.total)}<br>Seña: ${money(o.sena)}<br><span class="total">Saldo: ${money(saldo)}</span>
-${o.obs?`<div class="line"></div>Observaciones para el cliente: ${o.obs}`:""}${o.obsEquipo?`<div class="line"></div>Estado del equipo: ${o.obsEquipo}`:""}
+${o.obsEquipo?`<div class="line"></div>Estado del equipo: ${o.obsEquipo}`:""}
 <div class="terms"><b>TÉRMINOS Y CONDICIONES</b><br>
 1. Este comprobante es el único válido para retirar el equipo.<br>
 2. Una vez notificada la finalización de la reparación, el equipo deberá ser retirado dentro de los 30 días. Vencido dicho plazo, podrá cobrarse estadía. Transcurridos 90 días, el equipo podrá ser vendido para cubrir los gastos ocasionados.<br>

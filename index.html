@@ -715,7 +715,7 @@ async function qzPrintRaw(data,jobName,allowQueue=true){
   }
 }
 let printerReceiver=false,printerTimer=null,printerBusy=false;
-async async function sendTestPrintJob(){
+async function sendTestPrintJob(){
   try{
     const id="test-"+Date.now();
     const key="e30-print-job-"+id;

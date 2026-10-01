@@ -51,6 +51,64 @@ textarea{min-height:80px;resize:vertical}.form{display:grid;grid-template-column
 .modal{background:#fff;border-radius:18px;padding:20px;max-width:420px;width:100%;box-shadow:0 12px 40px #0003}
 
 .quick-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 14px}.quick-action{border:1px solid var(--line);background:#fff;border-radius:16px;padding:15px 8px;display:flex;flex-direction:column;align-items:center;gap:6px;color:#17171b}.quick-action span{font-size:24px}.quick-action b{font-size:13px}.order-filters{display:flex;gap:7px;overflow:auto;padding-bottom:2px}.filter-btn{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 11px;white-space:nowrap;font-size:12px}.filter-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}.cost-warning{border-color:#f0b429;background:#fffaf0}.cost-line{margin-top:10px}.cost-warning{color:#9a6700}
+
+/* E30 V17.1 — visual layer */
+.side-menu{position:fixed;left:14px;top:14px;bottom:14px;width:62px;background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 8px 30px rgba(20,16,76,.10);z-index:1000;overflow:hidden;transition:width .22s ease}.side-menu:hover,.side-menu.open{width:235px}.side-inner{height:100%;display:flex;flex-direction:column;padding:14px 9px;gap:5px}.side-logo{height:58px;display:flex;align-items:center;gap:10px;padding:0 8px;margin-bottom:8px;white-space:nowrap}.side-logo img{width:40px;height:40px;object-fit:contain;display:none}.side-e30{font-size:22px;font-weight:900;color:var(--blue);letter-spacing:-1px;width:40px;text-align:center}.side-item{width:100%;display:flex;align-items:center;gap:12px;border:0;background:transparent;border-radius:12px;padding:11px 10px;color:#363741;text-align:left;white-space:nowrap;font-weight:600}.side-item:hover{background:#f2f3fa}.side-item.active{background:#e9edff;color:#14104C}.side-icon{width:28px;min-width:28px;text-align:center;font-size:20px}.side-label{opacity:0;transition:opacity .12s ease}.side-menu:hover .side-label,.side-menu.open .side-label{opacity:1}.side-sep{height:1px;background:var(--line);margin:8px 4px}.menu-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.28);z-index:999}.menu-overlay.open{display:block}
+.brand-wrap{display:flex;align-items:center;gap:12px}.brand-logo{width:48px;height:48px;object-fit:contain;display:none}.mobile-menu-btn{display:none;border:1px solid var(--line);background:#fff;border-radius:12px;width:42px;height:42px;font-size:21px}.topbar{display:flex;align-items:center;gap:12px}.printer-pill{border:0;border-radius:999px;padding:9px 13px;background:#eaf9ef;color:#16803c;font-weight:700;display:flex;align-items:center;gap:8px}.printer-pill.off{background:#f1f1f4;color:#666}.printer-dot{width:9px;height:9px;border-radius:50%;background:#20a64a;display:inline-block}.printer-pill.off .printer-dot{background:#aaa}
+.top-actions{display:flex;gap:10px;margin:0 0 12px}.top-actions button{border:1px solid var(--line);background:#fff;border-radius:12px;padding:11px 18px;color:#222;font-weight:600;display:flex;align-items:center;gap:7px}.top-actions button.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+#appRoot{padding-left:86px;max-width:1180px}.app header{min-height:58px}.app>.card,.app>section{max-width:100%}
+#printerStatus{border-radius:14px}.card{box-shadow:0 2px 12px rgba(0,0,0,.035)}
+@media(max-width:900px){.side-menu{left:0;top:0;bottom:0;width:280px;border-radius:0 18px 18px 0;transform:translateX(-102%);transition:transform .22s ease,width .22s ease}.side-menu.open{transform:translateX(0);width:280px}.side-label{opacity:1}.side-inner{padding:18px 12px}.mobile-menu-btn{display:block}.side-logo{margin-top:2px}.top-actions{overflow-x:auto;flex-wrap:nowrap;padding-bottom:2px}.top-actions button{flex:0 0 auto;padding:10px 12px}#appRoot{padding-left:12px}.brand-logo{width:42px;height:42px}}
+@media(min-width:901px){#loginScreen{margin-left:auto!important;margin-right:auto!important}.app{padding-left:18px;padding-right:18px}}
+
+/* E30 V18 — PREMIUM UI OVERLAY */
+:root{--blue:#14104C;--blue2:#211b70;--ink:#171827;--muted:#73778a;--bg:#f4f6fb;--line:#e4e7ef;--soft:#eef1fb}
+body{background:radial-gradient(circle at 72% -10%,#ffffff 0,#f7f8fc 36%,#f1f3f8 100%);color:var(--ink)}
+#appRoot{max-width:1240px;padding-left:112px;padding-right:28px}
+.app{padding:22px 0 40px}
+.app header{min-height:68px;margin-bottom:16px}
+.brand-wrap{gap:14px}
+.brand-logo{width:52px;height:52px;border-radius:14px;padding:4px;background:#fff;border:1px solid var(--line);box-shadow:0 8px 24px rgba(20,16,76,.10)}
+.brand{font-size:20px;letter-spacing:-.6px;color:var(--blue)}
+.sub{font-size:13px;color:#7a7e8f}
+.topbar{gap:14px}
+.topbar>.sub{padding:9px 12px;border-radius:999px;background:#fff;border:1px solid var(--line);font-weight:600}
+.printer-pill{padding:10px 14px;box-shadow:0 5px 18px rgba(32,166,74,.10);border:1px solid #d7f0df}
+.printer-pill.off{border-color:var(--line);box-shadow:none}
+.top-actions{gap:12px;margin:0 0 16px}
+.top-actions button{height:52px;padding:0 22px;border-radius:14px;background:rgba(255,255,255,.92);border:1px solid #e1e4ec;box-shadow:0 5px 18px rgba(20,16,76,.045);font-size:15px;transition:transform .15s,box-shadow .15s,background .15s}
+.top-actions button:hover{transform:translateY(-1px);box-shadow:0 9px 24px rgba(20,16,76,.09)}
+.top-actions button.active{background:linear-gradient(135deg,#2c69e8,#14104C);border-color:#211b70;box-shadow:0 9px 22px rgba(20,16,76,.20)}
+.card{background:rgba(255,255,255,.94);border:1px solid rgba(225,228,237,.95);border-radius:22px;padding:22px;margin-bottom:16px;box-shadow:0 10px 32px rgba(25,28,55,.055)}
+.card h2{letter-spacing:-.7px}.card h3{letter-spacing:-.3px}
+.search{font-size:18px;padding:17px 19px;border-radius:16px;background:#fff;border-color:#e0e3eb;box-shadow:inset 0 1px 0 rgba(255,255,255,.8)}
+.search:focus{border-color:#7b76b8;box-shadow:0 0 0 4px rgba(20,16,76,.08),0 5px 18px rgba(20,16,76,.05)}
+.quick-actions{gap:12px;margin-bottom:16px}.quick-action{min-height:88px;border-radius:18px;padding:15px 10px;background:#fff;border:1px solid #e2e5ed;box-shadow:0 7px 22px rgba(25,28,55,.045);transition:transform .15s,box-shadow .15s}.quick-action:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(25,28,55,.09)}.quick-action span{font-size:27px}.quick-action b{font-size:14px}
+.stat-grid{gap:12px}.stat{border-radius:18px;padding:17px;background:linear-gradient(180deg,#fff,#fafbfe);box-shadow:0 6px 20px rgba(25,28,55,.035)}.stat b{font-size:27px;letter-spacing:-.6px}
+/* premium sidebar */
+.side-menu{left:12px;top:12px;bottom:12px;width:72px;background:rgba(255,255,255,.94);border:1px solid rgba(220,224,235,.95);border-radius:22px;box-shadow:0 14px 42px rgba(20,16,76,.13);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);transition:width .24s cubic-bezier(.2,.8,.2,1)}
+.side-menu:hover,.side-menu.open{width:252px}
+.side-inner{padding:15px 10px;gap:6px}
+.side-logo{height:60px;padding:0 8px;margin-bottom:9px;gap:12px}
+.side-logo img{width:42px;height:42px;border-radius:12px;padding:3px;background:#fff;border:1px solid var(--line);box-shadow:0 5px 15px rgba(20,16,76,.08)}
+.side-e30{font-size:24px;font-weight:950;background:linear-gradient(135deg,#2c69e8,#14104C);-webkit-background-clip:text;background-clip:text;color:transparent}
+.side-item{height:46px;border-radius:13px;padding:9px 11px;color:#444757;font-weight:650;transition:background .15s,color .15s,transform .15s}
+.side-item:hover{background:#f1f3fb;color:var(--blue);transform:translateX(1px)}
+.side-item.active{background:linear-gradient(135deg,#eaf0ff,#e7eaff);color:var(--blue);box-shadow:inset 0 0 0 1px rgba(20,16,76,.04)}
+.side-icon{font-size:19px;width:30px;min-width:30px;filter:saturate(.85)}
+.side-label{font-size:14px}
+.side-sep{background:#eceef4;margin:9px 5px}
+.side-spacer{flex:1}
+/* make main dashboard feel like the mockup */
+#printerStatus{border-radius:15px!important;background:rgba(255,255,255,.85);border:1px solid #e4e7ef!important;box-shadow:0 5px 18px rgba(25,28,55,.035)!important}
+#dashboard .card:first-child{padding:24px}
+@media(max-width:900px){
+ #appRoot{padding-left:12px;padding-right:12px}.app{padding:14px 0 28px}
+ .app header{min-height:58px}.brand-logo{width:44px;height:44px}.brand{font-size:17px}.topbar>.sub{display:none}.top-actions{gap:8px;margin-bottom:12px}.top-actions button{height:48px;padding:0 13px;border-radius:13px;font-size:14px}
+ .card{border-radius:19px;padding:17px}.quick-action{min-height:82px;border-radius:16px}.stat{border-radius:16px}
+ .side-menu{left:0;top:0;bottom:0;width:285px;border-radius:0 22px 22px 0;box-shadow:12px 0 38px rgba(0,0,0,.16)}
+ .side-menu.open{width:285px}.side-inner{padding:18px 13px}.side-label{opacity:1}
+}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.3.0/qz-tray.js"></script>
 <script>
@@ -79,23 +137,40 @@ qz.security.setSignaturePromise(function(toSign){
 </div>
 
 <div class="app" id="appRoot" style="display:none">
-<header><div><div class="brand">E30 | Técnico de celulares</div><div class="sub">Gestión de servicio técnico</div></div><div class="sub">Privado</div></header>
-<nav>
-<button onclick="show('dashboard',this)">🏠 Inicio</button>
-<button class="active" onclick="focusPriceSearch(this)">🔎 Buscar precios</button>
-<button onclick="show('orden',this)">➕ Nueva orden</button>
-<button onclick="show('ordenes',this)">📋 Órdenes</button>
-<button onclick="show('clientes',this)">👤 Clientes</button>
-<button onclick="show('stock',this)">📦 Stock</button>
-<button onclick="show('ventas',this)">🛒 Ventas</button>
-<button onclick="show('movimientos',this)">💰 Movimientos</button>
-<button onclick="show('reportes',this)">📊 Reportes</button>
-<button onclick="show('precios',this)">💲 Precios</button>
-<button onclick="show('presupuestos',this)">🧾 Presupuestos</button>
-<button onclick="togglePrinterReceiver()" id="printerBtn">🖨️ Activar impresora</button>
-
-
-</nav>
+<aside class="side-menu" id="sideMenu">
+  <div class="side-inner">
+    <div class="side-logo"><img id="sideLogo" alt="Logo E30"><div class="side-e30" id="sideE30">E30</div></div>
+    <button class="side-item active" onclick="sideGo('dashboard',this)"><span class="side-icon">🏠</span><span class="side-label">Inicio</span></button>
+    <button class="side-item" onclick="sideGo('orden',this)"><span class="side-icon">➕</span><span class="side-label">Nueva orden</span></button>
+    <button class="side-item" onclick="sideGo('ordenes',this)"><span class="side-icon">📋</span><span class="side-label">Órdenes</span></button>
+    <button class="side-item" onclick="sideGo('ventas',this)"><span class="side-icon">🛒</span><span class="side-label">Ventas</span></button>
+    <div class="side-sep"></div>
+    <button class="side-item" onclick="sideGo('clientes',this)"><span class="side-icon">👤</span><span class="side-label">Clientes</span></button>
+    <button class="side-item" onclick="sideGo('stock',this)"><span class="side-icon">📦</span><span class="side-label">Stock</span></button>
+    <button class="side-item" onclick="sideGo('movimientos',this)"><span class="side-icon">💰</span><span class="side-label">Movimientos</span></button>
+    <button class="side-item" onclick="sideGo('reportes',this)"><span class="side-icon">📊</span><span class="side-label">Reportes</span></button>
+    <button class="side-item" onclick="sideGo('precios',this)"><span class="side-icon">💲</span><span class="side-label">Precios</span></button>
+    <button class="side-item" onclick="sideGo('presupuestos',this)"><span class="side-icon">🧾</span><span class="side-label">Presupuestos</span></button>
+    <div class="side-spacer"></div>
+    <div class="side-sep"></div>
+    <button class="side-item" onclick="sideGo('configuracion',this)"><span class="side-icon">⚙️</span><span class="side-label">Configuración</span></button>
+  </div>
+</aside>
+<div class="menu-overlay" id="menuOverlay" onclick="closeSideMenu()"></div>
+<header>
+  <div class="brand-wrap">
+    <button class="mobile-menu-btn" onclick="toggleSideMenu()">☰</button>
+    <img id="headerLogo" class="brand-logo" alt="Logo E30">
+    <div><div class="brand">E30 | Técnico de celulares</div><div class="sub">Gestión de servicio técnico</div></div>
+  </div>
+  <div class="topbar"><button class="printer-pill off" id="printerPill" onclick="togglePrinterReceiver()"><span class="printer-dot"></span><span id="printerPillText">Impresora desconectada</span></button><div class="sub">Privado</div></div>
+</header>
+<div class="top-actions">
+  <button class="active" onclick="sideGo('dashboard',this)"><span>🏠</span> Inicio</button>
+  <button onclick="sideGo('orden',this)"><span>➕</span> Nueva orden</button>
+  <button onclick="sideGo('ordenes',this)"><span>📋</span> Órdenes</button>
+  <button onclick="sideGo('ventas',this)"><span>🛒</span> Venta</button>
+</div>
 <div id="printerStatus" class="card" style="display:none;padding:10px 14px;margin-top:-8px;margin-bottom:14px;font-size:13px"><b>🖨️ Receptor:</b> <span id="printerStatusText">—</span></div>
 
 
@@ -280,6 +355,24 @@ qz.security.setSignaturePromise(function(toSign){
 </form></div>
 <div id="budgets"></div>
 </section>
+
+<section id="configuracion" style="display:none">
+<div class="card"><h2 style="margin-top:0">⚙️ Configuración</h2><div class="sub">Personalizá la apariencia de E30 y la impresora de esta PC.</div></div>
+<div class="card">
+  <h3 style="margin-top:0">Logo</h3>
+  <div class="sub" style="margin-bottom:10px">Podés subir un JPG o PNG. Se guarda en este dispositivo.</div>
+  <div class="actions" style="align-items:center">
+    <input id="logoUpload" type="file" accept="image/png,image/jpeg,image/webp" onchange="handleLogoUpload(this)">
+    <button class="btn secondary" type="button" onclick="removeLogo()">Quitar logo</button>
+  </div>
+  <div id="logoPreviewWrap" style="margin-top:14px;display:none"><img id="logoPreview" style="max-width:180px;max-height:90px;object-fit:contain;border:1px solid var(--line);border-radius:14px;padding:8px;background:#fff"></div>
+</div>
+<div class="card">
+  <h3 style="margin-top:0">🖨️ Impresora</h3>
+  <div class="sub" style="margin-bottom:12px">La PC puede quedar escuchando trabajos enviados desde el celular.</div>
+  <button class="btn" type="button" onclick="togglePrinterReceiver()" id="printerBtn">🖨️ Activar impresora</button>
+</div>
+</section>
 </div>
 
 
@@ -425,23 +518,24 @@ function enterApp(){
   authed=true;
   document.getElementById("loginScreen").style.display="none";
   document.getElementById("appRoot").style.display="block";
-  document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));document.querySelectorAll("nav button")[1]?.classList.add("active");
-  orders.forEach(o=>{if(!o.costos)o.costos=[];});document.getElementById("rMes").value=new Date().toISOString().slice(0,7);renderSearch();renderDashboard();toggleGremioField();setTimeout(()=>document.getElementById("search")?.focus(),100);;setTimeout(restorePrinterReceiver,500);
+  orders.forEach(o=>{if(!o.costos)o.costos=[];});document.getElementById("rMes").value=new Date().toISOString().slice(0,7);renderSearch();renderDashboard();toggleGremioField();loadSavedLogo();updatePrinterPill();setTimeout(()=>document.getElementById("search")?.focus(),100);setTimeout(restorePrinterReceiver,500);
 }
 (async function init(){
   await loadAll();
   renderLogin();
 })();
 
-function show(id,btn){document.querySelectorAll("section").forEach(x=>x.style.display="none");document.getElementById(id).style.display="block";document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));if(btn)btn.classList.add("active");if(id==="dashboard")renderDashboard();if(id==="ordenes")renderOrders();if(id==="clientes")renderClients();if(id==="precios")renderPrices();if(id==="presupuestos")renderBudgets();if(id==="stock")renderStock();if(id==="ventas"){renderSaleProducts();renderSales();}if(id==="movimientos")renderMovements();}
+function show(id,btn){document.querySelectorAll("section").forEach(x=>x.style.display="none");const sec=document.getElementById(id);if(sec)sec.style.display="block";if(id==="dashboard")renderDashboard();if(id==="ordenes")renderOrders();if(id==="clientes")renderClients();if(id==="precios")renderPrices();if(id==="presupuestos")renderBudgets();if(id==="stock")renderStock();if(id==="ventas"){renderSaleProducts();renderSales();}if(id==="movimientos")renderMovements();if(id==="configuracion")loadSavedLogo();if(window.innerWidth<=700)closeSideMenu();}
+function sideGo(id,btn){show(id,btn);document.querySelectorAll(".side-item").forEach(x=>x.classList.remove("active"));if(btn&&btn.classList.contains("side-item"))btn.classList.add("active");else{const m=[...document.querySelectorAll(".side-item")].find(x=>x.getAttribute("onclick")?.includes("'"+id+"'"));if(m)m.classList.add("active");}document.querySelectorAll(".top-actions button").forEach(x=>x.classList.remove("active"));}
+function toggleSideMenu(){document.getElementById("sideMenu").classList.toggle("open");document.getElementById("menuOverlay").classList.toggle("open");}
+function closeSideMenu(){document.getElementById("sideMenu").classList.remove("open");document.getElementById("menuOverlay").classList.remove("open");}
+function focusPriceSearch(btn){sideGo("dashboard",null);const el=document.getElementById("search");if(el){el.focus();el.select();}}
+function handleLogoUpload(input){const file=input?.files?.[0];if(!file)return;if(!/^image\/(png|jpeg|webp)$/.test(file.type)){alert("Subí un JPG, PNG o WEBP.");return;}if(file.size>2*1024*1024){alert("El logo pesa más de 2 MB. Elegí una imagen más chica.");return;}const r=new FileReader();r.onload=()=>{localStorage.setItem("e30-logo",r.result);applyLogo(r.result);};r.readAsDataURL(file);}
+function applyLogo(src){["headerLogo","sideLogo","logoPreview"].forEach(id=>{const el=document.getElementById(id);if(el)el.src=src;});const h=document.getElementById("headerLogo"),s=document.getElementById("sideLogo"),e=document.getElementById("sideE30"),w=document.getElementById("logoPreviewWrap");if(h)h.style.display="block";if(s)s.style.display="block";if(e)e.style.display="none";if(w)w.style.display="block";}
+function loadSavedLogo(){const src=localStorage.getItem("e30-logo");if(src)applyLogo(src);}
+function removeLogo(){localStorage.removeItem("e30-logo");const h=document.getElementById("headerLogo"),s=document.getElementById("sideLogo"),e=document.getElementById("sideE30"),w=document.getElementById("logoPreviewWrap");if(h)h.style.display="none";if(s)s.style.display="none";if(e)e.style.display="block";if(w)w.style.display="none";const i=document.getElementById("logoUpload");if(i)i.value="";}
+function updatePrinterPill(){const pill=document.getElementById("printerPill"),txt=document.getElementById("printerPillText");if(!pill||!txt)return;const on=!!printerReceiver;pill.classList.toggle("off",!on);txt.textContent=on?"Impresora conectada":"Impresora desconectada";}
 
-function focusPriceSearch(btn){
-  show("dashboard",null);
-  document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));
-  if(btn)btn.classList.add("active");
-  const el=document.getElementById("search");
-  if(el){el.focus();el.select();}
-}
 
 function renderSearch(){
   const q=document.getElementById("search").value.toLowerCase().trim();
@@ -806,7 +900,7 @@ async function togglePrinterReceiver(){
     if(!printer)throw new Error("No se encontró XP-80C (copy 1).");
     printerReceiver=true;
     localStorage.setItem("e30-printer-receiver","1");
-    const b=document.getElementById("printerBtn");if(b)b.textContent="🟢 Impresora activa · escuchando";
+    const b=document.getElementById("printerBtn");if(b)b.textContent="🟢 Impresora activa · escuchando";updatePrinterPill();
     setPrinterStatus("conectada · buscando trabajos...");
     await processPrintQueue();
     if(printerTimer)clearInterval(printerTimer);
@@ -822,7 +916,7 @@ async function restorePrinterReceiver(){
     if(!window.qz||!qz.websocket.isActive())await qz.websocket.connect();
     const printer=await qz.printers.find("XP-80C (copy 1)");if(!printer)return;
     printerReceiver=true;
-    const b=document.getElementById("printerBtn");if(b)b.textContent="🟢 Impresora activa · escuchando";
+    const b=document.getElementById("printerBtn");if(b)b.textContent="🟢 Impresora activa · escuchando";updatePrinterPill();
     setPrinterStatus("conectada · buscando trabajos...");
     await processPrintQueue();
     if(printerTimer)clearInterval(printerTimer);printerTimer=setInterval(processPrintQueue,1000);

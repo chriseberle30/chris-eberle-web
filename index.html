@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>E30 | Técnico de celulares</title>
+<title>E30 Gestión · CONFIRM-01 · E30 | Técnico de celulares</title>
 <style>
 :root{--blue:#14104C;--bg:#f6f6f8;--line:#e6e6eb;--muted:#70717a}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:#17171b}
@@ -420,17 +420,7 @@ qz.security.setSignaturePromise(function(toSign){
 <button class="btn secondary" type="button" onclick="closeCostModal()">Cerrar</button>
 </div>
 </div></div>
-<div id="afterOrderModal" class="modal-back">
-<div class="modal">
-<h2 style="margin-top:0">Orden creada</h2>
-<div id="afterOrderText" class="sub" style="margin-bottom:16px"></div>
-<div class="actions">
-<button class="btn" type="button" onclick="afterOrderPrintClient()">🧾 Imprimir cliente</button>
-<button class="btn secondary" type="button" onclick="afterOrderPDF()">📄 PDF / WhatsApp</button>
-<button class="btn secondary" type="button" onclick="afterOrderPrintTech()">🔧 Imprimir técnico</button>
-<button class="btn secondary" type="button" onclick="closeAfterOrder()">Cerrar</button>
 </div>
-</div></div>
 
 <script>
 /* ============================================================
@@ -636,7 +626,7 @@ if(editingId){
 }
 const n=(orders.length?Math.max(...orders.map(o=>o.n)):0)+1;
 const o={n,cliente:cliente.value,telefono:telefono.value,marca:marca.value,modelo:modelo.value,imei:imei.value,tipoOrden:tipoOrden.value,gremio:gremio.value,local:local.value,desbloqueo:desbloqueo.value,unlockType:unlockMode,patron:pattern.join("-"),estado:estado.value,falla:falla.value,trabajo:trabajo.value,total:+total.value||0,sena:+sena.value||0,pago:pago.value,entrega:entrega.value,obsTecnico:obsTecnico.value,obsEquipo:obsEquipo.value,costos:[],fecha:new Date().toLocaleDateString("es-AR")};
-orders.unshift(o);saveOrders();resetOrder();renderOrders();renderDashboard();show("ordenes");if(confirm("¿Imprimir orden para el cliente?")){setTimeout(()=>printTicket(o.n),50);}
+orders.unshift(o);saveOrders();resetOrder();renderOrders();renderDashboard();show("ordenes");if(window.confirm("E30 — ¿IMPRIMIR ORDEN PARA EL CLIENTE?\n\nAceptar = imprimir\nCancelar = no imprimir")){setTimeout(()=>printTicket(o.n),50);}
 };
 function editOrder(n){
  const o=orders.find(x=>x.n===n);if(!o)return;
@@ -1172,27 +1162,6 @@ function renderMovements(){
   movIngresos.textContent=money(ingresos);movGastos.textContent=money(gastos);movNeto.textContent=money(ingresos-gastos);movVentas.textContent=money(ventasTotal);
   document.getElementById("movementsList").innerHTML=movements.map(m=>`<div class="card"><div class="order"><div><b>${m.tipo}</b><div>${m.concepto}</div><div class="sub">${m.fecha} · ${m.pago}</div></div><div class="price">${money(m.importe)}</div></div></div>`).join("")||'<div class="card empty">Todavía no hay movimientos.</div>';
 }
-
-function openAfterOrder(n){
-  const o=orders.find(x=>x.n===n);
-  if(!o){alert("No se encontró la orden recién creada.");return;}
-  afterOrderId=n;
-  const text=document.getElementById("afterOrderText");
-  const modal=document.getElementById("afterOrderModal");
-  if(!text||!modal){alert("No se pudo abrir el módulo de impresión.");return;}
-  // Aseguramos que el modal quede directamente sobre el documento y no
-  // quede oculto por ninguna sección/contenedor de la interfaz.
-  if(modal.parentElement!==document.body) document.body.appendChild(modal);
-  text.textContent=`Orden #${String(n).padStart(4,"0")} de ${o.cliente} · ${o.marca} ${o.modelo}`;
-  modal.style.setProperty("display","flex","important");
-  modal.style.setProperty("visibility","visible","important");
-  modal.style.setProperty("opacity","1","important");
-  modal.style.setProperty("z-index","99999","important");
-}
-function closeAfterOrder(){const m=document.getElementById("afterOrderModal");if(m)m.style.display="none";}
-function afterOrderPrintClient(){const n=afterOrderId;if(!n)return;closeAfterOrder();setTimeout(()=>printTicket(n),50);}
-function afterOrderPDF(){const n=afterOrderId;if(!n)return;closeAfterOrder();setTimeout(()=>openClientPDF("order",n),50);}
-function afterOrderPrintTech(){const n=afterOrderId;if(!n)return;closeAfterOrder();setTimeout(()=>printTechnician(n),50);}
 
 function orderCostTotal(o){return (o.costos||[]).reduce((a,c)=>a+(+c.importe||0),0);}
 function manageCosts(n){

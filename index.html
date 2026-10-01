@@ -50,7 +50,7 @@ textarea{min-height:80px;resize:vertical}.form{display:grid;grid-template-column
 .modal-back{position:fixed;inset:0;background:#0007;display:none;align-items:center;justify-content:center;padding:18px;z-index:20}
 .modal{background:#fff;border-radius:18px;padding:20px;max-width:420px;width:100%;box-shadow:0 12px 40px #0003}
 
-.quick-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 14px}.quick-action{border:1px solid var(--line);background:#fff;border-radius:16px;padding:15px 8px;display:flex;flex-direction:column;align-items:center;gap:6px;color:#17171b}.quick-action span{font-size:24px}.quick-action b{font-size:13px}.order-filters{display:flex;gap:7px;overflow:auto;padding-bottom:2px}.filter-btn{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 11px;white-space:nowrap;font-size:12px}.filter-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}.cost-warning{border-color:#f0b429;background:#fffaf0}.cost-line{margin-top:10px}.cost-warning{color:#9a6700}
+.quick-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:0 0 18px}.quick-action{border:1px solid #e1e4ef;background:linear-gradient(180deg,#fff 0%,#fbfcff 100%);border-radius:20px;padding:18px 14px;display:flex;flex-direction:column;align-items:center;gap:8px;color:#14104C;min-height:92px;box-shadow:0 8px 24px rgba(20,16,76,.07);transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease}.quick-action:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(20,16,76,.11);border-color:#cfd6ee}.quick-action span{font-size:28px}.quick-action b{font-size:14px}.order-filters{display:flex;gap:7px;overflow:auto;padding-bottom:2px}.filter-btn{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 11px;white-space:nowrap;font-size:12px}.filter-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}.cost-warning{border-color:#f0b429;background:#fffaf0}.cost-line{margin-top:10px}.cost-warning{color:#9a6700}
 
 /* E30 V17.1 — visual layer */
 .side-menu{position:fixed;left:14px;top:14px;bottom:14px;width:62px;background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 8px 30px rgba(20,16,76,.10);z-index:1000;overflow:hidden;transition:width .22s ease}.side-menu:hover,.side-menu.open{width:235px}.side-inner{height:100%;display:flex;flex-direction:column;padding:14px 9px;gap:5px}.side-logo{height:58px;display:flex;align-items:center;gap:10px;padding:0 8px;margin-bottom:8px;white-space:nowrap}.side-logo img{width:40px;height:40px;object-fit:contain;display:none}.side-e30{font-size:22px;font-weight:900;color:var(--blue);letter-spacing:-1px;width:40px;text-align:center}.side-item{width:100%;display:flex;align-items:center;gap:12px;border:0;background:transparent;border-radius:12px;padding:11px 10px;color:#363741;text-align:left;white-space:nowrap;font-weight:600}.side-item:hover{background:#f2f3fa}.side-item.active{background:#e9edff;color:#14104C}.side-icon{width:28px;min-width:28px;text-align:center;font-size:20px}.side-label{opacity:0;transition:opacity .12s ease}.side-menu:hover .side-label,.side-menu.open .side-label{opacity:1}.side-sep{height:1px;background:var(--line);margin:8px 4px}.menu-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.28);z-index:999}.menu-overlay.open{display:block}
@@ -109,6 +109,17 @@ body{background:radial-gradient(circle at 72% -10%,#ffffff 0,#f7f8fc 36%,#f1f3f8
  .side-menu{left:0;top:0;bottom:0;width:285px;border-radius:0 22px 22px 0;box-shadow:12px 0 38px rgba(0,0,0,.16)}
  .side-menu.open{width:285px}.side-inner{padding:18px 13px}.side-label{opacity:1}
 }
+
+.search-hero{box-shadow:0 12px 34px rgba(20,16,76,.08);border-color:#e2e5ef}.search-hero .search{border-color:#dfe3ee;background:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.8)}
+@media(max-width:700px){.quick-actions{gap:10px}.quick-action{min-height:86px;padding:15px 8px;border-radius:18px}.quick-action span{font-size:25px}.quick-action b{font-size:13px}}
+
+.admin-only{display:block}
+#adminSideItems{margin-top:4px}
+#adminAuthModal .modal{box-shadow:0 24px 70px rgba(20,16,76,.22)}
+.pending-cost-card{border-left:4px solid #e5484d}
+#appRoot{display:none!important}
+.admin-only{display:none!important}
+.admin-unlocked .admin-only{display:flex!important}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.3.0/qz-tray.js"></script>
 <script>
@@ -147,13 +158,17 @@ qz.security.setSignaturePromise(function(toSign){
     <div class="side-sep"></div>
     <button class="side-item" onclick="sideGo('clientes',this)"><span class="side-icon">👤</span><span class="side-label">Clientes</span></button>
     <button class="side-item" onclick="sideGo('stock',this)"><span class="side-icon">📦</span><span class="side-label">Stock</span></button>
-    <button class="side-item" onclick="sideGo('movimientos',this)"><span class="side-icon">💰</span><span class="side-label">Movimientos</span></button>
-    <button class="side-item" onclick="sideGo('reportes',this)"><span class="side-icon">📊</span><span class="side-label">Reportes</span></button>
-    <button class="side-item" onclick="sideGo('precios',this)"><span class="side-icon">💲</span><span class="side-label">Precios</span></button>
     <button class="side-item" onclick="sideGo('presupuestos',this)"><span class="side-icon">🧾</span><span class="side-label">Presupuestos</span></button>
     <div class="side-spacer"></div>
     <div class="side-sep"></div>
-    <button class="side-item" onclick="sideGo('configuracion',this)"><span class="side-icon">⚙️</span><span class="side-label">Configuración</span></button>
+    <button class="side-item" onclick="adminGate('administracion',this)"><span class="side-icon">🔐</span><span class="side-label">Administración</span></button>
+    <div id="adminSideItems" style="display:none">
+      <button class="side-item admin-only" onclick="sideGo('costospendientes',this)"><span class="side-icon">💸</span><span class="side-label">Costos pendientes</span></button>
+      <button class="side-item admin-only" onclick="sideGo('movimientos',this)"><span class="side-icon">💰</span><span class="side-label">Movimientos</span></button>
+      <button class="side-item admin-only" onclick="sideGo('reportes',this)"><span class="side-icon">📊</span><span class="side-label">Rentabilidad</span></button>
+      <button class="side-item admin-only" onclick="sideGo('precios',this)"><span class="side-icon">💲</span><span class="side-label">Gestión de precios</span></button>
+      <button class="side-item admin-only" onclick="sideGo('configuracion',this)"><span class="side-icon">⚙️</span><span class="side-label">Configuración</span></button>
+    </div>
   </div>
 </aside>
 <div class="menu-overlay" id="menuOverlay" onclick="closeSideMenu()"></div>
@@ -165,18 +180,12 @@ qz.security.setSignaturePromise(function(toSign){
   </div>
   <div class="topbar"><button class="printer-pill off" id="printerPill" onclick="togglePrinterReceiver()"><span class="printer-dot"></span><span id="printerPillText">Impresora desconectada</span></button><div class="sub">Privado</div></div>
 </header>
-<div class="top-actions">
-  <button class="active" onclick="sideGo('dashboard',this)"><span>🏠</span> Inicio</button>
-  <button onclick="sideGo('orden',this)"><span>➕</span> Nueva orden</button>
-  <button onclick="sideGo('ordenes',this)"><span>📋</span> Órdenes</button>
-  <button onclick="sideGo('ventas',this)"><span>🛒</span> Venta</button>
-</div>
 <div id="printerStatus" class="card" style="display:none;padding:10px 14px;margin-top:-8px;margin-bottom:14px;font-size:13px"><b>🖨️ Receptor:</b> <span id="printerStatusText">—</span></div>
 
 
 <section id="dashboard">
-<div class="card" style="padding:18px;margin-bottom:14px">
-<h2 style="margin:0 0 6px;font-size:22px">🔎 Buscar precio</h2>
+<div class="card search-hero" style="padding:22px;margin-bottom:18px">
+<h2 style="margin:0 0 6px;font-size:25px;letter-spacing:-.5px">🔎 Buscar precio</h2>
 <div class="sub" style="margin-bottom:10px">Consultá rápido cuánto cobrar por una reparación.</div>
 <input id="search" class="search" style="font-size:18px;padding:15px" placeholder="Ej.: iPhone 13 pantalla, Moto G31 módulo..." oninput="renderSearch()" autofocus>
 </div>
@@ -189,7 +198,6 @@ qz.security.setSignaturePromise(function(toSign){
 <div class="card"><h2 style="margin-top:0">Hoy</h2>
 <div class="stat-grid">
 <div class="stat"><div class="sub">Reparaciones</div><b id="dashRep">0</b></div>
-<div class="stat"><div class="sub">Facturado</div><b id="dashFact">$ 0</b></div>
 <div class="stat"><div class="sub">Pendientes</div><b id="dashPend">0</b></div>
 <div class="stat"><div class="sub">Listos</div><b id="dashListos">0</b></div>
 </div></div>
@@ -241,6 +249,22 @@ qz.security.setSignaturePromise(function(toSign){
 
 <section id="ordenes" style="display:none"><div class="card"><h2 style="margin-top:0">Órdenes</h2><input id="orderSearch" placeholder="Buscar por número, cliente, teléfono o modelo" oninput="renderOrders()"><div class="order-filters" style="margin-top:10px"><button class="filter-btn active" data-filter="activas" onclick="setOrderFilter('activas',this)">Activas</button><button class="filter-btn" data-filter="todas" onclick="setOrderFilter('todas',this)">Todas</button><button class="filter-btn" data-filter="listas" onclick="setOrderFilter('listas',this)">Listas</button><button class="filter-btn" data-filter="esperando" onclick="setOrderFilter('esperando',this)">Esperando repuesto</button><button class="filter-btn" data-filter="entregadas" onclick="setOrderFilter('entregadas',this)">Entregadas</button></div></div><div id="orders"></div></section>
 
+
+<section id="administracion" style="display:none">
+<div class="card"><div style="display:flex;align-items:center;justify-content:space-between;gap:12px"><div><h2 style="margin:0">🔐 Administración</h2><div class="sub" style="margin-top:5px">Información y herramientas privadas del negocio.</div></div><span class="pill" style="background:#eef2ff;color:#14104C">Acceso privado</span></div><button class="btn secondary" type="button" onclick="adminAuthed=false;refreshAdminUI();sideGo('dashboard')">🔒 Cerrar administración</button></div>
+<div class="stat-grid">
+  <button class="card quick-action" type="button" onclick="sideGo('costospendientes')"><span>💸</span><b>Costos pendientes</b><small id="adminPendingCount">0 pendientes</small></button>
+  <button class="card quick-action" type="button" onclick="sideGo('reportes')"><span>📊</span><b>Rentabilidad</b><small>Facturación y ganancias</small></button>
+  <button class="card quick-action" type="button" onclick="sideGo('movimientos')"><span>💰</span><b>Movimientos</b><small>Ingresos y gastos</small></button>
+  <button class="card quick-action" type="button" onclick="sideGo('precios')"><span>💲</span><b>Gestión de precios</b><small>Editar valores</small></button>
+  <button class="card quick-action" type="button" onclick="sideGo('configuracion')"><span>⚙️</span><b>Configuración</b><small>Datos y sistema</small></button>
+</div>
+</section>
+
+<section id="costospendientes" style="display:none">
+<div class="card"><h2 style="margin-top:0">💸 Costos pendientes</h2><div class="sub">Reparaciones entregadas que todavía no tienen sus costos cargados.</div></div>
+<div id="pendingCostsList"></div>
+</section>
 
 <section id="movimientos" style="display:none">
 <div class="card"><h2 style="margin-top:0">💰 Movimientos</h2>
@@ -376,6 +400,12 @@ qz.security.setSignaturePromise(function(toSign){
 </div>
 
 
+<div id="adminAuthModal" class="modal-back">
+  <div class="modal" style="max-width:390px">
+    <h2 style="margin-top:0">🔐 Administración</h2>
+    <div id="adminAuthBody"></div>
+  </div>
+</div>
 <div id="costModal" class="modal-back">
 <div class="modal">
 <h2 style="margin-top:0">💰 Costos de la reparación</h2>
@@ -396,6 +426,7 @@ qz.security.setSignaturePromise(function(toSign){
 <div id="afterOrderText" class="sub" style="margin-bottom:16px"></div>
 <div class="actions">
 <button class="btn" type="button" onclick="afterOrderPrintClient()">🧾 Imprimir cliente</button>
+<button class="btn secondary" type="button" onclick="afterOrderPDF()">📄 PDF / WhatsApp</button>
 <button class="btn secondary" type="button" onclick="afterOrderPrintTech()">🔧 Imprimir técnico</button>
 <button class="btn secondary" type="button" onclick="closeAfterOrder()">Cerrar</button>
 </div>
@@ -463,13 +494,13 @@ const DEFAULT_PRICES=[
 {id:30,marca:"Motorola",modelo:"G31",reparacion:"Módulo",precio:60000,activo:true}
 ];
 
-let prices=[],orders=[],budgets=[],stock=[],sales=[],movements=[],passHash=null,authed=false,afterOrderId=null;
+let prices=[],orders=[],budgets=[],stock=[],sales=[],movements=[],passHash=null,adminPassHash=null,authed=false,adminAuthed=false,afterOrderId=null;
 const money=n=>new Intl.NumberFormat("es-AR",{style:"currency",currency:"ARS",maximumFractionDigits:0}).format(n||0);
 
 async function loadAll(attempt){
   attempt=attempt||1;
   try{
-    const [p,o,b,s,v,m,ph]=await Promise.all([kvGet("e30-prices"),kvGet("e30-orders"),kvGet("e30-budgets"),kvGet("e30-stock"),kvGet("e30-sales"),kvGet("e30-movements"),kvGet("e30-pass")]);
+    const [p,o,b,s,v,m,ph,aph]=await Promise.all([kvGet("e30-prices"),kvGet("e30-orders"),kvGet("e30-budgets"),kvGet("e30-stock"),kvGet("e30-sales"),kvGet("e30-movements"),kvGet("e30-pass"),kvGet("e30-admin-pass")]);
     prices=(p&&p.length)?p:JSON.parse(JSON.stringify(DEFAULT_PRICES));
     orders=o||[];
     budgets=b||[];
@@ -477,6 +508,7 @@ async function loadAll(attempt){
     sales=v||[];
     movements=m||[];
     passHash=ph;
+    adminPassHash=aph;
   }catch(e){
     if(attempt<3){await new Promise(r=>setTimeout(r,1200));return loadAll(attempt+1);}
     document.getElementById("loginBody").innerHTML='<div class="sub">No se pudo conectar con la base de datos. Revisá tu conexión y recargá la página.</div>';
@@ -517,15 +549,58 @@ async function doLogin(){
 function enterApp(){
   authed=true;
   document.getElementById("loginScreen").style.display="none";
-  document.getElementById("appRoot").style.display="block";
-  orders.forEach(o=>{if(!o.costos)o.costos=[];});document.getElementById("rMes").value=new Date().toISOString().slice(0,7);renderSearch();renderDashboard();toggleGremioField();loadSavedLogo();updatePrinterPill();setTimeout(()=>document.getElementById("search")?.focus(),100);setTimeout(restorePrinterReceiver,500);
+  document.getElementById("appRoot").style.setProperty("display","block","important");
+  orders.forEach(o=>{if(!o.costos)o.costos=[];});document.getElementById("rMes").value=new Date().toISOString().slice(0,7);renderSearch();renderDashboard();toggleGremioField();loadSavedLogo();updatePrinterPill();refreshAdminUI();setTimeout(()=>document.getElementById("search")?.focus(),100);setTimeout(restorePrinterReceiver,500);
 }
 (async function init(){
   await loadAll();
   renderLogin();
+  adminAuthed=false;
+  refreshAdminUI();
 })();
 
-function show(id,btn){document.querySelectorAll("section").forEach(x=>x.style.display="none");const sec=document.getElementById(id);if(sec)sec.style.display="block";if(id==="dashboard")renderDashboard();if(id==="ordenes")renderOrders();if(id==="clientes")renderClients();if(id==="precios")renderPrices();if(id==="presupuestos")renderBudgets();if(id==="stock")renderStock();if(id==="ventas"){renderSaleProducts();renderSales();}if(id==="movimientos")renderMovements();if(id==="configuracion")loadSavedLogo();if(window.innerWidth<=700)closeSideMenu();}
+function refreshAdminUI(){
+  const box=document.getElementById("adminSideItems");
+  if(box)box.style.display=adminAuthed?"block":"none";
+  document.getElementById("appRoot")?.classList.toggle("admin-unlocked",!!adminAuthed);
+  document.querySelectorAll(".admin-cost-btn").forEach(b=>b.style.display=adminAuthed?"inline-flex":"none");
+  renderPendingCosts();
+  const c=document.getElementById("adminPendingCount");
+  if(c){const n=orders.filter(o=>o.estado==="Entregado"&&orderCostTotal(o)===0&&(+o.total||0)>0).length;c.textContent=`${n} pendiente${n===1?"":"s"}`;}
+}
+function adminGate(target,btn){
+  if(adminAuthed){ if(target==="administracion")sideGo("administracion",btn); else sideGo(target,btn); return; }
+  const modal=document.getElementById("adminAuthModal");
+  const body=document.getElementById("adminAuthBody");
+  if(!adminPassHash){
+    body.innerHTML=`<div class="sub" style="margin-bottom:12px">Creá una contraseña distinta a la de acceso general. Esta protege facturación, ganancias, costos, precios y configuración.</div><label>Nueva contraseña</label><input id="adminSetup1" type="password" style="margin:6px 0 10px"><label>Repetir</label><input id="adminSetup2" type="password" style="margin:6px 0 14px"><button class="btn" style="width:100%" onclick="setupAdminPassword('${target}')">Crear contraseña y entrar</button>`;
+  }else{
+    body.innerHTML=`<div class="sub" style="margin-bottom:12px">Ingresá la contraseña administrativa para continuar.</div><label>Contraseña</label><input id="adminLogin" type="password" style="margin:6px 0 10px" onkeydown="if(event.key==='Enter')loginAdmin('${target}')"><div id="adminLoginError" style="color:#b42318;font-size:13px;min-height:18px;margin-bottom:8px"></div><button class="btn" style="width:100%" onclick="loginAdmin('${target}')">Entrar</button>`;
+  }
+  modal.style.display="flex";
+  setTimeout(()=>document.getElementById(adminPassHash?"adminLogin":"adminSetup1")?.focus(),50);
+}
+async function setupAdminPassword(target){
+  const a=document.getElementById("adminSetup1").value,b=document.getElementById("adminSetup2").value;
+  if(a.length<6){alert("Usá al menos 6 caracteres para la contraseña administrativa.");return;}
+  if(a!==b){alert("Las contraseñas no coinciden.");return;}
+  adminPassHash=await sha256Hex(a);await kvSet("e30-admin-pass",adminPassHash);adminAuthed=true;document.getElementById("adminAuthModal").style.display="none";refreshAdminUI();sideGo(target);}
+async function loginAdmin(target){
+  const p=document.getElementById("adminLogin").value;
+  if(await sha256Hex(p)===adminPassHash){adminAuthed=true;document.getElementById("adminAuthModal").style.display="none";refreshAdminUI();sideGo(target);}
+  else document.getElementById("adminLoginError").textContent="Contraseña incorrecta.";
+}
+function adminManageCosts(n){if(!adminAuthed){adminGate("costospendientes");return;}manageCosts(n);}
+function renderPendingCosts(){
+  const el=document.getElementById("pendingCostsList");if(!el)return;
+  if(!adminAuthed){el.innerHTML='<div class="card empty">Acceso administrativo requerido.</div>';return;}
+  const list=orders.filter(o=>o.estado==="Entregado"&&orderCostTotal(o)===0&&(+o.total||0)>0).sort((a,b)=>String(b.fecha||"").localeCompare(String(a.fecha||"")));
+  el.innerHTML=list.map(o=>`<div class="card pending-cost-card"><div class="order"><div><b>ORDEN #${String(o.n).padStart(4,"0")}</b><h3 style="margin:5px 0">${o.cliente||"Sin cliente"}</h3><div>${o.marca||""} ${o.modelo||""} · ${o.trabajo||"Reparación"}</div><div class="sub">Entregada · Total ${money(o.total)}</div></div><button class="btn" onclick="manageCosts(${o.n})">💰 Cargar costos</button></div></div>`).join("")||'<div class="card empty">🎉 No hay costos pendientes.</div>';
+}
+function show(id,btn){
+  const adminSections=["administracion","costospendientes","movimientos","reportes","precios","configuracion"];
+  if(adminSections.includes(id) && !adminAuthed){ adminGate("administracion",btn); return; }
+  document.querySelectorAll("section").forEach(x=>x.style.display="none");const sec=document.getElementById(id);if(sec)sec.style.display="block";if(id==="dashboard")renderDashboard();if(id==="administracion")refreshAdminUI();if(id==="costospendientes")renderPendingCosts();if(id==="ordenes")renderOrders();if(id==="clientes")renderClients();if(id==="precios")renderPrices();if(id==="presupuestos")renderBudgets();if(id==="stock")renderStock();if(id==="ventas"){renderSaleProducts();renderSales();}if(id==="movimientos")renderMovements();if(id==="configuracion")loadSavedLogo();if(window.innerWidth<=700)closeSideMenu();}
 function sideGo(id,btn){show(id,btn);document.querySelectorAll(".side-item").forEach(x=>x.classList.remove("active"));if(btn&&btn.classList.contains("side-item"))btn.classList.add("active");else{const m=[...document.querySelectorAll(".side-item")].find(x=>x.getAttribute("onclick")?.includes("'"+id+"'"));if(m)m.classList.add("active");}document.querySelectorAll(".top-actions button").forEach(x=>x.classList.remove("active"));}
 function toggleSideMenu(){document.getElementById("sideMenu").classList.toggle("open");document.getElementById("menuOverlay").classList.toggle("open");}
 function closeSideMenu(){document.getElementById("sideMenu").classList.remove("open");document.getElementById("menuOverlay").classList.remove("open");}
@@ -561,7 +636,7 @@ if(editingId){
 }
 const n=(orders.length?Math.max(...orders.map(o=>o.n)):0)+1;
 const o={n,cliente:cliente.value,telefono:telefono.value,marca:marca.value,modelo:modelo.value,imei:imei.value,tipoOrden:tipoOrden.value,gremio:gremio.value,local:local.value,desbloqueo:desbloqueo.value,unlockType:unlockMode,patron:pattern.join("-"),estado:estado.value,falla:falla.value,trabajo:trabajo.value,total:+total.value||0,sena:+sena.value||0,pago:pago.value,entrega:entrega.value,obsTecnico:obsTecnico.value,obsEquipo:obsEquipo.value,costos:[],fecha:new Date().toLocaleDateString("es-AR")};
-orders.unshift(o);saveOrders();afterOrderId=o.n;resetOrder();renderOrders();renderDashboard();show("ordenes");setTimeout(()=>openAfterOrder(o.n),50);
+orders.unshift(o);saveOrders();afterOrderId=o.n;resetOrder();renderOrders();renderDashboard();show("ordenes");setTimeout(()=>openAfterOrder(o.n),150);
 };
 function editOrder(n){
  const o=orders.find(x=>x.n===n);if(!o)return;
@@ -587,7 +662,7 @@ function orderCard(o){const ct=orderCostTotal(o),missing=ct===0&&(+o.total||0)>0
 </div><div><select onchange="setStatus(${o.n},this.value)" style="width:auto;padding:6px 8px;font-size:12px;border-radius:8px">${ESTADOS.map(s=>`<option ${o.estado===s?"selected":""}>${s}</option>`).join("")}</select><div style="margin-top:6px"><span class="status-badge ${statusClass(o.estado)}">${o.estado}</span></div><div class="price">${money(o.total)}</div></div></div><hr>
 <div><b>Seña:</b> ${money(o.sena)} · <b>Saldo:</b> ${money(Math.max(0,o.total-o.sena))}</div>
 <div class="cost-line ${missing?"cost-warning":""}"><b>Costos:</b> ${missing?"⚠️ Falta cargar":money(ct)}${missing?"":" · <b>Ganancia bruta:</b> "+money(Math.max(0,(+o.total||0)-ct))}</div>${o.obsEquipo?`<div class="sub" style="margin-top:7px"><b>Estado del equipo:</b> ${o.obsEquipo}</div>`:""}
-<div class="actions" style="margin-top:12px"><button class="btn secondary" type="button" onclick="editOrder(${o.n})">✏️ Editar</button><button class="btn secondary" type="button" onclick="manageCosts(${o.n})">💰 Costos</button><button class="btn" onclick="printTicket(${o.n})">🖨️ Ticket cliente</button><button class="btn secondary" onclick="printTechnician(${o.n})">🔧 Orden técnico</button><button class="btn danger" onclick="deleteOrder(${o.n})">Eliminar</button></div></div>`}
+<div class="actions" style="margin-top:12px"><button class="btn secondary" type="button" onclick="editOrder(${o.n})">✏️ Editar</button><button class="btn secondary admin-cost-btn" type="button" onclick="adminManageCosts(${o.n})" style="display:${adminAuthed?"inline-flex":"none"}">💰 Costos</button><button class="btn" onclick="printTicket(${o.n})">🖨️ Ticket cliente</button><button class="btn secondary" onclick="openClientPDF('order',${o.n})">📄 PDF / WhatsApp</button><button class="btn secondary" onclick="printTechnician(${o.n})">🔧 Orden técnico</button><button class="btn danger" onclick="deleteOrder(${o.n})">Eliminar</button></div></div>`}
 
 function renderOrders(){const q=(document.getElementById("orderSearch")?.value||"").toLowerCase();const arr=orders.filter(orderVisible).filter(o=>JSON.stringify(o).toLowerCase().includes(q));document.getElementById("orders").innerHTML=arr.map(orderCard).join("")||'<div class="card empty">No hay órdenes.</div>';}
 const ESTADOS=["Recibido","Pendiente","Esperando repuesto","En reparación","Listo","Entregado","Cancelado"];
@@ -655,7 +730,7 @@ const o={n,cliente:bCliente.value,telefono:bTelefono.value,marca:bMarca.value,mo
 budgets.unshift(o);saveBudgets();resetBudget();renderBudgets();
 };
 function resetBudget(){document.getElementById("budgetForm").reset();}
-function renderBudgets(){document.getElementById("budgets").innerHTML=budgets.map(o=>`<div class="card"><div class="order"><div><b>PRESUPUESTO #${String(o.n).padStart(4,"0")}</b><h3>${o.cliente}</h3><div>${o.marca} ${o.modelo} · ${o.concepto}</div><div class="sub">${o.local} · ${o.telefono||"Sin teléfono"}</div></div><div><div class="price">${money(o.precio)}</div><div class="sub">Válido hasta ${o.valida}</div></div></div><div class="actions" style="margin-top:12px"><button class="btn" onclick="printBudget(${o.n})">🖨️ Imprimir presupuesto</button><button class="btn danger" onclick="deleteBudget(${o.n})">Eliminar</button></div></div>`).join("")||'<div class="card empty">Todavía no hay presupuestos.</div>';}
+function renderBudgets(){document.getElementById("budgets").innerHTML=budgets.map(o=>`<div class="card"><div class="order"><div><b>PRESUPUESTO #${String(o.n).padStart(4,"0")}</b><h3>${o.cliente}</h3><div>${o.marca} ${o.modelo} · ${o.concepto}</div><div class="sub">${o.local} · ${o.telefono||"Sin teléfono"}</div></div><div><div class="price">${money(o.precio)}</div><div class="sub">Válido hasta ${o.valida}</div></div></div><div class="actions" style="margin-top:12px"><button class="btn" onclick="printBudget(${o.n})">🖨️ Imprimir presupuesto</button><button class="btn secondary" onclick="openClientPDF('budget',${o.n})">📄 PDF / WhatsApp</button><button class="btn danger" onclick="deleteBudget(${o.n})">Eliminar</button></div></div>`).join("")||'<div class="card empty">Todavía no hay presupuestos.</div>';}
 function deleteBudget(n){if(confirm("¿Eliminar el presupuesto?")){budgets=budgets.filter(x=>x.n!==n);saveBudgets();renderBudgets();}}
 
 
@@ -997,7 +1072,7 @@ document.getElementById("saleForm").onsubmit=e=>{
 };
 function renderSales(){
  const el=document.getElementById("salesList");
- el.innerHTML=sales.map(s=>`<div class="card"><div class="order"><div><b>VENTA #${String(s.n).padStart(4,"0")}</b><h3>${s.producto} × ${s.cantidad}</h3><div class="sub">${s.cliente||"Consumidor final"} · ${s.local} · ${s.fecha}</div></div><div><div class="price">${money(s.total)}</div><div class="sub">Garantía hasta ${s.warranty}</div></div></div><div class="actions" style="margin-top:10px"><button class="btn" onclick="printSaleTicket(${s.n})">🖨️ Ticket</button><button class="btn danger" onclick="deleteSale(${s.n})">Eliminar</button></div></div>`).join("")||'<div class="card empty">Todavía no hay ventas.</div>';
+ el.innerHTML=sales.map(s=>`<div class="card"><div class="order"><div><b>VENTA #${String(s.n).padStart(4,"0")}</b><h3>${s.producto} × ${s.cantidad}</h3><div class="sub">${s.cliente||"Consumidor final"} · ${s.local} · ${s.fecha}</div></div><div><div class="price">${money(s.total)}</div><div class="sub">Garantía hasta ${s.warranty}</div></div></div><div class="actions" style="margin-top:10px"><button class="btn" onclick="printSaleTicket(${s.n})">🖨️ Ticket</button><button class="btn secondary" onclick="openClientPDF('sale',${s.n})">📄 PDF / WhatsApp</button><button class="btn danger" onclick="deleteSale(${s.n})">Eliminar</button></div></div>`).join("")||'<div class="card empty">Todavía no hay ventas.</div>';
 }
 function deleteSale(n){
  const s=sales.find(x=>x.n===n);if(!s)return;
@@ -1099,16 +1174,24 @@ function renderMovements(){
 }
 
 function openAfterOrder(n){
-  const o=orders.find(x=>x.n===n);if(!o)return;
+  const o=orders.find(x=>x.n===n);
+  if(!o){alert("No se encontró la orden recién creada.");return;}
   afterOrderId=n;
   const text=document.getElementById("afterOrderText");
   const modal=document.getElementById("afterOrderModal");
   if(!text||!modal){alert("No se pudo abrir el módulo de impresión.");return;}
+  // Aseguramos que el modal quede directamente sobre el documento y no
+  // quede oculto por ninguna sección/contenedor de la interfaz.
+  if(modal.parentElement!==document.body) document.body.appendChild(modal);
   text.textContent=`Orden #${String(n).padStart(4,"0")} de ${o.cliente} · ${o.marca} ${o.modelo}`;
-  modal.style.display="flex";
+  modal.style.setProperty("display","flex","important");
+  modal.style.setProperty("visibility","visible","important");
+  modal.style.setProperty("opacity","1","important");
+  modal.style.setProperty("z-index","99999","important");
 }
 function closeAfterOrder(){const m=document.getElementById("afterOrderModal");if(m)m.style.display="none";}
 function afterOrderPrintClient(){const n=afterOrderId;if(!n)return;closeAfterOrder();setTimeout(()=>printTicket(n),50);}
+function afterOrderPDF(){const n=afterOrderId;if(!n)return;closeAfterOrder();setTimeout(()=>openClientPDF("order",n),50);}
 function afterOrderPrintTech(){const n=afterOrderId;if(!n)return;closeAfterOrder();setTimeout(()=>printTechnician(n),50);}
 
 function orderCostTotal(o){return (o.costos||[]).reduce((a,c)=>a+(+c.importe||0),0);}
@@ -1193,6 +1276,44 @@ document.getElementById("reportBreakdown").innerHTML=`<h3 style="margin-top:0">D
   <div style="padding:8px 0;border-bottom:1px solid var(--line)">Costos de reparaciones: <b>${money(costos)}</b></div>
   <div style="padding:8px 0"><b>Resultado bruto: ${money(ganancia)}</b></div>`;
 }
+function pdfEscape(v){return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function branchInfo(local){
+  const x=String(local||"").toLowerCase();
+  if(x.includes("las flores")) return {name:"Las Flores",address:"Demóstenes 3110 — Las Flores"};
+  if(x.includes("moreno")) return {name:"Moreno",address:"Piovano 2960 — Moreno"};
+  return {name:local||"E30",address:"Demóstenes 3110 — Las Flores"};
+}
+function pdfMoney(n){return money(n);}
+function openClientPDF(type,n){
+  let data,title="",number="",client="",phone="",branch="",rows="",total="",note="",valid="",terms="";
+  if(type==="order"){
+    const o=orders.find(x=>x.n===n); if(!o)return;
+    const b=branchInfo(o.local); title="ORDEN DE SERVICIO"; number="#"+String(o.n).padStart(4,"0"); client=o.cliente; phone=o.telefono; branch=b;
+    rows=`<div class="label">EQUIPO</div><div class="value">${pdfEscape((o.marca||"")+" "+(o.modelo||""))}</div>${o.imei?`<div class="label">IMEI</div><div class="value mono">${pdfEscape(o.imei)}</div>`:""}<div class="label">FALLA INFORMADA</div><div class="value">${pdfEscape(o.falla||"-")}</div><div class="label">TRABAJO</div><div class="value">${pdfEscape(o.trabajo||"-")}</div>${o.entrega?`<div class="label">ENTREGA ESTIMADA</div><div class="value">${pdfEscape(o.entrega)}</div>`:""}`;
+    total=pdfMoney(o.total); note=o.obsEquipo||"";
+    terms=`<div class="terms-title">Términos y condiciones</div><ol><li>Este comprobante es el único válido para retirar el equipo.</li><li>Una vez notificada la finalización, el equipo deberá retirarse dentro de 30 días. Vencido ese plazo, podrá cobrarse estadía. A los 90 días, podrá venderse para cubrir gastos.</li><li>El diagnóstico puede requerir desarme. Equipos con líquido o golpes no cuentan con garantía asegurada.</li><li><b>Garantía de la reparación: 30 días.</b> Cubre exclusivamente la reparación realizada y los componentes o repuestos colocados como parte de ella. No cubre nuevas fallas ni componentes ajenos al trabajo realizado.</li><li>El cliente declara ser propietario o estar autorizado por su propietario.</li><li>No nos responsabilizamos por pérdida de información o datos. Se recomienda realizar copia de seguridad.</li></ol>`;
+  }else if(type==="sale"){
+    const s=sales.find(x=>x.n===n); if(!s)return;
+    const b=branchInfo(s.local); title="COMPROBANTE DE VENTA"; number="#"+String(s.n).padStart(4,"0"); client=s.cliente||"Consumidor final"; phone=s.telefono||""; branch=b;
+    rows=`<div class="label">PRODUCTO</div><div class="value">${pdfEscape(s.producto)}</div><div class="label">CANTIDAD</div><div class="value">${s.cantidad}</div><div class="label">PRECIO UNITARIO</div><div class="value">${pdfMoney(s.unit)}</div><div class="label">MEDIO DE PAGO</div><div class="value">${pdfEscape(s.pago||"-")}</div>`;
+    total=pdfMoney(s.total); valid=s.warranty; terms=`<div class="terms-title">Garantía</div><p>La garantía corresponde al accesorio vendido y cubre fallas de funcionamiento. No cubre daños por golpes, humedad, uso indebido o manipulación. Garantía válida hasta <b>${pdfEscape(s.warranty)}</b>.</p>`;
+  }else{
+    const o=budgets.find(x=>x.n===n); if(!o)return;
+    const b=branchInfo(o.local); title="PRESUPUESTO"; number="#"+String(o.n).padStart(4,"0"); client=o.cliente; phone=o.telefono||""; branch=b;
+    rows=`<div class="label">EQUIPO</div><div class="value">${pdfEscape((o.marca||"")+" "+(o.modelo||""))}</div><div class="label">CONCEPTO</div><div class="value big">${pdfEscape(o.concepto||"-")}</div>${o.obs?`<div class="label">DETALLE</div><div class="value">${pdfEscape(o.obs)}</div>`:""}`;
+    total=pdfMoney(o.precio); valid=o.valida; terms=`<div class="terms-title">Condiciones</div><p>Presupuesto válido hasta <b>${pdfEscape(o.valida)}</b>. Precio sujeto a disponibilidad y variación de costos de repuestos.</p>`;
+  }
+  const logo=localStorage.getItem("e30-logo")||"";
+  const issued=new Date().toLocaleDateString("es-AR");
+  const w=window.open("","_blank","width=900,height=1000");
+  if(!w){alert("Chrome bloqueó la ventana del PDF. Permití ventanas emergentes para E30.");return;}
+  w.document.open();
+  w.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>E30 ${pdfEscape(title)} ${pdfEscape(number)}</title><style>
+  *{box-sizing:border-box}body{margin:0;background:#eef0f6;font-family:Arial,Helvetica,sans-serif;color:#17153f}.sheet{width:210mm;min-height:297mm;margin:20px auto;background:#fff;padding:18mm 17mm;box-shadow:0 10px 40px rgba(20,16,76,.12);position:relative}.top{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #14104C;padding-bottom:18px}.brand{display:flex;align-items:center;gap:12px}.brand img{width:58px;height:58px;object-fit:contain;border-radius:14px}.logoText{font-size:27px;font-weight:800;letter-spacing:-1px}.subbrand{font-size:12px;color:#6d6b7e;margin-top:3px}.doc{text-align:right}.doc h1{font-size:20px;margin:0 0 6px;color:#14104C}.doc .num{font-size:15px;font-weight:700}.meta{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0}.box{border:1px solid #e1e3ec;border-radius:13px;padding:13px 15px;background:#fbfbfd}.label{font-size:9px;letter-spacing:1.2px;color:#77758a;font-weight:700;margin-top:15px;text-transform:uppercase}.box .label:first-child{margin-top:0}.value{font-size:14px;font-weight:600;margin-top:5px;line-height:1.45;color:#24223f}.value.big{font-size:16px}.mono{letter-spacing:.5px}.content{border:1px solid #e1e3ec;border-radius:14px;padding:16px;margin-top:6px}.total{margin-top:20px;border-radius:15px;background:#14104C;color:#fff;padding:18px 20px;display:flex;justify-content:space-between;align-items:center}.total span{font-size:12px;opacity:.8;text-transform:uppercase;letter-spacing:1px}.total b{font-size:25px}.note{margin-top:15px;padding:12px 14px;border-left:4px solid #14104C;background:#f5f4fb;border-radius:7px;font-size:12px;line-height:1.5}.terms{margin-top:22px;border-top:1px solid #e1e3ec;padding-top:14px;color:#55536a;font-size:10px;line-height:1.5}.terms-title{font-weight:800;color:#24223f;font-size:11px;margin-bottom:7px}.terms ol{padding-left:18px;margin:5px 0}.terms li{margin:3px 0}.footer{position:absolute;bottom:12mm;left:17mm;right:17mm;border-top:1px solid #e1e3ec;padding-top:10px;display:flex;justify-content:space-between;font-size:10px;color:#77758a}.footer b{color:#14104C}@media print{body{background:#fff}.sheet{margin:0;width:210mm;min-height:297mm;box-shadow:none;padding:15mm 15mm}.footer{bottom:9mm}}@page{size:A4;margin:0}
+  </style></head><body><div class="sheet"><div class="top"><div class="brand">${logo?`<img src="${logo}" alt="E30">`:``}<div><div class="logoText">E30</div><div class="subbrand">TÉCNICO DE CELULARES</div></div></div><div class="doc"><h1>${pdfEscape(title)}</h1><div class="num">${pdfEscape(number)}</div><div class="subbrand">Emitido ${pdfEscape(issued)}</div></div></div><div class="meta"><div class="box"><div class="label">Cliente</div><div class="value">${pdfEscape(client||"Consumidor final")}</div>${phone?`<div class="label">Teléfono</div><div class="value">${pdfEscape(phone)}</div>`:""}</div><div class="box"><div class="label">Sucursal</div><div class="value">${pdfEscape(branch.name)}</div><div class="label">Dirección</div><div class="value">${pdfEscape(branch.address)}</div></div></div><div class="content">${rows}</div><div class="total"><span>Total</span><b>${pdfEscape(total)}</b></div>${note?`<div class="note"><b>Estado del equipo</b><br>${pdfEscape(note)}</div>`:""}<div class="terms">${terms}</div><div class="footer"><span>11 4445-8553 · @eberle30</span><b>E30 | Técnico de celulares</b></div></div><script>window.onload=function(){setTimeout(function(){window.print()},250)};<\/script></body></html>`);
+  w.document.close();
+}
+
 async function printBudget(n){
   const o=budgets.find(x=>x.n===n);if(!o)return;
   const ESC="\x1B",LF="\n";let d=ESC+"@";
@@ -1253,6 +1374,10 @@ async function printTicket(n){
     d+="Estado del equipo:"+LF;
     wrap(o.obsEquipo).forEach(x=>d+="  "+x+LF);
   }
+  d+="-----------------------------------------------"+LF;
+  d+=ESC+"E"+"\x01"+"GARANTIA DE LA REPARACION: 30 DIAS"+ESC+"E"+"\x00"+LF;
+  d+="La garantia cubre exclusivamente la reparacion realizada y los componentes o repuestos colocados como parte de ella."+LF;
+  d+="No cubre nuevas fallas ni componentes ajenos al trabajo realizado."+LF;
   d+="-----------------------------------------------"+LF;
   d+=ESC+"E"+"\x01"+"TERMINOS Y CONDICIONES"+ESC+"E"+"\x00"+LF;
   const terms=[

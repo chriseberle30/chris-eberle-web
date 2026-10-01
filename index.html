@@ -25,12 +25,14 @@ textarea{min-height:80px;resize:vertical}.form{display:grid;grid-template-column
 @media(max-width:700px){.app{padding:12px}.form{grid-template-columns:1fr}.result,.order{flex-direction:column;align-items:flex-start}.price{align-self:flex-start}}
 
 .pattern-wrap{display:none;margin-top:10px;padding:12px;border:1px solid var(--line);border-radius:14px;background:#fafafd}
-.pattern-grid{width:210px;height:210px;margin:8px auto;display:grid;grid-template-columns:repeat(3,1fr);gap:0;touch-action:none;user-select:none}
-.pattern-dot{position:relative;display:flex;align-items:center;justify-content:center}
-.pattern-dot::before{content:"";width:48px;height:48px;border:2px solid #aaa;border-radius:50%;background:#fff;box-shadow:0 1px 4px #00000010}
+.pattern-grid{width:280px;height:280px;max-width:100%;margin:12px auto;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:0;touch-action:none;user-select:none;-webkit-user-select:none}
+.pattern-dot{position:relative;display:flex;align-items:center;justify-content:center;min-width:0;min-height:0;touch-action:none}
+.pattern-dot::before{content:"";width:50px;height:50px;border:2px solid #aaa;border-radius:50%;background:#fff;box-shadow:0 1px 4px #00000010;transition:transform .08s ease,background .08s ease,border-color .08s ease}
 .pattern-dot.selected::before{background:var(--blue);border-color:var(--blue)}
 .pattern-dot.selected::after{content:attr(data-num);position:absolute;color:#fff;font-size:12px;font-weight:700}
 .pattern-help{text-align:center;color:var(--muted);font-size:12px}
+.pattern-dot.selected::before{transform:scale(1.05)}
+@media(max-width:700px){.pattern-grid{width:min(300px,86vw);height:min(300px,86vw)}.pattern-dot::before{width:54px;height:54px}}
 
 .stock-low{border-color:#d97706;background:#fffaf0}.stock-zero{border-color:#b42318;background:#fff5f5}.small-muted{font-size:12px;color:var(--muted)}
 ''
@@ -122,6 +124,15 @@ body{background:radial-gradient(circle at 72% -10%,#ffffff 0,#f7f8fc 36%,#f1f3f8
 .admin-unlocked .admin-only{display:flex!important}
 
 /* E30 PREMIUM 04 — dashboard inspired by modern service-management layouts */
+.activity-list{background:rgba(255,255,255,.48);border-radius:18px;overflow:hidden;border:1px solid rgba(225,228,239,.7);box-shadow:0 8px 24px rgba(20,16,76,.035)}
+.activity-row{display:grid;grid-template-columns:34px 48px minmax(0,1fr) 18px;align-items:center;gap:10px;padding:12px 12px;border-bottom:1px solid #eceef3;min-height:62px}
+.activity-row:last-child{border-bottom:0}
+.activity-icon{width:32px;height:32px;border-radius:10px;background:#f1f4fb;color:#315fb5;display:flex;align-items:center;justify-content:center}
+.activity-icon svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.activity-time{font-size:12px;color:#7c8495;font-variant-numeric:tabular-nums}
+.activity-main{min-width:0}.activity-main b{display:block;font-size:13px;color:#202231;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.activity-main span{display:block;margin-top:3px;font-size:11px;color:#8d94a2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.activity-arrow{font-size:24px;line-height:1;color:#9aa2b2;text-align:right}.activity-empty{padding:18px 14px;color:#8b93a2;font-size:13px;text-align:center}.activity-title{margin-top:28px}
+@media(max-width:700px){.activity-row{grid-template-columns:34px 43px minmax(0,1fr) 14px;gap:8px;padding:11px 10px}.activity-main b{font-size:12.5px}.activity-main span{font-size:10.5px}}
 .dashboard-section-title{align-items:center;margin:26px 2px 13px}
 .dashboard-section-title h2{font-size:21px;letter-spacing:-.5px}
 .dashboard-section-title .sub{margin-top:3px}
@@ -232,6 +243,8 @@ qz.security.setSignaturePromise(function(toSign){
 </div>
 <div class="dashboard-section-title"><div><div class="eyebrow">OPERACIÓN</div><h2 style="margin:0">Órdenes de servicio recientes</h2><div class="sub">Equipos que todavía están en proceso.</div></div><button class="dash-view-all" onclick="show('ordenes')">Ver todas <span>→</span></button></div>
 <div id="dashOrders" class="dashboard-orders"></div>
+<div class="dashboard-section-title activity-title"><div><div class="eyebrow">HOY</div><h2 style="margin:0">Actividad de hoy</h2><div class="sub">Últimas acciones realizadas en el sistema.</div></div><button class="dash-view-all" type="button" onclick="show('movimientos')">Ver toda la actividad <span>→</span></button></div>
+<div id="activityList" class="activity-list"></div>
 </section>
 
 <section id="orden" style="display:none"><div class="card"><h2 id="orderFormTitle" style="margin-top:0">Nueva orden</h2>
@@ -532,19 +545,20 @@ const DEFAULT_PRICES=[
 {id:30,marca:"Motorola",modelo:"G31",reparacion:"Módulo",precio:60000,activo:true}
 ];
 
-let prices=[],orders=[],budgets=[],stock=[],sales=[],movements=[],passHash=null,adminPassHash=null,authed=false,adminAuthed=false,afterOrderId=null;
+let prices=[],orders=[],budgets=[],stock=[],sales=[],movements=[],activity=[],passHash=null,adminPassHash=null,authed=false,adminAuthed=false,afterOrderId=null;
 const money=n=>new Intl.NumberFormat("es-AR",{style:"currency",currency:"ARS",maximumFractionDigits:0}).format(n||0);
 
 async function loadAll(attempt){
   attempt=attempt||1;
   try{
-    const [p,o,b,s,v,m,ph,aph,cfg]=await Promise.all([kvGet("e30-prices"),kvGet("e30-orders"),kvGet("e30-budgets"),kvGet("e30-stock"),kvGet("e30-sales"),kvGet("e30-movements"),kvGet("e30-pass"),kvGet("e30-admin-pass"),kvGet("e30-config")]);
+    const [p,o,b,s,v,m,a,ph,aph,cfg]=await Promise.all([kvGet("e30-prices"),kvGet("e30-orders"),kvGet("e30-budgets"),kvGet("e30-stock"),kvGet("e30-sales"),kvGet("e30-movements"),kvGet("e30-activity"),kvGet("e30-pass"),kvGet("e30-admin-pass"),kvGet("e30-config")]);
     prices=(p&&p.length)?p:JSON.parse(JSON.stringify(DEFAULT_PRICES));
     orders=o||[];
     budgets=b||[];
     stock=s||[];
     sales=v||[];
     movements=m||[];
+    activity=a||[];
     passHash=ph;
     adminPassHash=aph;
     if(cfg)businessConfig=Object.assign({},DEFAULT_BUSINESS_CONFIG,cfg);
@@ -560,6 +574,32 @@ function savePrices(){kvSet("e30-prices",prices);}
 function saveStock(){kvSet("e30-stock",stock);}
 function saveSales(){kvSet("e30-sales",sales);}
 function saveMovements(){kvSet("e30-movements",movements);}
+function saveActivity(){kvSet("e30-activity",activity);}
+function localDateTime(){const d=new Date();return {date:d.toLocaleDateString("es-AR"),time:d.toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit",hour12:false}),iso:d.toISOString()};}
+function recordActivity(type,title,detail,ref){
+  const dt=localDateTime();
+  activity.unshift({id:"a"+Date.now()+Math.random().toString(36).slice(2,6),type,title,detail:detail||"",ref:ref??null,fecha:dt.date,hora:dt.time,createdAt:dt.iso});
+  activity=activity.slice(0,300); saveActivity();
+  if(document.getElementById("activityList")) renderActivity();
+}
+function activityIcon(type){
+  const icons={orden:'<svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="16" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',presupuesto:'<svg viewBox="0 0 24 24"><path d="M6 3h12v18H6z"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>',venta:'<svg viewBox="0 0 24 24"><path d="M5 7h14l-1 12H6L5 7Z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>',estado:'<svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></svg>',cobro:'<svg viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="12" rx="2"/><path d="M8 12h8"/></svg>',movimiento:'<svg viewBox="0 0 24 24"><path d="M12 4v16M6 10l6-6 6 6M18 14l-6 6-6-6"/></svg>'};
+  return icons[type]||icons.movimiento;
+}
+function renderActivity(){
+  const el=document.getElementById("activityList"); if(!el)return;
+  const today=new Date().toLocaleDateString("es-AR");
+  let items=(activity||[]).filter(x=>x.fecha===today);
+  const legacy=[];
+  orders.filter(o=>o.fecha===today).forEach(o=>legacy.push({type:"orden",title:`Se creó la orden #${String(o.n).padStart(4,"0")}`,detail:`${(o.marca||"")} ${(o.modelo||"")} · ${o.cliente||"Cliente"}`,ref:o.n,hora:"—"}));
+  budgets.filter(b=>b.emitida===today).forEach(b=>legacy.push({type:"presupuesto",title:`Presupuesto #${String(b.n).padStart(4,"0")} creado`,detail:`${(b.marca||"")} ${(b.modelo||"")} · ${money(b.precio)}`,ref:b.n,hora:"—"}));
+  sales.filter(v=>v.fecha===today).forEach(v=>legacy.push({type:"venta",title:"Venta realizada",detail:`${v.producto||"Producto"} × ${v.cantidad||1} · ${money(v.total)}`,ref:v.n,hora:"—"}));
+  movements.filter(m=>m.fecha===today).forEach(m=>legacy.push({type:m.tipo==="Ingreso"?"cobro":"movimiento",title:m.tipo==="Ingreso"?"Ingreso registrado":"Gasto registrado",detail:`${m.concepto||"Sin concepto"} · ${money(m.importe)}`,ref:m.n,hora:"—"}));
+  const existing=new Set(items.map(x=>`${x.type}:${x.ref??""}`));
+  legacy.forEach(x=>{if(!existing.has(`${x.type}:${x.ref??""}`))items.push(x)});
+  items=items.slice(0,6);
+  el.innerHTML=items.map(x=>`<div class="activity-row"><div class="activity-icon">${activityIcon(x.type)}</div><div class="activity-time">${escapeHtml(x.hora||"—")}</div><div class="activity-main"><b>${escapeHtml(x.title||"Actividad")}</b><span>${escapeHtml(x.detail||"")}</span></div><span class="activity-arrow">›</span></div>`).join("")||'<div class="activity-empty">Todavía no hay actividad registrada hoy.</div>';
+}
 
 function renderLogin(){
   const body=document.getElementById("loginBody");
@@ -569,9 +609,9 @@ function renderLogin(){
       <div style="margin-bottom:10px"><label>Repetir</label><input id="setupPass2" type="password"></div>
       <button class="btn" style="width:100%" onclick="setupPassword()">Crear y entrar</button>`;
   }else{
-    body.innerHTML=`<div style="margin-bottom:10px"><label>Contraseña</label><input id="loginPass" type="password" onkeydown="if(event.key==='Enter')doLogin()"></div>
-      <button class="btn" style="width:100%" onclick="doLogin()">Entrar</button>
-      <div id="loginError" style="color:#b42318;font-size:13px;margin-top:8px"></div>`;
+    body.innerHTML=`<form id="loginForm" autocomplete="on" onsubmit="event.preventDefault();doLogin()"><div style="margin-bottom:10px"><label>Contraseña</label><input id="loginPass" name="password" type="password" autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <button class="btn" style="width:100%" type="submit">Entrar</button>
+      <div id="loginError" style="color:#b42318;font-size:13px;margin-top:8px"></div></form>`;
   }
 }
 async function setupPassword(){
@@ -589,7 +629,7 @@ function enterApp(){
   authed=true;
   document.getElementById("loginScreen").style.display="none";
   document.getElementById("appRoot").style.setProperty("display","block","important");
-  orders.forEach(o=>{if(!o.costos)o.costos=[];});document.getElementById("rMes").value=new Date().toISOString().slice(0,7);renderSearch();renderDashboard();toggleGremioField();applyBusinessConfig();loadSavedLogo();updatePrinterPill();refreshAdminUI();setTimeout(()=>document.getElementById("search")?.focus(),100);setTimeout(restorePrinterReceiver,500);
+  orders.forEach(o=>{if(!o.costos)o.costos=[];});document.getElementById("rMes").value=new Date().toISOString().slice(0,7);renderSearch();renderDashboard();renderActivity();toggleGremioField();applyBusinessConfig();loadSavedLogo();updatePrinterPill();refreshAdminUI();setTimeout(()=>document.getElementById("search")?.focus(),100);setTimeout(restorePrinterReceiver,500);
 }
 (async function init(){
   await loadAll();
@@ -688,8 +728,8 @@ if(editingId){
   saveOrders();window.editingOrderId=null;resetOrder();renderOrders();renderDashboard();show("ordenes");return;
 }
 const n=(orders.length?Math.max(...orders.map(o=>o.n)):0)+1;
-const o={n,cliente:cliente.value,telefono:telefono.value,marca:marca.value,modelo:modelo.value,imei:imei.value,tipoOrden:tipoOrden.value,gremio:gremio.value,local:local.value,desbloqueo:desbloqueo.value,unlockType:unlockMode,patron:pattern.join("-"),estado:estado.value,falla:falla.value,trabajo:trabajo.value,total:+total.value||0,sena:+sena.value||0,pago:pago.value,entrega:entrega.value,obsTecnico:obsTecnico.value,obsEquipo:obsEquipo.value,costos:[],fecha:new Date().toLocaleDateString("es-AR")};
-orders.unshift(o);saveOrders();resetOrder();renderOrders();renderDashboard();show("ordenes");setTimeout(()=>showPrintQuestion(o.n),80);
+const o={n,cliente:cliente.value,telefono:telefono.value,marca:marca.value,modelo:modelo.value,imei:imei.value,tipoOrden:tipoOrden.value,gremio:gremio.value,local:local.value,desbloqueo:desbloqueo.value,unlockType:unlockMode,patron:pattern.join("-"),estado:estado.value,falla:falla.value,trabajo:trabajo.value,total:+total.value||0,sena:+sena.value||0,pago:pago.value,entrega:entrega.value,obsTecnico:obsTecnico.value,obsEquipo:obsEquipo.value,costos:[],fecha:new Date().toLocaleDateString("es-AR"),createdAt:new Date().toISOString()};
+orders.unshift(o);saveOrders();recordActivity("orden",`Se creó la orden #${String(n).padStart(4,"0")}`,`${(o.marca||"")} ${(o.modelo||"")} · ${o.cliente||"Cliente"}`,n);resetOrder();renderOrders();renderDashboard();show("ordenes");setTimeout(()=>showPrintQuestion(o.n),80);
 };
 let pendingPrintOrderId=null;
 function showPrintQuestion(n){
@@ -744,7 +784,7 @@ function renderOrders(){const q=(document.getElementById("orderSearch")?.value||
 const ESTADOS=["Recibido","Pendiente","Esperando repuesto","En reparación","Listo","Entregado","Cancelado"];
 function setStatus(n,val){
   const o=orders.find(x=>x.n===n);if(!o)return;
-  o.estado=val;saveOrders();renderOrders();renderDashboard();
+  const anterior=o.estado;o.estado=val;saveOrders();if(anterior!==val)recordActivity("estado",`Orden #${String(n).padStart(4,"0")} pasó a “${val}”`,`${(o.marca||"")} ${(o.modelo||"")} · ${o.cliente||"Cliente"}`,n);renderOrders();renderDashboard();
   if(val==="Entregado" && (+o.total||0)>0 && orderCostTotal(o)===0){
     setTimeout(()=>{
       const ir=confirm(`Orden #${String(n).padStart(4,"0")} entregada.\n\nTodavía no cargaste los costos de esta reparación.\n\n¿Querés cargarlos ahora?`);
@@ -802,8 +842,8 @@ document.getElementById("budgetForm").onsubmit=e=>{
 e.preventDefault();
 const n=(budgets.length?Math.max(...budgets.map(x=>x.n)):0)+1;
 const issued=new Date(), valid=new Date(issued);valid.setDate(valid.getDate()+7);
-const o={n,cliente:bCliente.value,telefono:bTelefono.value,marca:bMarca.value,modelo:bModelo.value,local:bLocal.value,precio:+bPrecio.value||0,concepto:bConcepto.value,obs:bObs.value,emitida:issued.toLocaleDateString("es-AR"),valida:valid.toLocaleDateString("es-AR")};
-budgets.unshift(o);saveBudgets();resetBudget();renderBudgets();
+const o={n,cliente:bCliente.value,telefono:bTelefono.value,marca:bMarca.value,modelo:bModelo.value,local:bLocal.value,precio:+bPrecio.value||0,concepto:bConcepto.value,obs:bObs.value,emitida:issued.toLocaleDateString("es-AR"),valida:valid.toLocaleDateString("es-AR"),createdAt:new Date().toISOString()};
+budgets.unshift(o);saveBudgets();recordActivity("presupuesto",`Presupuesto #${String(n).padStart(4,"0")} creado`,`${(o.marca||"")} ${(o.modelo||"")} · ${money(o.precio)}`,n);resetBudget();renderBudgets();
 };
 function resetBudget(){document.getElementById("budgetForm").reset();}
 function renderBudgets(){document.getElementById("budgets").innerHTML=budgets.map(o=>`<div class="card"><div class="order"><div><b>PRESUPUESTO #${String(o.n).padStart(4,"0")}</b><h3>${o.cliente}</h3><div>${o.marca} ${o.modelo} · ${o.concepto}</div><div class="sub">${o.local} · ${o.telefono||"Sin teléfono"}</div></div><div><div class="price">${money(o.precio)}</div><div class="sub">Válido hasta ${o.valida}</div></div></div><div class="actions" style="margin-top:12px"><button class="btn" onclick="printBudget(${o.n})">🖨️ Imprimir presupuesto</button><button class="btn secondary" onclick="openClientPDF('budget',${o.n})">PDF / WhatsApp</button><button class="btn danger" onclick="deleteBudget(${o.n})">Eliminar</button></div></div>`).join("")||'<div class="card empty">Todavía no hay presupuestos.</div>';}
@@ -1142,8 +1182,8 @@ document.getElementById("saleForm").onsubmit=e=>{
  const x=stock.find(p=>p.id===+saleProduct.value),qty=+saleQty.value||0,unit=+salePrice.value||0;
  if(!x){alert("Seleccioná un producto.");return;} if(qty<1){alert("La cantidad debe ser mayor a 0.");return;} if(x.cantidad<qty){alert(`No hay stock suficiente. Disponible: ${x.cantidad}.`);return;}
  const now=new Date(),warranty=new Date(now);warranty.setDate(warranty.getDate()+7);
- const sale={n:sales.length?Math.max(...sales.map(s=>s.n))+1:1,productoId:x.id,producto:x.producto,cantidad:qty,unit,total:unit*qty,cliente:saleClient.value.trim(),telefono:salePhone.value.trim(),local:saleLocal.value,pago:salePayment.value,fecha:now.toLocaleDateString("es-AR"),warranty:warranty.toLocaleDateString("es-AR")};
- x.cantidad-=qty;sales.unshift(sale);saveStock();saveSales();resetSaleForm();renderSaleProducts();renderStock();renderSales();
+ const sale={n:sales.length?Math.max(...sales.map(s=>s.n))+1:1,productoId:x.id,producto:x.producto,cantidad:qty,unit,total:unit*qty,cliente:saleClient.value.trim(),telefono:salePhone.value.trim(),local:saleLocal.value,pago:salePayment.value,fecha:now.toLocaleDateString("es-AR"),warranty:warranty.toLocaleDateString("es-AR"),createdAt:now.toISOString()};
+ x.cantidad-=qty;sales.unshift(sale);saveStock();saveSales();recordActivity("venta","Venta realizada",`${sale.producto||"Producto"} × ${sale.cantidad} · ${money(sale.total)}`,sale.n);resetSaleForm();renderSaleProducts();renderStock();renderSales();renderDashboard();
  if(confirm("Venta registrada. ¿Querés imprimir el ticket ahora?"))printSaleTicket(sale.n);
 };
 function renderSales(){
@@ -1203,6 +1243,7 @@ function renderDashboard(){
       <div class="dash-order-side"><span class="status-dot"></span><span class="status-text ${statusClass(o.estado)}">${status}</span></div>
     </div>`;
   }).join("")||'<div class="dashboard-empty"><b>No hay órdenes en curso</b><span>Las reparaciones activas aparecerán acá.</span></div>';
+  renderActivity();
 }
 
 function escapeHtml(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","":"&quot;","'":"&#39;"}[c]));}
@@ -1245,7 +1286,7 @@ function showClientDetail(encoded){
 function addMovement(){
   const amount=+mImporte.value||0;if(amount<=0){alert("Ingresá un importe.");return;}
   const m={n:movements.length?Math.max(...movements.map(x=>x.n))+1:1,tipo:mTipo.value,concepto:mConcepto.value.trim()||"Sin concepto",importe:amount,pago:mPago.value,fecha:new Date().toLocaleDateString("es-AR")};
-  movements.unshift(m);saveMovements();mConcepto.value="";mImporte.value="";renderMovements();renderDashboard();
+  movements.unshift(m);saveMovements();recordActivity(m.tipo==="Ingreso"?"cobro":"movimiento",m.tipo==="Ingreso"?"Ingreso registrado":"Gasto registrado",`${m.concepto||"Sin concepto"} · ${money(m.importe)}`,m.n);mConcepto.value="";mImporte.value="";renderMovements();renderDashboard();
 }
 function renderMovements(){
   const ingresos=movements.filter(m=>m.tipo==="Ingreso").reduce((a,m)=>a+m.importe,0);

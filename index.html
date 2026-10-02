@@ -466,6 +466,16 @@ qz.security.setSignaturePromise(function(toSign){
 <div id="logoPreviewWrap" style="margin-top:14px;display:none"><img id="logoPreview" style="max-width:180px;max-height:90px;object-fit:contain;border:1px solid var(--line);border-radius:14px;padding:8px;background:#fff"></div>
 </div>
 <div class="card">
+<h3 style="margin-top:0">Garantías y plazos</h3>
+<div class="sub" style="margin-bottom:12px">Estos valores se usan automáticamente en tickets, comprobantes y PDF.</div>
+<div class="form">
+<div><label>Garantía de reparaciones (días)</label><input id="cfgRepairWarranty" type="number" min="0" step="1" placeholder="30"></div>
+<div><label>Garantía de accesorios (días)</label><input id="cfgAccessoryWarranty" type="number" min="0" step="1" placeholder="7"></div>
+<div><label>Días para retirar después del aviso</label><input id="cfgPickupDays" type="number" min="0" step="1" placeholder="30"></div>
+<div><label>Días antes de considerar abandono</label><input id="cfgAbandonmentDays" type="number" min="0" step="1" placeholder="90"></div>
+<div class="full"><button class="btn" type="button" onclick="saveBusinessConfig()">Guardar garantías y plazos</button></div>
+</div></div>
+<div class="card">
 <h3 style="margin-top:0">Impresora</h3>
 <div class="sub" style="margin-bottom:12px">La PC puede quedar escuchando trabajos enviados desde el celular.</div>
 <button class="btn" type="button" onclick="togglePrinterReceiver()" id="printerBtn">Activar impresora</button>
@@ -709,17 +719,17 @@ function sideGo(id,btn){show(id,btn);document.querySelectorAll(".side-item").for
 function toggleSideMenu(){document.getElementById("sideMenu").classList.toggle("open");document.getElementById("menuOverlay").classList.toggle("open");}
 function closeSideMenu(){document.getElementById("sideMenu").classList.remove("open");document.getElementById("menuOverlay").classList.remove("open");}
 function focusPriceSearch(btn){sideGo("dashboard",null);const el=document.getElementById("search");if(el){el.focus();el.select();}}
-const DEFAULT_BUSINESS_CONFIG={business:"E30 | Técnico de celulares",phone:"11 4445-8553",instagram:"@eberle30",address:"Demóstenes 3110 — Las Flores",branch2:"Piovano 2960 — Moreno"};
+const DEFAULT_BUSINESS_CONFIG={business:"E30 | Técnico de celulares",phone:"11 4445-8553",instagram:"@eberle30",address:"Demóstenes 3110 — Las Flores",branch2:"Piovano 2960 — Moreno",repairWarrantyDays:30,accessoryWarrantyDays:7,pickupDays:30,abandonmentDays:90};
 let businessConfig=Object.assign({},DEFAULT_BUSINESS_CONFIG);
 async function loadBusinessConfig(){try{const c=await kvGet("e30-config");if(c)businessConfig=Object.assign({},DEFAULT_BUSINESS_CONFIG,c);}catch(e){}applyBusinessConfig();}
 function applyBusinessConfig(){
-  const ids={cfgBusiness:businessConfig.business,cfgPhone:businessConfig.phone,cfgInstagram:businessConfig.instagram,cfgAddress:businessConfig.address,cfgBranch2:businessConfig.branch2};
+  const ids={cfgBusiness:businessConfig.business,cfgPhone:businessConfig.phone,cfgInstagram:businessConfig.instagram,cfgAddress:businessConfig.address,cfgBranch2:businessConfig.branch2,cfgRepairWarranty:businessConfig.repairWarrantyDays,cfgAccessoryWarranty:businessConfig.accessoryWarrantyDays,cfgPickupDays:businessConfig.pickupDays,cfgAbandonmentDays:businessConfig.abandonmentDays};
   Object.entries(ids).forEach(([id,v])=>{const el=document.getElementById(id);if(el)el.value=v||"";});
   const opts=[businessConfig.address,businessConfig.branch2].filter(Boolean);
   document.querySelectorAll("#local,#rLocal").forEach(sel=>{if(!sel)return;const current=sel.value;sel.innerHTML=(sel.id==="rLocal"?'<option value="Todas">Todas</option>':"")+opts.map(x=>`<option>${escapeHtml(x)}</option>`).join("");if([...sel.options].some(o=>o.value===current))sel.value=current;});
 }
 async function saveBusinessConfig(){
-  businessConfig={business:(document.getElementById("cfgBusiness")?.value||DEFAULT_BUSINESS_CONFIG.business).trim(),phone:(document.getElementById("cfgPhone")?.value||DEFAULT_BUSINESS_CONFIG.phone).trim(),instagram:(document.getElementById("cfgInstagram")?.value||DEFAULT_BUSINESS_CONFIG.instagram).trim(),address:(document.getElementById("cfgAddress")?.value||DEFAULT_BUSINESS_CONFIG.address).trim(),branch2:(document.getElementById("cfgBranch2")?.value||DEFAULT_BUSINESS_CONFIG.branch2).trim()};
+  businessConfig={business:(document.getElementById("cfgBusiness")?.value||DEFAULT_BUSINESS_CONFIG.business).trim(),phone:(document.getElementById("cfgPhone")?.value||DEFAULT_BUSINESS_CONFIG.phone).trim(),instagram:(document.getElementById("cfgInstagram")?.value||DEFAULT_BUSINESS_CONFIG.instagram).trim(),address:(document.getElementById("cfgAddress")?.value||DEFAULT_BUSINESS_CONFIG.address).trim(),branch2:(document.getElementById("cfgBranch2")?.value||DEFAULT_BUSINESS_CONFIG.branch2).trim(),repairWarrantyDays:Math.max(0,parseInt(document.getElementById("cfgRepairWarranty")?.value,10)||DEFAULT_BUSINESS_CONFIG.repairWarrantyDays),accessoryWarrantyDays:Math.max(0,parseInt(document.getElementById("cfgAccessoryWarranty")?.value,10)||DEFAULT_BUSINESS_CONFIG.accessoryWarrantyDays),pickupDays:Math.max(0,parseInt(document.getElementById("cfgPickupDays")?.value,10)||DEFAULT_BUSINESS_CONFIG.pickupDays),abandonmentDays:Math.max(0,parseInt(document.getElementById("cfgAbandonmentDays")?.value,10)||DEFAULT_BUSINESS_CONFIG.abandonmentDays)};
   await kvSet("e30-config",businessConfig);applyBusinessConfig();document.getElementById("cfgSaved").textContent="Guardado ✓";setTimeout(()=>{const e=document.getElementById("cfgSaved");if(e)e.textContent="";},1800);
 }
 
@@ -803,7 +813,7 @@ function orderCard(o){const ct=orderCostTotal(o),missing=ct===0&&(+o.total||0)>0
 </div><div><select onchange="setStatus(${o.n},this.value)" style="width:auto;padding:6px 8px;font-size:12px;border-radius:8px">${ESTADOS.map(s=>`<option ${o.estado===s?"selected":""}>${s}</option>`).join("")}</select><div style="margin-top:6px"><span class="status-badge ${statusClass(o.estado)}">${o.estado}</span></div><div class="price">${money(o.total)}</div></div></div><hr>
 <div><b>Seña:</b> ${money(o.sena)} · <b>Saldo:</b> ${money(Math.max(0,o.total-o.sena))}</div>
 <div class="cost-line ${missing?"cost-warning":""}"><b>Costos:</b> ${missing?"Falta cargar":money(ct)}${missing?"":" · <b>Ganancia bruta:</b> "+money(Math.max(0,(+o.total||0)-ct))}</div>${o.obsEquipo?`<div class="sub" style="margin-top:7px"><b>Estado del equipo:</b> ${o.obsEquipo}</div>`:""}
-<div class="actions" style="margin-top:12px"><button class="btn secondary" type="button" onclick="editOrder(${o.n})">Editar</button><button class="btn secondary admin-cost-btn" type="button" onclick="adminManageCosts(${o.n})" style="display:${adminAuthed?"inline-flex":"none"}">Costos</button><button class="btn" onclick="printTicket(${o.n})">Ticket cliente</button><button class="btn secondary" onclick="openClientPDF('order',${o.n})">PDF / WhatsApp</button><button class="btn secondary" onclick="printTechnician(${o.n})">Orden técnico</button><button class="btn danger" onclick="deleteOrder(${o.n})">Eliminar</button></div></div>`}
+<div class="actions" style="margin-top:12px"><button class="btn secondary" type="button" onclick="editOrder(${o.n})">Editar</button><button class="btn secondary admin-cost-btn" type="button" onclick="adminManageCosts(${o.n})" style="display:${adminAuthed?"inline-flex":"none"}">Costos</button><button class="btn" onclick="printTicket(${o.n})">Ticket cliente</button>${o.estado==="Entregado"?`<button class="btn secondary" onclick="printDeliveryReceipt(${o.n})">Orden de entrega</button>`:""}<button class="btn secondary" onclick="openClientPDF('order',${o.n})">PDF / WhatsApp</button><button class="btn secondary" onclick="printTechnician(${o.n})">Orden técnico</button><button class="btn danger" onclick="deleteOrder(${o.n})">Eliminar</button></div></div>`}
 
 function renderOrders(){const q=(document.getElementById("orderSearch")?.value||"").toLowerCase();const arr=orders.filter(orderVisible).filter(o=>JSON.stringify(o).toLowerCase().includes(q));document.getElementById("orders").innerHTML=arr.map(orderCard).join("")||'<div class="card empty">No hay órdenes.</div>'; }
 const ESTADOS=["Recibido","Pendiente","Esperando repuesto","En reparación","Listo","Entregado","Cancelado"];
@@ -1251,7 +1261,7 @@ document.getElementById("saleForm").onsubmit=e=>{
  e.preventDefault();
  const x=stock.find(p=>p.id===+saleProduct.value),qty=+saleQty.value||0,unit=+salePrice.value||0;
  if(!x){alert("Seleccioná un producto.");return;} if(qty<1){alert("La cantidad debe ser mayor a 0.");return;} if(x.cantidad<qty){alert(`No hay stock suficiente. Disponible: ${x.cantidad}.`);return;}
- const now=new Date(),warranty=new Date(now);warranty.setDate(warranty.getDate()+7);
+ const now=new Date(),warranty=new Date(now);warranty.setDate(warranty.getDate()+businessConfig.accessoryWarrantyDays);
  const sale={n:sales.length?Math.max(...sales.map(s=>s.n))+1:1,productoId:x.id,producto:x.producto,cantidad:qty,unit,total:unit*qty,cliente:saleClient.value.trim(),telefono:salePhone.value.trim(),local:saleLocal.value,pago:salePayment.value,fecha:now.toLocaleDateString("es-AR"),warranty:warranty.toLocaleDateString("es-AR"),createdAt:now.toISOString()};
  x.cantidad-=qty;sales.unshift(sale);saveStock();saveSales();recordActivity("venta","Venta realizada",`${sale.producto||"Producto"} × ${sale.cantidad} · ${money(sale.total)}`,sale.n);resetSaleForm();renderSaleProducts();renderStock();renderSales();renderDashboard();
  if(confirm("Venta registrada. ¿Querés imprimir el ticket ahora?"))printSaleTicket(sale.n);
@@ -1282,7 +1292,7 @@ async function printSaleTicket(n){
   d+="Producto: "+escTicketText(s.producto)+LF+"Cantidad: "+s.cantidad+LF+"Precio unit.: "+money(s.unit)+LF;
   d+="-----------------------------------------------"+LF;
   d+=ESC+"E"+"\x01"+"TOTAL: "+money(s.total)+ESC+"E"+"\x00"+LF+"Pago: "+escTicketText(s.pago)+LF;
-  d+="-----------------------------------------------"+LF+"GARANTIA: 7 DIAS"+LF+"Valida hasta: "+escTicketText(s.warranty)+LF;
+  d+="-----------------------------------------------"+LF+"GARANTIA: "+businessConfig.accessoryWarrantyDays+" DIAS"+LF+"Valida hasta: "+escTicketText(s.warranty)+LF;
   d+="-----------------------------------------------"+LF;
   escWrap("La garantia corresponde al accesorio vendido y cubre fallas de funcionamiento. No cubre danos por golpes, humedad, uso indebido o manipulacion.",46).forEach(x=>d+=x+LF);
   d+="-----------------------------------------------"+LF+"Conserve este comprobante"+LF+LF+LF;
@@ -1484,7 +1494,7 @@ function openClientPDF(type,n){
     const b=branchInfo(o.local); title="ORDEN DE SERVICIO"; number="#"+String(o.n).padStart(4,"0"); client=o.cliente; phone=o.telefono; branch=b;
     rows=`<div class="label">EQUIPO</div><div class="value">${pdfEscape((o.marca||"")+" "+(o.modelo||""))}</div>${o.imei?`<div class="label">IMEI</div><div class="value mono">${pdfEscape(o.imei)}</div>`:""}<div class="label">FALLA INFORMADA</div><div class="value">${pdfEscape(o.falla||"-")}</div><div class="label">TRABAJO</div><div class="value">${pdfEscape(o.trabajo||"-")}</div>${o.entrega?`<div class="label">ENTREGA ESTIMADA</div><div class="value">${pdfEscape(o.entrega)}</div>`:""}`;
     total=pdfMoney(o.total); note=o.obsEquipo||"";
-    terms=`<div class="terms-title">Términos y condiciones</div><ol><li>Este comprobante es el único válido para retirar el equipo.</li><li>Una vez notificada la finalización, el equipo deberá retirarse dentro de 30 días. Vencido ese plazo, podrá cobrarse estadía. A los 90 días, podrá venderse para cubrir gastos.</li><li>El diagnóstico puede requerir desarme. Equipos con líquido o golpes no cuentan con garantía asegurada.</li><li><b>Garantía de la reparación: 30 días.</b> Cubre exclusivamente la reparación realizada y los componentes o repuestos colocados como parte de ella. No cubre nuevas fallas ni componentes ajenos al trabajo realizado.</li><li>El cliente declara ser propietario o estar autorizado por su propietario.</li><li>No nos responsabilizamos por pérdida de información o datos. Se recomienda realizar copia de seguridad.</li></ol>`;
+    terms=`<div class="terms-title">Términos y condiciones</div><ol><li>Este comprobante es el único válido para retirar el equipo.</li><li>Una vez notificada la finalización, el equipo deberá retirarse dentro de ${businessConfig.pickupDays} días. Vencido ese plazo, podrá cobrarse estadía. A los ${businessConfig.abandonmentDays} días, podrá venderse para cubrir gastos.</li><li>El diagnóstico puede requerir desarme. Equipos con líquido o golpes no cuentan con garantía asegurada.</li><li><b>Garantía de la reparación: ${businessConfig.repairWarrantyDays} días.</b> Cubre exclusivamente la reparación realizada y los componentes o repuestos colocados como parte de ella. No cubre nuevas fallas ni componentes ajenos al trabajo realizado.</li><li>El cliente declara ser propietario o estar autorizado por su propietario.</li><li>No nos responsabilizamos por pérdida de información o datos. Se recomienda realizar copia de seguridad.</li></ol>`;
   }else if(type==="sale"){
     const s=sales.find(x=>x.n===n); if(!s)return;
     const b=branchInfo(s.local); title="COMPROBANTE DE VENTA"; number="#"+String(s.n).padStart(4,"0"); client=s.cliente||"Consumidor final"; phone=s.telefono||""; branch=b;
@@ -1600,7 +1610,7 @@ async function printDeliveryReceipt(n){
   d+="Sena:  "+money(o.sena)+LF;
   d+="Saldo: "+money(saldo)+LF;
   d+="-----------------------------------------------"+LF;
-  d+=ESC+"E"+"\x01"+"GARANTIA DE LA REPARACION: 30 DIAS"+ESC+"E"+"\x00"+LF;
+  d+=ESC+"E"+"\x01"+"GARANTIA DE LA REPARACION: "+businessConfig.repairWarrantyDays+" DIAS"+ESC+"E"+"\x00"+LF;
   wrap("La garantia cubre exclusivamente la reparacion realizada y los componentes o repuestos colocados como parte de ella.").forEach(x=>d+=x+LF);
   wrap("No cubre nuevas fallas, danos, humedad, manipulacion por terceros ni componentes ajenos al trabajo realizado, sin perjuicio de los derechos que correspondan por ley.").forEach(x=>d+=x+LF);
   d+="-----------------------------------------------"+LF;
@@ -1656,14 +1666,14 @@ async function printTicket(n){
     wrap(o.obsEquipo).forEach(x=>d+="  "+x+LF);
   }
   d+="-----------------------------------------------"+LF;
-  d+=ESC+"E"+"\x01"+"GARANTIA DE LA REPARACION: 30 DIAS"+ESC+"E"+"\x00"+LF;
+  d+=ESC+"E"+"\x01"+"GARANTIA DE LA REPARACION: "+businessConfig.repairWarrantyDays+" DIAS"+ESC+"E"+"\x00"+LF;
   d+="La garantia cubre exclusivamente la reparacion realizada y los componentes o repuestos colocados como parte de ella."+LF;
   d+="No cubre nuevas fallas ni componentes ajenos al trabajo realizado."+LF;
   d+="-----------------------------------------------"+LF;
   d+=ESC+"E"+"\x01"+"TERMINOS Y CONDICIONES"+ESC+"E"+"\x00"+LF;
   const terms=[
     "1. Este comprobante es el unico valido para retirar el equipo.",
-    "2. Una vez notificada la finalizacion, el equipo debera retirarse dentro de 30 dias. Vencido ese plazo, podra cobrarse estadia. A los 90 dias, podra venderse para cubrir gastos.",
+    "2. Una vez notificada la finalizacion, el equipo debera retirarse dentro de "+businessConfig.pickupDays+" dias. Vencido ese plazo, podra cobrarse estadia. A los "+businessConfig.abandonmentDays+" dias, podra venderse para cubrir gastos.",
     "3. El diagnostico puede requerir desarme. Equipos con liquido o golpes no cuentan con garantia asegurada.",
     "4. La garantia cubre exclusivamente la reparacion realizada y no otras fallas o componentes.",
     "5. El cliente declara ser propietario o estar autorizado por su propietario.",

@@ -803,7 +803,7 @@ function orderCard(o){const ct=orderCostTotal(o),missing=ct===0&&(+o.total||0)>0
 </div><div><select onchange="setStatus(${o.n},this.value)" style="width:auto;padding:6px 8px;font-size:12px;border-radius:8px">${ESTADOS.map(s=>`<option ${o.estado===s?"selected":""}>${s}</option>`).join("")}</select><div style="margin-top:6px"><span class="status-badge ${statusClass(o.estado)}">${o.estado}</span></div><div class="price">${money(o.total)}</div></div></div><hr>
 <div><b>Seña:</b> ${money(o.sena)} · <b>Saldo:</b> ${money(Math.max(0,o.total-o.sena))}</div>
 <div class="cost-line ${missing?"cost-warning":""}"><b>Costos:</b> ${missing?"Falta cargar":money(ct)}${missing?"":" · <b>Ganancia bruta:</b> "+money(Math.max(0,(+o.total||0)-ct))}</div>${o.obsEquipo?`<div class="sub" style="margin-top:7px"><b>Estado del equipo:</b> ${o.obsEquipo}</div>`:""}
-<div class="actions" style="margin-top:12px"><button class="btn secondary" type="button" onclick="editOrder(${o.n})">Editar</button><button class="btn secondary admin-cost-btn" type="button" onclick="adminManageCosts(${o.n})" style="display:${adminAuthed?"inline-flex":"none"}">Costos</button><button class="btn" onclick="printTicket(${o.n})">Ticket cliente</button><button class="btn secondary" onclick="openClientPDF('order',${o.n})">PDF / WhatsApp</button><button class="btn secondary" onclick="printTechnician(${o.n})">Orden técnico</button><button class="btn danger" onclick="deleteOrder(${o.n})">Eliminar</button></div></div>`}
+<div class="actions" style="margin-top:12px"><button class="btn secondary" type="button" onclick="editOrder(${o.n})">Editar</button><button class="btn secondary admin-cost-btn" type="button" onclick="adminManageCosts(${o.n})" style="display:${adminAuthed?"inline-flex":"none"}">Costos</button><button class="btn" onclick="printTicket(${o.n})">Ticket cliente</button><button class="btn secondary" onclick="openClientPDF('order',${o.n})">PDF / WhatsApp</button><button class="btn secondary" onclick="printTechnician(${o.n})">Orden técnico</button>${o.estado==="Entregado"?`<button class="btn secondary" onclick="printDeliveryReceipt(${o.n})">Orden de entrega</button>`:""}<button class="btn danger" onclick="deleteOrder(${o.n})">Eliminar</button></div></div>`}
 
 function renderOrders(){const q=(document.getElementById("orderSearch")?.value||"").toLowerCase();const arr=orders.filter(orderVisible).filter(o=>JSON.stringify(o).toLowerCase().includes(q));document.getElementById("orders").innerHTML=arr.map(orderCard).join("")||'<div class="card empty">No hay órdenes.</div>'; }
 const ESTADOS=["Recibido","Pendiente","Esperando repuesto","En reparación","Listo","Entregado","Cancelado"];
@@ -1215,6 +1215,7 @@ async function printTechnician(n){
   escWrap(o.obsTecnico||"Sin observaciones internas.",46).forEach(x=>d+=x+LF);
   d+="-----------------------------------------------"+LF;
   d+="Total: "+money(o.total)+LF+"Sena: "+money(o.sena)+LF+"Saldo: "+money(saldo)+LF+LF+LF;
+  d+="\x1D\x56\x42\x08";
   await qzPrintRaw(d,`E30 Orden tecnica #${o.n}`);
 }
 
@@ -1286,6 +1287,7 @@ async function printSaleTicket(n){
   d+="-----------------------------------------------"+LF;
   escWrap("La garantia corresponde al accesorio vendido y cubre fallas de funcionamiento. No cubre danos por golpes, humedad, uso indebido o manipulacion.",46).forEach(x=>d+=x+LF);
   d+="-----------------------------------------------"+LF+"Conserve este comprobante"+LF+LF+LF;
+  d+="\x1D\x56\x42\x08";
   await qzPrintRaw(d,`E30 Venta #${s.n}`);
 }
 
@@ -1564,6 +1566,7 @@ async function printBudget(n){
   d+="-----------------------------------------------"+LF;
   escWrap("Presupuesto valido por 7 dias. Precio sujeto a disponibilidad y variacion de costos de repuestos.",46).forEach(x=>d+=x+LF);
   d+="-----------------------------------------------"+LF+"Conserve este comprobante"+LF+LF+LF;
+  d+="\x1D\x56\x42\x08";
   await qzPrintRaw(d,`E30 Presupuesto #${o.n}`);
 }
 
@@ -1611,9 +1614,8 @@ async function printDeliveryReceipt(n){
   d+="-----------------------------------------------"+LF;
   wrap("Este comprobante acredita la entrega del equipo. Conservelo junto con el comprobante de ingreso si necesita realizar una consulta posterior.").forEach(x=>d+=x+LF);
   // Feed suficiente para que el papel salga del cabezal antes del corte.
-  d+=LF+LF+LF+LF;
-  // Corte completo ESC/POS para XP-80C.
-  d+="\x1D\x56\x00";
+  // Avanza el papel y luego ejecuta corte completo. XP-80C soporta GS V 66 n.
+  d+="\x1D\x56\x42\x08";
   await qzPrintRaw(d,`E30 Comprobante entrega #${o.n}`);
 }
 
@@ -1675,6 +1677,7 @@ async function printTicket(n){
   terms.forEach(t=>wrap(t).forEach(x=>d+=x+LF));
   d+="-----------------------------------------------"+LF;
   d+=ESC+"a"+"\x01"+"Conserve este comprobante"+LF+LF+LF+LF;
+  d+="\x1D\x56\x42\x08";
   await qzPrintRaw(d,`E30 Orden #${o.n}`);
 }
 </script>

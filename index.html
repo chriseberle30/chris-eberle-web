@@ -794,20 +794,48 @@ function setStatus(n,val){
   if(anterior!==val)recordActivity("estado",`Orden #${String(n).padStart(4,"0")} pasó a “${val}”`,`${(o.marca||"")} ${(o.modelo||"")} · ${o.cliente||"Cliente"}`,n);
   renderOrders();renderDashboard();
   if(val==="Entregado" && anterior!=="Entregado"){
-    setTimeout(()=>{
-      const imprimir=confirm(`Orden #${String(n).padStart(4,"0")} entregada.\n\n¿Querés imprimir el comprobante de entrega para el cliente?`);
-      if(imprimir) printDeliveryReceipt(n);
-      else if((+o.total||0)>0 && orderCostTotal(o)===0){
-        const ir=confirm(`Todavía no cargaste los costos de esta reparación.\n\n¿Querés cargarlos ahora?`);
-        if(ir) manageCosts(n);
-      }
-    },80);
-  }else if(val==="Entregado" && (+o.total||0)>0 && orderCostTotal(o)===0){
-    setTimeout(()=>{
-      const ir=confirm(`Orden #${String(n).padStart(4,"0")} entregada.\n\nTodavía no cargaste los costos de esta reparación.\n\n¿Querés cargarlos ahora?`);
-      if(ir) manageCosts(n);
-    },50);
+    showDeliveryModal(n);
   }
+}
+function showDeliveryModal(n){
+  const o=orders.find(x=>x.n===n); if(!o)return;
+  const modal=document.getElementById("deliveryPrintModal");
+  const text=document.getElementById("deliveryPrintText");
+  if(!modal||!text){
+    printDeliveryReceipt(n);
+    return;
+  }
+  modal.dataset.order=n;
+  text.textContent=`La orden #${String(n).padStart(4,"0")} fue entregada. ¿Querés imprimir el comprobante de entrega para el cliente?`;
+  modal.style.display="flex";
+}
+function closeDeliveryModal(){
+  const m=document.getElementById("deliveryPrintModal");if(m)m.style.display="none";
+}
+function deliveryPrintYes(){
+  const m=document.getElementById("deliveryPrintModal");const n=Number(m?.dataset.order||0);
+  closeDeliveryModal();
+  if(n)printDeliveryReceipt(n);
+  const o=orders.find(x=>x.n===n);
+  if(o && (+o.total||0)>0 && orderCostTotal(o)===0)setTimeout(()=>showPendingCostsModal(n),250);
+}
+function deliveryPrintNo(){
+  const m=document.getElementById("deliveryPrintModal");const n=Number(m?.dataset.order||0);
+  closeDeliveryModal();
+  const o=orders.find(x=>x.n===n);
+  if(o && (+o.total||0)>0 && orderCostTotal(o)===0)setTimeout(()=>showPendingCostsModal(n),250);
+}
+function showPendingCostsModal(n){
+  const o=orders.find(x=>x.n===n);if(!o)return;
+  const modal=document.getElementById("pendingCostsModal");
+  if(!modal){return;}
+  modal.dataset.order=n;
+  modal.style.display="flex";
+}
+function closePendingCostsModal(){const m=document.getElementById("pendingCostsModal");if(m)m.style.display="none";}
+function pendingCostsYes(){
+  const m=document.getElementById("pendingCostsModal");const n=Number(m?.dataset.order||0);
+  closePendingCostsModal();if(n)manageCosts(n);
 }
 function deleteOrder(n){if(confirm("¿Eliminar la orden?")){orders=orders.filter(o=>o.n!==n);saveOrders();renderOrders();}}
 function toggleUnlock(n,b){
@@ -1607,5 +1635,28 @@ async function printTicket(n){
   await qzPrintRaw(d,`E30 Orden #${o.n}`);
 }
 </script>
+
+<div id="deliveryPrintModal" class="modal-back" style="display:none;z-index:99999">
+  <div class="modal" style="max-width:430px">
+    <div style="width:42px;height:42px;border-radius:12px;background:#14104C;color:#fff;display:flex;align-items:center;justify-content:center;margin-bottom:14px;font-size:20px">✓</div>
+    <h2 style="margin:0 0 8px">Orden entregada</h2>
+    <div id="deliveryPrintText" class="sub" style="line-height:1.5;margin-bottom:20px"></div>
+    <div class="actions" style="justify-content:flex-end">
+      <button class="btn secondary" type="button" onclick="deliveryPrintNo()">Ahora no</button>
+      <button class="btn" type="button" onclick="deliveryPrintYes()">Imprimir comprobante</button>
+    </div>
+  </div>
+</div>
+<div id="pendingCostsModal" class="modal-back" style="display:none;z-index:99998">
+  <div class="modal" style="max-width:430px">
+    <div style="width:42px;height:42px;border-radius:12px;background:#f4f5f7;color:#14104C;display:flex;align-items:center;justify-content:center;margin-bottom:14px;font-size:19px">$</div>
+    <h2 style="margin:0 0 8px">Costos pendientes</h2>
+    <div class="sub" style="line-height:1.5;margin-bottom:20px">Esta reparación todavía no tiene costos cargados. ¿Querés cargarlos ahora?</div>
+    <div class="actions" style="justify-content:flex-end">
+      <button class="btn secondary" type="button" onclick="closePendingCostsModal()">Ahora no</button>
+      <button class="btn" type="button" onclick="pendingCostsYes()">Cargar costos</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>

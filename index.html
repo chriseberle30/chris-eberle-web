@@ -799,18 +799,30 @@ function setStatus(n,val){
 }
 function showDeliveryModal(n){
   const o=orders.find(x=>x.n===n); if(!o)return;
-  const modal=document.getElementById("deliveryPrintModal");
-  const text=document.getElementById("deliveryPrintText");
-  if(!modal||!text){
-    printDeliveryReceipt(n);
-    return;
+  let modal=document.getElementById("deliveryPrintModal");
+  if(!modal){
+    modal=document.createElement("div");
+    modal.id="deliveryPrintModal";
+    modal.className="modal-back";
+    modal.style.cssText="display:flex;position:fixed;inset:0;z-index:2147483647;background:rgba(10,12,20,.48);align-items:center;justify-content:center;padding:20px;";
+    modal.innerHTML=`<div class="modal" style="max-width:430px;width:100%;background:#fff;border-radius:18px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.25)">
+      <div style="width:42px;height:42px;border-radius:12px;background:#14104C;color:#fff;display:flex;align-items:center;justify-content:center;margin-bottom:14px;font-size:20px">✓</div>
+      <h2 style="margin:0 0 8px">Orden entregada</h2>
+      <div id="deliveryPrintText" style="line-height:1.5;margin-bottom:20px;color:#667085"></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button type="button" class="btn secondary" onclick="deliveryPrintNo()">Ahora no</button>
+        <button type="button" class="btn" onclick="deliveryPrintYes()">Imprimir comprobante</button>
+      </div>
+    </div>`;
+    document.body.appendChild(modal);
   }
-  modal.dataset.order=n;
-  text.textContent=`La orden #${String(n).padStart(4,"0")} fue entregada. ¿Querés imprimir el comprobante de entrega para el cliente?`;
+  modal.dataset.order=String(n);
+  const text=modal.querySelector("#deliveryPrintText");
+  if(text)text.textContent=`La orden #${String(n).padStart(4,"0")} fue entregada. ¿Querés imprimir el comprobante de entrega para el cliente?`;
   modal.style.display="flex";
 }
 function closeDeliveryModal(){
-  const m=document.getElementById("deliveryPrintModal");if(m)m.style.display="none";
+  const m=document.getElementById("deliveryPrintModal");if(m){m.style.display="none";m.removeAttribute("data-order");}
 }
 function deliveryPrintYes(){
   const m=document.getElementById("deliveryPrintModal");const n=Number(m?.dataset.order||0);

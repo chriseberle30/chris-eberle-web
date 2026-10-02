@@ -1215,7 +1215,6 @@ async function printTechnician(n){
   escWrap(o.obsTecnico||"Sin observaciones internas.",46).forEach(x=>d+=x+LF);
   d+="-----------------------------------------------"+LF;
   d+="Total: "+money(o.total)+LF+"Sena: "+money(o.sena)+LF+"Saldo: "+money(saldo)+LF+LF+LF;
-  d+="\x1D\x56\x42\x08";
   await qzPrintRaw(d,`E30 Orden tecnica #${o.n}`);
 }
 
@@ -1287,7 +1286,6 @@ async function printSaleTicket(n){
   d+="-----------------------------------------------"+LF;
   escWrap("La garantia corresponde al accesorio vendido y cubre fallas de funcionamiento. No cubre danos por golpes, humedad, uso indebido o manipulacion.",46).forEach(x=>d+=x+LF);
   d+="-----------------------------------------------"+LF+"Conserve este comprobante"+LF+LF+LF;
-  d+="\x1D\x56\x42\x08";
   await qzPrintRaw(d,`E30 Venta #${s.n}`);
 }
 
@@ -1566,15 +1564,20 @@ async function printBudget(n){
   d+="-----------------------------------------------"+LF;
   escWrap("Presupuesto valido por 7 dias. Precio sujeto a disponibilidad y variacion de costos de repuestos.",46).forEach(x=>d+=x+LF);
   d+="-----------------------------------------------"+LF+"Conserve este comprobante"+LF+LF+LF;
-  d+="\x1D\x56\x42\x08";
   await qzPrintRaw(d,`E30 Presupuesto #${o.n}`);
 }
 
 async function printDeliveryReceipt(n){
   const o=orders.find(x=>x.n===n); if(!o)return;
-  const saldo=Math.max(0,(o.total||0)-(o.sena||0));
+  const total=Number(o.total)||0;
+  const sena=Number(o.sena)||0;
+  const saldo=Math.max(0,total-sena);
   const clean=(v)=>String(v??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[\r\n]+/g," ").trim();
-  const wrap=(txt,width=48)=>{
+  const moneyTicket=(v)=>{
+    const n=Number(v)||0;
+    return "$ "+Math.round(n).toLocaleString("es-AR").replace(/\u00A0/g,".");
+  };
+  const wrap=(txt,width=46)=>{
     txt=clean(txt); if(!txt)return [""];
     const words=txt.split(/\s+/),out=[];let line="";
     for(const w of words){
@@ -1584,14 +1587,16 @@ async function printDeliveryReceipt(n){
     }
     if(line)out.push(line);return out;
   };
-  const ESC="\x1B",LF="\n";
+  const ESC="\x1B",GS="\x1D",LF="\n";
   const fechaEntrega=o.entregadoAt?new Date(o.entregadoAt).toLocaleString("es-AR",{dateStyle:"short",timeStyle:"short"}):new Date().toLocaleString("es-AR",{dateStyle:"short",timeStyle:"short"});
+  const localText=String(o.local||"").toLowerCase().includes("moreno")?"Piovano 2960 - Moreno":"Demostenes 3110 - Las Flores";
   let d=ESC+"@";
-  d+=ESC+"a"+"\x01"+ESC+"E"+"\x01"+"E30 | TECNICO DE CELULARES"+ESC+"E"+"\x00"+LF;
-  d+=clean(o.local)+LF;
+  d+=ESC+"t"+"\x00";
+  d+=ESC+"a"+"\x01"+"E30 | TECNICO DE CELULARES"+LF;
+  d+=localText+LF;
   d+="Tel: "+clean(businessConfig.phone)+"  Instagram: "+clean(businessConfig.instagram)+LF;
   d+="-----------------------------------------------"+LF;
-  d+=ESC+"E"+"\x01"+"COMPROBANTE DE ENTREGA"+ESC+"E"+"\x00"+LF;
+  d+="COMPROBANTE DE ENTREGA"+LF;
   d+="ORDEN #"+String(o.n).padStart(4,"0")+LF;
   d+="Entrega: "+fechaEntrega+LF;
   d+="-----------------------------------------------"+LF;
@@ -1599,23 +1604,23 @@ async function printDeliveryReceipt(n){
   d+="Tel: "+clean(o.telefono)+LF;
   d+="Equipo: "+clean((o.marca||"")+" "+(o.modelo||""))+LF;
   if(o.imei)d+="IMEI: "+clean(o.imei)+LF;
-  d+="Total: "+money(o.total)+LF;
-  d+="Sena:  "+money(o.sena)+LF;
-  d+="Saldo: "+money(saldo)+LF;
+  d+="Total: "+moneyTicket(total)+LF;
+  d+="Sena:  "+moneyTicket(sena)+LF;
+  d+="Saldo: "+moneyTicket(saldo)+LF;
   d+="-----------------------------------------------"+LF;
-  d+=ESC+"E"+"\x01"+"GARANTIA DE LA REPARACION: 30 DIAS"+ESC+"E"+"\x00"+LF;
+  d+="GARANTIA DE LA REPARACION: 30 DIAS"+LF;
   wrap("La garantia cubre exclusivamente la reparacion realizada y los componentes o repuestos colocados como parte de ella.").forEach(x=>d+=x+LF);
   wrap("No cubre nuevas fallas, danos, humedad, manipulacion por terceros ni componentes ajenos al trabajo realizado, sin perjuicio de los derechos que correspondan por ley.").forEach(x=>d+=x+LF);
   d+="-----------------------------------------------"+LF;
-  d+=ESC+"E"+"\x01"+"CONSTANCIA DE ENTREGA"+ESC+"E"+"\x00"+LF;
+  d+="CONSTANCIA DE ENTREGA"+LF;
   wrap("El cliente declara recibir el equipo correspondiente a esta orden y deja constancia de su entrega.").forEach(x=>d+=x+LF);
-  d+="\nFirma del cliente:________________________"+LF+LF;
+  d+="Firma del cliente:________________________"+LF+LF;
   d+="Aclaracion: ______________________________"+LF;
   d+="-----------------------------------------------"+LF;
   wrap("Este comprobante acredita la entrega del equipo. Conservelo junto con el comprobante de ingreso si necesita realizar una consulta posterior.").forEach(x=>d+=x+LF);
-  // Feed suficiente para que el papel salga del cabezal antes del corte.
-  // Avanza el papel y luego ejecuta corte completo. XP-80C soporta GS V 66 n.
-  d+="\x1D\x56\x42\x08";
+  d+=LF+LF+LF+LF;
+  d+=ESC+"d"+"\x07";
+  d+=GS+"V"+"\x00";
   await qzPrintRaw(d,`E30 Comprobante entrega #${o.n}`);
 }
 
@@ -1677,7 +1682,6 @@ async function printTicket(n){
   terms.forEach(t=>wrap(t).forEach(x=>d+=x+LF));
   d+="-----------------------------------------------"+LF;
   d+=ESC+"a"+"\x01"+"Conserve este comprobante"+LF+LF+LF+LF;
-  d+="\x1D\x56\x42\x08";
   await qzPrintRaw(d,`E30 Orden #${o.n}`);
 }
 </script>

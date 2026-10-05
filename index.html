@@ -232,6 +232,10 @@ body{background:radial-gradient(circle at 72% -10%,#ffffff 0,#f7f8fc 36%,#f1f3f8
   .e30-bottom-nav .more-dot{font-size:22px;line-height:18px;height:21px;letter-spacing:1px}
   .global-search-btn{width:40px;height:40px}.topbar .printer-pill{display:none}.payment-summary{grid-template-columns:1fr 1fr}.payment-summary .payment-box:last-child{grid-column:1/-1}
 }
+
+/* E30: navegación inferior móvil retirada por ahora. */
+.e30-bottom-nav{display:none!important}
+@media(max-width:700px){body{padding-bottom:0!important}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.3.0/qz-tray.js"></script>
 <script>
@@ -515,13 +519,6 @@ qz.security.setSignaturePromise(function(toSign){
 </div>
 
 
-<nav id="e30BottomNav" class="e30-bottom-nav" aria-label="Navegación rápida" style="display:none">
-  <button type="button" onclick="sideGo('dashboard')"><svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"></path><path d="M5.5 10.5V20h13v-9.5"></path><path d="M9.5 20v-5h5v5"></path></svg><span>Inicio</span></button>
-  <button type="button" class="active" onclick="sideGo('ordenes')"><svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="16" rx="2"></rect><path d="M8 8h8M8 12h8M8 16h5"></path></svg><span>Órdenes</span></button>
-  <button type="button" class="center" onclick="focusPriceSearch()"><span class="nav-float"><svg viewBox="0 0 24 24"><path d="M5 7.5 10.5 4H20v9.5L13.5 20H9l-4-4z"></path><circle cx="15.5" cy="8.5" r="1.4"></circle></svg></span><span>Precios</span></button>
-  <button type="button" class="new-order" onclick="show('orden');resetOrder()"><span class="mini-plus">+</span><span>Nueva orden</span></button>
-  <button type="button" onclick="toggleSideMenu()"><span class="more-dot">•••</span><span>Más</span></button>
-</nav>
 
 <div id="globalSearchModal" class="modal-back" style="z-index:1300">
   <div class="modal" style="max-width:520px">
@@ -739,13 +736,11 @@ function enterApp(){
   authed=true;
   document.getElementById("loginScreen").style.display="none";
   document.getElementById("appRoot").style.setProperty("display","block","important");
-  const bottomNav=document.getElementById("e30BottomNav"); if(bottomNav) bottomNav.style.display="";
   orders.forEach(o=>{if(!o.costos)o.costos=[];});ensureClients();document.getElementById("rMes").value=new Date().toISOString().slice(0,7);renderSearch();renderDashboard();renderActivity();toggleGremioField();applyBusinessConfig();loadSavedLogo();updatePrinterPill();refreshAdminUI();setTimeout(()=>document.getElementById("search")?.focus(),100);setTimeout(restorePrinterReceiver,500);
 }
 (async function init(){
   await loadAll();
   renderLogin();
-  const bottomNav=document.getElementById("e30BottomNav"); if(bottomNav) bottomNav.style.display="none";
   adminAuthed=false;
   refreshAdminUI();
 })();
@@ -1314,7 +1309,7 @@ async function printTechnician(n){
   escWrap(o.obsTecnico||"Sin observaciones internas.",46).forEach(x=>d+=x+LF);
   d+="-----------------------------------------------"+LF;
   d+="Total: "+money(o.total)+LF+"Sena: "+money(o.sena)+LF+"Saldo: "+money(saldo)+LF+LF+LF;
-  await qzPrintRaw(d,`E30 Orden tecnica #${o.n}`);
+  await qzPrintRaw(e30FinishTicket(d),`E30 Orden tecnica #${o.n}`);
 }
 
 function resetStockForm(){document.getElementById("stockForm").reset();sCosto.value=0;sVenta.value=0;sCantidad.value=0;}
@@ -1385,7 +1380,7 @@ async function printSaleTicket(n){
   d+="-----------------------------------------------"+LF;
   escWrap("La garantia corresponde al accesorio vendido y cubre fallas de funcionamiento. No cubre danos por golpes, humedad, uso indebido o manipulacion.",46).forEach(x=>d+=x+LF);
   d+="-----------------------------------------------"+LF+"Conserve este comprobante"+LF+LF+LF;
-  await qzPrintRaw(d,`E30 Venta #${s.n}`);
+  await qzPrintRaw(e30FinishTicket(d),`E30 Venta #${s.n}`);
 }
 
 function statusClass(s){
@@ -1703,7 +1698,13 @@ async function printBudget(n){
   d+="-----------------------------------------------"+LF;
   escWrap("Presupuesto valido por 7 dias. Precio sujeto a disponibilidad y variacion de costos de repuestos.",46).forEach(x=>d+=x+LF);
   d+="-----------------------------------------------"+LF+"Conserve este comprobante"+LF+LF+LF;
-  await qzPrintRaw(d,`E30 Presupuesto #${o.n}`);
+  await qzPrintRaw(e30FinishTicket(d),`E30 Presupuesto #${o.n}`);
+}
+
+
+function e30FinishTicket(data){
+  const ESC="\x1B",GS="\x1D";
+  return data + ESC+"d"+"\x07" + GS+"V"+"\x42"+"\x00" + ESC+"i";
 }
 
 async function printDeliveryReceipt(n){
@@ -1758,9 +1759,7 @@ async function printDeliveryReceipt(n){
   d+="-----------------------------------------------"+LF;
   wrap("Este comprobante acredita la entrega del equipo. Conservelo junto con el comprobante de ingreso si necesita realizar una consulta posterior.").forEach(x=>d+=x+LF);
   d+=LF+LF+LF+LF;
-  d+=ESC+"d"+"\x07";
-  d+=GS+"V"+"\x00";
-  await qzPrintRaw(d,`E30 Comprobante entrega #${o.n}`);
+  await qzPrintRaw(e30FinishTicket(d),`E30 Comprobante entrega #${o.n}`);
 }
 
 async function printTicket(n){
@@ -1821,7 +1820,7 @@ async function printTicket(n){
   terms.forEach(t=>wrap(t).forEach(x=>d+=x+LF));
   d+="-----------------------------------------------"+LF;
   d+=ESC+"a"+"\x01"+"Conserve este comprobante"+LF+LF+LF+LF;
-  await qzPrintRaw(d,`E30 Orden #${o.n}`);
+  await qzPrintRaw(e30FinishTicket(d),`E30 Orden #${o.n}`);
 }
 </script>
 

@@ -1134,7 +1134,7 @@ function isMobileClient(){
 }
 async function qzPrintRaw(data,jobName,allowQueue=true){
   // En celular NO intentamos conectar con QZ Tray: el trabajo va directo a Supabase.
-  // La PC con el receptor activo lo toma y lo manda a la XP-80C.
+  // La PC con el receptor activo lo toma y lo manda a la XP-80.
   if(isMobileClient()){
     if(!allowQueue) throw new Error("QUEUE_ONLY_CLIENT");
     try{
@@ -1150,7 +1150,7 @@ async function qzPrintRaw(data,jobName,allowQueue=true){
   try{
     if(!window.qz) throw new Error("QZ_NOT_AVAILABLE");
     if(!qz.websocket.isActive()) await qz.websocket.connect();
-    const printer=await qz.printers.find("XP-80C");
+    const printer=await qz.printers.find("XP-80");
     const config=qz.configs.create(printer,{margins:0,jobName:jobName||"E30"});
     await qz.print(config,[{type:"raw",format:"command",flavor:"plain",data}]);
     return true;
@@ -1243,8 +1243,8 @@ async function togglePrinterReceiver(){
   try{
     if(!window.qz)throw new Error("QZ Tray no está cargado.");
     if(!qz.websocket.isActive())await qz.websocket.connect();
-    const printer=await qz.printers.find("XP-80C");
-    if(!printer)throw new Error("No se encontró XP-80C.");
+    const printer=await qz.printers.find("XP-80");
+    if(!printer)throw new Error("No se encontró XP-80.");
     printerReceiver=true;
     localStorage.setItem("e30-printer-receiver","1");
     const b=document.getElementById("printerBtn");if(b)b.textContent="🟢 Impresora activa · escuchando";updatePrinterPill();
@@ -1261,7 +1261,7 @@ async function restorePrinterReceiver(){
   if(localStorage.getItem("e30-printer-receiver")!=="1")return;
   try{
     if(!window.qz||!qz.websocket.isActive())await qz.websocket.connect();
-    const printer=await qz.printers.find("XP-80C");if(!printer)return;
+    const printer=await qz.printers.find("XP-80");if(!printer)return;
     printerReceiver=true;
     const b=document.getElementById("printerBtn");if(b)b.textContent="🟢 Impresora activa · escuchando";updatePrinterPill();
     setPrinterStatus("conectada · buscando trabajos...");

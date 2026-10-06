@@ -234,37 +234,9 @@ body{background:radial-gradient(circle at 72% -10%,#ffffff 0,#f7f8fc 36%,#f1f3f8
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.3.0/qz-tray.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jsrsasign/11.1.0/jsrsasign-all-min.js"></script>
 <script>
-// E30/QZ: firma del lado del cliente. La clave privada NO se guarda en GitHub.
-// En el primer uso se selecciona private-key.pem desde la PC y queda solo en memoria.
-const E30_QZ_CERT = '-----BEGIN CERTIFICATE-----\nMIIEMDCCAxigAwIBAgIGAaD1BWA4MA0GCSqGSIb3DQEBCwUAMIGiMQswCQYDVQQG\nEwJVUzELMAkGA1UECAwCTlkxEjAQBgNVBAcMCUNhbmFzdG90YTEbMBkGA1UECgwS\nUVogSW5kdXN0cmllcywgTExDMRswGQYDVQQLDBJRWiBJbmR1c3RyaWVzLCBMTEMx\nHDAaBgkqhkiG9w0BCQEWDXN1cHBvcnRAcXouaW8xGjAYBgNVBAMMEVFaIFRyYXkg\nRGVtbyBDZXJ0MB4XDTI2MDkzMDAxMTI0NVoXDTQ2MDkzMDAxMTI0NVowgaIxCzAJ\nBgNVBAYTAlVTMQswCQYDVQQIDAJOWTESMBAGA1UEBwwJQ2FuYXN0b3RhMRswGQYD\nVQQKDBJRWiBJbmR1c3RyaWVzLCBMTEMxGzAZBgNVBAsMElFaIEluZHVzdHJpZXMs\nIExMQzEcMBoGCSqGSIb3DQEJARYNc3VwcG9ydEBxei5pbzEaMBgGA1UEAwwRUVog\nVHJheSBEZW1vIENlcnQwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCY\nMxDy7w/y4hZNAn8bIpG+4c8AQbLaimYCJVECBrvz2UK75QPArX7rIb5zvGJix+cJ\nGapd508HGpUdhWUmqnlh/i4XwpsHqTOfDazBw19ZGy9DP5l5d7JHSnnHVmW90pzd\nmAhOzzqSj5OP214bRVRCePqfcnDQkuvZqYqE1hImL9SZ9E3JNPsxVaKUTWdKUVCq\nrqe7W5LIanBAK6sSLfY968r/wFi7+pEL2L8p/MKI/Dc9optVZMSDzXRx/f8VenGJ\nmVUynmHKkaPg/AujzLIBC3F/DraA48AZVkLo6Bu480HwqYA1r10cfD5arqO2QcW5\nJQCnqU5kxveVkQ6wlQiJAgMBAAGjajBoMBIGA1UdEwEB/wQIMAYBAf8CAQEwDgYD\nVR0PAQH/BAQDAgEGMB0GA1UdDgQWBBSY1FL5mHXAMsmWqdrwMJ4AesjtCjAjBgNV\nHR4BAf8EGTAXoBUwE4IRUVogVHJheSBEZW1vIENlcnQwDQYJKoZIhvcNAQELBQAD\nggEBAIKul7LCu8YDdGJhSi6ICFpGdG/5r9bOTIOLb0N2qvDFZrdrmbq8ZZYKpCA5\nSROa76gxE7ma8NaB/erHjVqHu/lU0jv9mwyadmiGqdb5eHfRhNrcAfQHxC3UbkGD\n5VMmYCm/dV+prslzZIcWVD1DzeTh8mGjmjUNKoSx/HHf0dpCZTa39GGcpcD9dQ2O\n/Y07ijEm5mpIPG8oLwdqFXnEspecEdJmd7UroO004iMfFeM+wvqBYvrsCZ9PaHuc\nj1VvmKIkN3Z0SGQuYmuYQs20PAwkrhTBYQi2vP2oRyWDDX994xIXyndfVgp/4oIF\nenumyp5zw7iK2ELVRjVdOL7BJ44=\n-----END CERTIFICATE-----';
-let E30_QZ_PRIVATE_KEY = null;
-function e30SelectPrivateKey(){
-  return new Promise((resolve,reject)=>{
-    const input=document.createElement('input'); input.type='file'; input.accept='.pem,.key,text/plain'; input.style.display='none';
-    document.body.appendChild(input);
-    input.onchange=()=>{ const f=input.files&&input.files[0]; if(!f){input.remove(); reject(new Error('No se seleccionó private-key.pem')); return;}
-      const r=new FileReader(); r.onload=()=>{ try{ E30_QZ_PRIVATE_KEY=String(r.result||'').trim(); KEYUTIL.getKey(E30_QZ_PRIVATE_KEY); input.remove(); resolve(); } catch(e){ input.remove(); reject(new Error('La clave seleccionada no es un private-key.pem válido.')); } }; r.onerror=()=>{input.remove(); reject(new Error('No se pudo leer la clave privada.'));}; r.readAsText(f);
-    };
-    input.click();
-  });
-}
-qz.security.setCertificatePromise(function(resolve){ resolve(E30_QZ_CERT); });
-qz.security.setSignatureAlgorithm('SHA512');
-qz.security.setSignaturePromise(function(toSign){
-  return async function(resolve,reject){
-    try{
-      if(!E30_QZ_PRIVATE_KEY) await e30SelectPrivateKey();
-      const sig=new KJUR.crypto.Signature({alg:'SHA512withRSA'});
-      sig.init(KEYUTIL.getKey(E30_QZ_PRIVATE_KEY));
-      sig.updateString(toSign);
-      resolve(hextob64(sig.sign()));
-    }catch(err){ reject(err); }
-  };
-});
+// E30/QZ: conexión local con QZ Tray sin selector de clave/archivo.
 </script>
-
 </head>
 <body>
 

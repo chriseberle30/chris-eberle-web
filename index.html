@@ -1291,7 +1291,7 @@ function escWrap(txt,width=48){
 async function printTechnician(n){
   const o=orders.find(x=>x.n===n);if(!o)return;
   const saldo=paymentBalance(o);
-  const ESC="\x1B",LF="\n";let d=ESC+"@";
+  const ESC="\x1B",GS="\x1D",LF="\n";let d=ESC+"@"+ESC+"t"+"\x10";
   d+=ESC+"a"+"\x01"+ESC+"E"+"\x01"+"E30 | ORDEN INTERNA"+ESC+"E"+"\x00"+LF;
   d+=escTicketText(o.local)+LF+"Tel: "+escTicketText(businessConfig.phone)+"  "+escTicketText(businessConfig.instagram)+LF;
   d+="-----------------------------------------------"+LF;
@@ -1311,7 +1311,7 @@ async function printTechnician(n){
   d+=ESC+"E"+"\x01"+"OBSERVACIONES TECNICAS:"+ESC+"E"+"\x00"+LF;
   escWrap(o.obsTecnico||"Sin observaciones internas.",46).forEach(x=>d+=x+LF);
   d+="-----------------------------------------------"+LF;
-  d+="Total: "+money(o.total)+LF+"Sena: "+money(o.sena)+LF+"Saldo: "+money(saldo)+LF+LF+LF;
+  d+="Total: "+money(o.total)+LF+"Sena: "+money(o.sena)+LF+"Saldo: "+money(saldo)+LF+LF+LF; d+=GS+"V"+"\x00";
   await qzPrintRaw(d,`E30 Orden tecnica #${o.n}`);
 }
 
@@ -1367,7 +1367,7 @@ function deleteSale(n){
 }
 async function printSaleTicket(n){
   const s=sales.find(x=>x.n===n);if(!s)return;
-  const ESC="\x1B",LF="\n";let d=ESC+"@";
+  const ESC="\x1B",GS="\x1D",LF="\n";let d=ESC+"@"+ESC+"t"+"\x10";
   d+=ESC+"a"+"\x01"+ESC+"E"+"\x01"+"E30 | TECNICO DE CELULARES"+ESC+"E"+"\x00"+LF;
   d+=escTicketText(s.local)+LF+"Tel: "+escTicketText(businessConfig.phone)+"  "+escTicketText(businessConfig.instagram)+LF;
   d+="-----------------------------------------------"+LF;
@@ -1382,7 +1382,7 @@ async function printSaleTicket(n){
   d+="-----------------------------------------------"+LF+"GARANTIA: 7 DIAS"+LF+"Valida hasta: "+escTicketText(s.warranty)+LF;
   d+="-----------------------------------------------"+LF;
   escWrap("La garantia corresponde al accesorio vendido y cubre fallas de funcionamiento. No cubre danos por golpes, humedad, uso indebido o manipulacion.",46).forEach(x=>d+=x+LF);
-  d+="-----------------------------------------------"+LF+"Conserve este comprobante"+LF+LF+LF;
+  d+="-----------------------------------------------"+LF+"Conserve este comprobante"+LF+LF+LF+LF; d+=GS+"V"+"\x00";
   await qzPrintRaw(d,`E30 Venta #${s.n}`);
 }
 
@@ -1687,7 +1687,7 @@ header{margin-bottom:18px;}
 
 async function printBudget(n){
   const o=budgets.find(x=>x.n===n);if(!o)return;
-  const ESC="\x1B",LF="\n";let d=ESC+"@";
+  const ESC="\x1B",GS="\x1D",LF="\n";let d=ESC+"@"+ESC+"t"+"\x10";
   d+=ESC+"a"+"\x01"+ESC+"E"+"\x01"+"E30 | TECNICO DE CELULARES"+ESC+"E"+"\x00"+LF;
   d+=escTicketText(o.local)+LF+"Tel: "+escTicketText(businessConfig.phone)+"  "+escTicketText(businessConfig.instagram)+LF;
   d+="-----------------------------------------------"+LF;
@@ -1700,7 +1700,7 @@ async function printBudget(n){
   d+="-----------------------------------------------"+LF+"Emitido: "+escTicketText(o.emitida)+LF+"Valido hasta: "+escTicketText(o.valida)+LF;
   d+="-----------------------------------------------"+LF;
   escWrap("Presupuesto valido por 7 dias. Precio sujeto a disponibilidad y variacion de costos de repuestos.",46).forEach(x=>d+=x+LF);
-  d+="-----------------------------------------------"+LF+"Conserve este comprobante"+LF+LF+LF;
+  d+="-----------------------------------------------"+LF+"Conserve este comprobante"+LF+LF+LF+LF; d+=GS+"V"+"\x00";
   await qzPrintRaw(d,`E30 Presupuesto #${o.n}`);
 }
 
@@ -1777,7 +1777,7 @@ async function printTicket(n){
   };
   const ESC="\x1B", GS="\x1D", LF="\n";
   let d="";
-  d+=ESC+"@";
+  d+=ESC+"@" + ESC+"t"+"\x10";
   d+=ESC+"a"+"\x01"+ESC+"E"+"\x01"+"E30 | TECNICO DE CELULARES"+ESC+"E"+"\x00"+LF;
   d+=clean(o.local)+LF;
   d+="Tel: "+clean(businessConfig.phone)+"  Instagram: "+clean(businessConfig.instagram)+LF;
@@ -1818,7 +1818,7 @@ async function printTicket(n){
   ];
   terms.forEach(t=>wrap(t).forEach(x=>d+=x+LF));
   d+="-----------------------------------------------"+LF;
-  d+=ESC+"a"+"\x01"+"Conserve este comprobante"+LF+LF+LF+LF;
+  d+=ESC+"a"+"\x01"+"Conserve este comprobante"+LF+LF+LF+LF; d+=GS+"V"+"\x00";
   await qzPrintRaw(d,`E30 Orden #${o.n}`);
 }
 </script>

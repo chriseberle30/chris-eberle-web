@@ -1162,7 +1162,7 @@ async function qzPrintRaw(data,jobName,allowQueue=true){
     if(!window.qz) throw new Error("QZ_NOT_AVAILABLE");
     if(!qz.websocket.isActive()) await qz.websocket.connect();
     const printer=await qz.printers.find("XP-80");
-    const config=qz.configs.create(printer,{margins:0,jobName:jobName||"E30"});
+    const config=qz.configs.create(printer,{margins:0,jobName:jobName||"E30",encoding:"Cp1252"});
     await qz.print(config,[{type:"raw",format:"command",flavor:"plain",data}]);
     return true;
   }catch(err){
@@ -1280,7 +1280,19 @@ async function restorePrinterReceiver(){
     if(printerTimer)clearInterval(printerTimer);printerTimer=setInterval(processPrintQueue,1000);
   }catch(err){console.warn("E30 receiver not restored",err)}
 }
-function escTicketText(v){return String(v??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[\r\n]+/g," ").trim();}
+function escTicketText(v){
+  return String(v??"")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g,"")
+    .replace(/[\u2013\u2014]/g,"-")
+    .replace(/\u00A0/g," ")
+    .replace(/[\r\n]+/g," ")
+    .trim();
+}
+function ticketMoney(v){
+  const n=Math.round(Number(v)||0);
+  return "$ "+n.toLocaleString("es-AR").replace(/\u00A0/g," ");
+}
 function escWrap(txt,width=48){
   txt=escTicketText(txt); if(!txt)return [""];
   const words=txt.split(/\s+/),out=[];let line="";
@@ -1311,7 +1323,7 @@ async function printTechnician(n){
   d+=ESC+"E"+"\x01"+"OBSERVACIONES TECNICAS:"+ESC+"E"+"\x00"+LF;
   escWrap(o.obsTecnico||"Sin observaciones internas.",46).forEach(x=>d+=x+LF);
   d+="-----------------------------------------------"+LF;
-  d+="Total: "+money(o.total)+LF+"Sena: "+money(o.sena)+LF+"Saldo: "+money(saldo)+LF+LF+LF; d+=GS+"V"+"\x00";
+  d+="Total: "+ticketMoney(o.total)+LF+"Sena: "+ticketMoney(o.sena)+LF+"Saldo: "+ticketMoney(saldo)+LF+LF+LF; d+=GS+"V"+"\x00";
   await qzPrintRaw(d,`E30 Orden tecnica #${o.n}`);
 }
 
@@ -1376,9 +1388,9 @@ async function printSaleTicket(n){
   d+="Fecha: "+escTicketText(s.fecha)+LF;
   if(s.cliente)d+="Cliente: "+escTicketText(s.cliente)+LF;
   if(s.telefono)d+="Tel: "+escTicketText(s.telefono)+LF;
-  d+="Producto: "+escTicketText(s.producto)+LF+"Cantidad: "+s.cantidad+LF+"Precio unit.: "+money(s.unit)+LF;
+  d+="Producto: "+escTicketText(s.producto)+LF+"Cantidad: "+s.cantidad+LF+"Precio unit.: "+ticketMoney(s.unit)+LF;
   d+="-----------------------------------------------"+LF;
-  d+=ESC+"E"+"\x01"+"TOTAL: "+money(s.total)+ESC+"E"+"\x00"+LF+"Pago: "+escTicketText(s.pago)+LF;
+  d+=ESC+"E"+"\x01"+"TOTAL: "+ticketMoney(s.total)+ESC+"E"+"\x00"+LF+"Pago: "+escTicketText(s.pago)+LF;
   d+="-----------------------------------------------"+LF+"GARANTIA: 7 DIAS"+LF+"Valida hasta: "+escTicketText(s.warranty)+LF;
   d+="-----------------------------------------------"+LF;
   escWrap("La garantia corresponde al accesorio vendido y cubre fallas de funcionamiento. No cubre danos por golpes, humedad, uso indebido o manipulacion.",46).forEach(x=>d+=x+LF);
@@ -1695,7 +1707,7 @@ async function printBudget(n){
   d+="-----------------------------------------------"+LF;
   d+="Cliente: "+escTicketText(o.cliente)+LF+"Tel: "+escTicketText(o.telefono||"-")+LF+"Equipo: "+escTicketText((o.marca||"")+" "+(o.modelo||""))+LF+LF;
   escWrap(o.concepto||"-",46).forEach(x=>d+=x+LF);
-  d+=ESC+"E"+"\x01"+money(o.precio)+ESC+"E"+"\x00"+LF;
+  d+=ESC+"E"+"\x01"+ticketMoney(o.precio)+ESC+"E"+"\x00"+LF;
   if(o.obsEquipo){d+="-----------------------------------------------"+LF+"Estado del equipo:"+LF;escWrap(o.obsEquipo,46).forEach(x=>d+=x+LF);}
   d+="-----------------------------------------------"+LF+"Emitido: "+escTicketText(o.emitida)+LF+"Valido hasta: "+escTicketText(o.valida)+LF;
   d+="-----------------------------------------------"+LF;
@@ -1794,9 +1806,9 @@ async function printTicket(n){
   d+="Estado: "+clean(o.estado)+LF;
   if(o.entrega)d+="Entrega estimada: "+clean(o.entrega)+LF;
   d+="-----------------------------------------------"+LF;
-  d+="Total: "+money(o.total)+LF;
-  d+="Pagado: "+money(paymentTotal(o))+LF;
-  d+=ESC+"E"+"\x01"+"Saldo: "+money(saldo)+ESC+"E"+"\x00"+LF;
+  d+="Total: "+ticketMoney(o.total)+LF;
+  d+="Pagado: "+ticketMoney(paymentTotal(o))+LF;
+  d+=ESC+"E"+"\x01"+"Saldo: "+ticketMoney(saldo)+ESC+"E"+"\x00"+LF;
   if(o.obsEquipo){
     d+="-----------------------------------------------"+LF;
     d+="Estado del equipo:"+LF;

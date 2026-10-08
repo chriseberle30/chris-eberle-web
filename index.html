@@ -236,7 +236,7 @@ body{background:radial-gradient(circle at 72% -10%,#ffffff 0,#f7f8fc 36%,#f1f3f8
 <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.3.0/qz-tray.js"></script>
 <script>
 // E30/QZ signing: the certificate is public; the private key stays on the PC.
-const E30_QZ_CERT = '-----BEGIN CERTIFICATE-----
+const E30_QZ_CERT = `-----BEGIN CERTIFICATE-----
 MIIEMDCCAxigAwIBAgIGAaEY53d1MA0GCSqGSIb3DQEBCwUAMIGiMQswCQYDVQQG
 EwJVUzELMAkGA1UECAwCTlkxEjAQBgNVBAcMCUNhbmFzdG90YTEbMBkGA1UECgwS
 UVogSW5kdXN0cmllcywgTExDMRswGQYDVQQLDBJRWiBJbmR1c3RyaWVzLCBMTEMx
@@ -260,7 +260,7 @@ zq83SYz3Vk1IGlM8mfuI2XchzgecYRjm8Bj5nlRSz5dSmVeKtHxxfS8IM3XgOTXk
 knYX168IYLhOj57sLWa/wYw6OkX9n4MXKshuhwU5E0sfFRqJJqZ1z5l1goemxbX0
 ww7h+qPlMhUPCRwh1rbc9xwfHR0o1brLJISloqWC9Cgt+xczlUgqInkcRKNVqmCA
 AgiHizrum1k34KBrO7W2dfp9h3o=
------END CERTIFICATE-----';
+-----END CERTIFICATE-----`;
 qz.security.setCertificatePromise(function(resolve, reject){ resolve(E30_QZ_CERT); });
 qz.security.setSignatureAlgorithm("SHA512");
 qz.security.setSignaturePromise(function(toSign){

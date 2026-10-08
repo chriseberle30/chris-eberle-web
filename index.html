@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="es">
 <head>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>E30 Gestión · PREMIUM 03 · E30 | Técnico de celulares</title>
@@ -617,15 +618,23 @@ qz.security.setSignaturePromise(function(toSign){
    ============================================================ */
 const SUPABASE_URL="https://edeaijyayhhijyyjksss.supabase.co";
 const SUPABASE_KEY="sb_publishable_jIYqZUl28NXA4NCqL3K_uA_nbiQRcPf";
-function sbHeaders(extra){return Object.assign({apikey:SUPABASE_KEY,Authorization:"Bearer "+SUPABASE_KEY,"Content-Type":"application/json"},extra||{});}
+let e30AuthClient=null;
+async function e30AccessToken(){
+  if(!e30AuthClient) throw new Error("El acceso seguro no está inicializado.");
+  const {data,error}=await e30AuthClient.auth.getSession();if(error)throw error;
+  if(!data.session)throw new Error("Tu sesión expiró. Volvé a ingresar.");return data.session.access_token;
+}
+function sbHeaders(extra){return Object.assign({apikey:SUPABASE_KEY,Authorization:"Bearer "+(window.__e30AccessToken||SUPABASE_KEY),"Content-Type":"application/json"},extra||{});}
 async function kvGet(key){
-  const res=await fetch(`${SUPABASE_URL}/rest/v1/e30_kv?key=eq.${encodeURIComponent(key)}&select=value`,{headers:sbHeaders({"Cache-Control":"no-cache","Pragma":"no-cache"}),cache:"no-store"});
+  const token=await e30AccessToken();
+  const res=await fetch(`${SUPABASE_URL}/rest/v1/e30_kv?key=eq.${encodeURIComponent(key)}&select=value`,{headers:Object.assign(sbHeaders({"Cache-Control":"no-cache","Pragma":"no-cache"}),{Authorization:"Bearer "+token}),cache:"no-store"});
   if(!res.ok) throw new Error("read failed "+res.status);
   const rows=await res.json();
   return (rows&&rows[0])?rows[0].value:null;
 }
 async function kvSet(key,value){
-  const res=await fetch(`${SUPABASE_URL}/rest/v1/e30_kv?on_conflict=key`,{method:"POST",headers:sbHeaders({Prefer:"resolution=merge-duplicates,return=representation"}),body:JSON.stringify([{key,value}])});
+  const token=await e30AccessToken();
+  const res=await fetch(`${SUPABASE_URL}/rest/v1/e30_kv?on_conflict=key`,{method:"POST",headers:Object.assign(sbHeaders({Prefer:"resolution=merge-duplicates,return=representation"}),{Authorization:"Bearer "+token}),body:JSON.stringify([{key,value}])});
   if(!res.ok){const t=await res.text().catch(()=>"");throw new Error("write failed "+res.status+(t?" — "+t.slice(0,180):""));}
   return true;
 }
@@ -737,27 +746,21 @@ function renderActivity(){
 
 function renderLogin(){
   const body=document.getElementById("loginBody");
-  if(!passHash){
-    body.innerHTML=`<div class="sub" style="margin-bottom:10px">Todavía no configuraste una contraseña. Creála ahora.</div>
-      <div style="margin-bottom:10px"><label>Nueva contraseña</label><input id="setupPass" type="password"></div>
-      <div style="margin-bottom:10px"><label>Repetir</label><input id="setupPass2" type="password"></div>
-      <button class="btn" style="width:100%" onclick="setupPassword()">Crear y entrar</button>`;
-  }else{
-    body.innerHTML=`<form id="loginForm" autocomplete="on" onsubmit="event.preventDefault();doLogin()"><div style="margin-bottom:10px"><label>Contraseña</label><input id="loginPass" name="password" type="password" autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false" onkeydown="if(event.key==='Enter')doLogin()"></div>
-      <button class="btn" style="width:100%" type="submit">Entrar</button>
-      <div id="loginError" style="color:#b42318;font-size:13px;margin-top:8px"></div></form>`;
-  }
+  body.innerHTML=`<form id="loginForm" autocomplete="on" onsubmit="event.preventDefault();doLogin()">
+    <div style="margin-bottom:10px"><label>Correo de E30</label><input id="loginEmail" name="username" type="email" value="chriseberlecontacto@gmail.com" autocomplete="username" required autocapitalize="none" autocorrect="off" spellcheck="false"></div>
+    <div style="margin-bottom:10px"><label>Contraseña</label><input id="loginPass" name="password" type="password" autocomplete="current-password" required></div>
+    <button class="btn" style="width:100%" type="submit">Entrar</button>
+    <div id="loginError" style="color:#b42318;font-size:13px;margin-top:8px"></div>
+  </form>`;
 }
-async function setupPassword(){
-  const p1=document.getElementById("setupPass").value,p2=document.getElementById("setupPass2").value;
-  if(p1.length<4){alert("Usá al menos 4 caracteres.");return;}
-  if(p1!==p2){alert("Las contraseñas no coinciden.");return;}
-  passHash=await sha256Hex(p1);await kvSet("e30-pass",passHash);enterApp();
-}
+async function setupPassword(){document.getElementById("loginError").textContent="El usuario debe crearse desde Supabase Authentication antes de ingresar."}
 async function doLogin(){
-  const p=document.getElementById("loginPass").value;
-  if(await sha256Hex(p)===passHash) enterApp();
-  else document.getElementById("loginError").textContent="Contraseña incorrecta.";
+  const email=document.getElementById("loginEmail").value.trim(),password=document.getElementById("loginPass").value;
+  const errorBox=document.getElementById("loginError"),button=document.querySelector("#loginForm button[type=submit]");
+  if(button){button.disabled=true;button.textContent="Ingresando…"}
+  try{const {data,error}=await e30AuthClient.auth.signInWithPassword({email,password});if(error)throw error;if(!data.session)throw new Error("No se pudo iniciar la sesión.");window.__e30AccessToken=data.session.access_token;await loadAll();enterApp()}
+  catch(e){errorBox.textContent=e.message==="Invalid login credentials"?"Correo o contraseña incorrectos.":("No se pudo ingresar: "+(e.message||"revisá tus datos"))}
+  finally{if(button){button.disabled=false;button.textContent="Entrar"}}
 }
 function enterApp(){
   authed=true;
@@ -766,10 +769,14 @@ function enterApp(){
   orders.forEach(o=>{if(!o.costos)o.costos=[];});ensureClients();document.getElementById("rMes").value=new Date().toISOString().slice(0,7);renderSearch();renderDashboard();renderActivity();toggleGremioField();applyBusinessConfig();loadSavedLogo();updatePrinterPill();refreshAdminUI();setTimeout(()=>document.getElementById("search")?.focus(),100);setTimeout(restorePrinterReceiver,500);
 }
 (async function init(){
-  await loadAll();
-  renderLogin();
-  adminAuthed=false;
-  refreshAdminUI();
+  try{
+    if(!window.supabase||!window.supabase.createClient)throw new Error("No se pudo cargar el módulo de acceso seguro.");
+    e30AuthClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+    const {data,error}=await e30AuthClient.auth.getSession();if(error)throw error;
+    renderLogin();
+    if(data.session){window.__e30AccessToken=data.session.access_token;try{await loadAll();enterApp()}catch(e){console.error(e);renderLogin()}}
+    adminAuthed=false;refreshAdminUI();
+  }catch(e){document.getElementById("loginBody").textContent="No se pudo iniciar el acceso seguro. Recargá la página e intentá nuevamente.";console.error("E30 auth init",e)}
 })();
 
 function refreshAdminUI(){

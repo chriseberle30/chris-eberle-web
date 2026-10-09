@@ -822,7 +822,7 @@ async function loginAdmin(target){
   if(await sha256Hex(p)===adminPassHash){adminAuthed=true;document.getElementById("adminAuthModal").style.display="none";refreshAdminUI();sideGo(target);}
   else document.getElementById("adminLoginError").textContent="Contraseña incorrecta.";
 }
-async async function changeAdminPassword(){
+async function changeAdminPassword(){
   if(!adminAuthed){alert("Primero ingresá a Administración.");return;}
   const current=prompt("Ingresá tu contraseña administrativa actual:");if(current===null)return;
   if(await sha256Hex(current)!==adminPassHash){alert("La contraseña actual es incorrecta.");return;}

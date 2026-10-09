@@ -1324,15 +1324,33 @@ async function togglePrinterReceiver(){
 }
 async function restorePrinterReceiver(){
   if(localStorage.getItem("e30-printer-receiver")!=="1")return;
-  try{
-    if(!window.qz||!qz.websocket.isActive())await qz.websocket.connect();
-    const printer=await qz.printers.find("XP-80");if(!printer)return;
-    printerReceiver=true;
-    const b=document.getElementById("printerBtn");if(b)b.textContent="🟢 Impresora activa · escuchando";updatePrinterPill();
-    setPrinterStatus("conectada · buscando trabajos...");
-    await processPrintQueue();
-    if(printerTimer)clearInterval(printerTimer);printerTimer=setInterval(processPrintQueue,1000);
-  }catch(err){console.warn("E30 receiver not restored",err)}
+  // QZ Tray puede tardar unos segundos en arrancar con Windows.
+  // Reintentamos sin exigir que el usuario pulse "Activar impresora" cada vez.
+  const maxAttempts=8;
+  for(let attempt=1;attempt<=maxAttempts;attempt++){
+    try{
+      if(!window.qz)throw new Error("QZ Tray no está cargado en esta página.");
+      if(!qz.websocket.isActive())await qz.websocket.connect();
+      const printer=await qz.printers.find("XP-80");
+      if(!printer)throw new Error("No se encontró la impresora XP-80.");
+      printerReceiver=true;
+      const b=document.getElementById("printerBtn");
+      if(b)b.textContent="🟢 Impresora activa · escuchando";
+      updatePrinterPill();
+      setPrinterStatus("conectada · buscando trabajos...");
+      await processPrintQueue();
+      if(printerTimer)clearInterval(printerTimer);
+      printerTimer=setInterval(processPrintQueue,1000);
+      return;
+    }catch(err){
+      console.warn("E30: intento de reconexión automática "+attempt+"/"+maxAttempts,err);
+      setPrinterStatus("reconectando impresora · intento "+attempt+"/"+maxAttempts+" · "+(err?.message||String(err)));
+      if(attempt<maxAttempts)await new Promise(resolve=>setTimeout(resolve,2000));
+    }
+  }
+  const b=document.getElementById("printerBtn");
+  if(b)b.textContent="🟠 Reintentar impresora";
+  setPrinterStatus("No se pudo reconectar. Verificá que QZ Tray esté abierto y la XP-80 encendida; después tocá Activar impresora.");
 }
 function escTicketText(v){return String(v??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[\r\n]+/g," ").trim();}
 function escWrap(txt,width=48){

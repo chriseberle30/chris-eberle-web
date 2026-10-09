@@ -391,7 +391,7 @@ qz.security.setSignaturePromise(function(toSign){
 
 <section id="administracion" style="display:none">
 <div class="card"><div style="display:flex;align-items:center;justify-content:space-between;gap:12px"><div><h2 style="margin:0">🔐 Administración</h2><div class="sub" style="margin-top:5px">Información y herramientas privadas del negocio.</div></div><span class="pill" style="background:#eef2ff;color:#14104C">Acceso privado</span></div><button class="btn secondary" type="button" onclick="adminAuthed=false;refreshAdminUI();sideGo('dashboard')">🔒 Cerrar administración</button></div>
-<div class="card" style="margin-top:12px"><h3 style="margin:0 0 6px">Contraseña administrativa</h3><div class="sub" style="margin-bottom:12px">Cambiá la clave privada de administración por un PIN numérico de 6 dígitos.</div><button class="btn secondary" type="button" onclick="changeAdminPassword()">Cambiar contraseña</button></div>
+<div class="card" style="margin-top:12px"><h3 style="margin:0 0 6px">Contraseña administrativa</h3><div class="sub" style="margin-bottom:12px">Cambiá la clave privada de administración por un PIN numérico de 4 dígitos.</div><button class="btn secondary" type="button" onclick="changeAdminPassword()">Cambiar contraseña</button></div>
 <div class="stat-grid">
   <button class="card quick-action" type="button" onclick="sideGo('costospendientes')"><span class="qa-icon"><svg viewBox="0 0 24 24"><path d="M12 3v18M7 7h7a3 3 0 0 1 0 6H9a3 3 0 0 0 0 6h8"/></svg></span><b>Costos pendientes</b><small id="adminPendingCount">0 pendientes</small></button>
   <button class="card quick-action" type="button" onclick="sideGo('reportes')"><span class="qa-icon"><svg viewBox="0 0 24 24"><path d="M5 19V10M12 19V5M19 19v-7M4 19h17"/></svg></span><b>Rentabilidad</b><small>Facturación y ganancias</small></button>
@@ -822,13 +822,13 @@ async function loginAdmin(target){
   if(await sha256Hex(p)===adminPassHash){adminAuthed=true;document.getElementById("adminAuthModal").style.display="none";refreshAdminUI();sideGo(target);}
   else document.getElementById("adminLoginError").textContent="Contraseña incorrecta.";
 }
-async function changeAdminPassword(){
+async async function changeAdminPassword(){
   if(!adminAuthed){alert("Primero ingresá a Administración.");return;}
   const current=prompt("Ingresá tu contraseña administrativa actual:");if(current===null)return;
   if(await sha256Hex(current)!==adminPassHash){alert("La contraseña actual es incorrecta.");return;}
-  const next=prompt("Ingresá el nuevo PIN numérico de 6 dígitos:");if(next===null)return;
-  if(!/^\\d{6}$/.test(next)){alert("El PIN debe tener exactamente 6 números.");return;}
-  const confirm=prompt("Repetí el nuevo PIN de 6 dígitos:");if(confirm===null)return;
+  const next=prompt("Ingresá el nuevo PIN numérico de 4 dígitos:");if(next===null)return;
+  if(!/^\d{4}$/.test(next)){alert("El PIN debe tener exactamente 4 números.");return;}
+  const confirm=prompt("Repetí el nuevo PIN de 4 dígitos:");if(confirm===null)return;
   if(next!==confirm){alert("Los PIN no coinciden.");return;}
   adminPassHash=await sha256Hex(next);await kvSet("e30-admin-pass",adminPassHash);alert("Contraseña administrativa actualizada.");
 }

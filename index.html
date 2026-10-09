@@ -1369,15 +1369,14 @@ function importBulkStock(){
     const line=lines[i].replace(/^\uFEFF/,"");
     if(i===0 && /producto/i.test(line) && /(costo|venta|precio)/i.test(line))continue;
     const parts=(line.includes("\t")?line.split("\t"):(line.includes("|")?line.split("|"):(line.includes(";")?line.split(";"):line.split(",")))).map(x=>x.trim().replace(/^"|"$/g,""));
-    if(parts.length<4){alert(`Fila ${i+1}: faltan columnas. Usá Producto, Categoría, Costo, Precio de venta y Stock inicial.`);return;}
-    const producto=parts[0],categoria=parts.length>=5?parts[1]:(parts[1]||""),offset=parts.length>=5?1:0;
-    const costoRaw=parts[offset+2],ventaRaw=parts[offset+3],cantidadRaw=parts[offset+4];
+    if(parts.length<5){alert(`Fila ${i+1}: necesitás 5 columnas: Producto, Categoría, Costo, Precio de venta y Stock inicial. Si no tenés categoría, dejá esa celda vacía.`);return;}
+    const [producto,categoria,costoRaw,ventaRaw,cantidadRaw]=parts;
     const num=v=>Number(String(v||"0").replace(/[^\d,.-]/g,"").replace(/\.(?=\d{3}(\D|$))/g,"").replace(",","."));
     const costo=num(costoRaw),venta=num(ventaRaw),cantidad=num(cantidadRaw);
     if(!producto||!Number.isFinite(costo)||!Number.isFinite(venta)||costo<0||venta<0||!Number.isFinite(cantidad)||cantidad<0){
       alert(`Fila ${i+1}: revisá producto, costo, precio de venta y cantidad.`);return;
     }
-    parsed.push({producto,categoria:parts[offset+1]||"",costo,venta,cantidad:Math.floor(cantidad)});
+    parsed.push({producto,categoria:categoria||"",costo,venta,cantidad:Math.floor(cantidad)});
   }
   if(!parsed.length){alert("No encontré productos válidos.");return;}
   const duplicates=parsed.filter(x=>stock.some(p=>String(p.producto||"").trim().toLowerCase()===x.producto.toLowerCase()&&String(p.categoria||"").trim().toLowerCase()===x.categoria.toLowerCase()));

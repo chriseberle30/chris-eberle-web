@@ -432,7 +432,7 @@ qz.security.setSignaturePromise(function(toSign){
 <div class="form">
 <div><label>Mes</label><input id="rMes" type="month"></div>
 <div><label>Sucursal</label><select id="rLocal"><option value="Todas">Todas</option><option>Demóstenes 3110 — Las Flores</option><option>Piovano 2960 — Moreno</option></select></div>
-<div class="full"><button class="btn" type="button" onclick="renderReports()">Actualizar reporte</button></div>
+<div class="full actions"><button class="btn" type="button" onclick="renderReports()">Actualizar reporte</button><button class="btn secondary" type="button" onclick="exportMonthlyReport()">Descargar CSV del mes</button></div>
 </div></div>
 <div class="stat-grid">
 <div class="stat"><div class="sub">Facturado</div><b id="rFacturado">$ 0</b></div>
@@ -448,6 +448,7 @@ qz.security.setSignaturePromise(function(toSign){
 </div>
 <div id="reportBreakdown" class="card" style="margin-top:14px"></div>
 <div id="reportCharts" class="report-charts" aria-live="polite"></div>
+<div id="reportInsights" class="card" style="margin-top:14px"></div>
 </section>
 
 <section id="precios" style="display:none">
@@ -1662,25 +1663,39 @@ function saleMonthKey(s){
 function orderMonthKey(o){
   return monthKeyFromDateString(o.fecha);
 }
+function reportFilterData(){
+  const selectedMonth=document.getElementById("rMes")?.value||"";
+  const local=document.getElementById("rLocal")?.value||"Todas";
+  const matchesLocal=x=>local==="Todas"||x.local===local;
+  const matchesMonth=x=>!selectedMonth||(x.fecha?monthKeyFromDateString(x.fecha):orderMonthKey(x))===selectedMonth;
+  const ord=orders.filter(o=>matchesLocal(o)&&(!selectedMonth||orderMonthKey(o)===selectedMonth));
+  const salesFiltered=sales.filter(x=>matchesLocal(x)&&(!selectedMonth||saleMonthKey(x)===selectedMonth));
+  const mov=movements.filter(x=>matchesLocal(x)&&(!selectedMonth||monthKeyFromDateString(x.fecha)===selectedMonth));
+  return {selectedMonth,local,ord,salesFiltered,mov};
+}
+function csvCell(v){return '"'+String(v??"").replace(/"/g,'""')+'"';}
+function downloadCSV(filename,rows){
+  const csv="\\uFEFF"+rows.map(row=>row.map(csvCell).join(";")).join("\\r\\n");
+  const blob=new Blob([csv],{type:"text/csv;charset=utf-8;"});
+  const url=URL.createObjectURL(blob),a=document.createElement("a");
+  a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+}
+function exportMonthlyReport(){
+  const {selectedMonth,local,ord,salesFiltered,mov}=reportFilterData();
+  const rows=[["E30 Gestión","Reporte mensual"],["Mes",selectedMonth||"Todos"],["Sucursal",local],[],["TIPO","FECHA","SUCURSAL","CONCEPTO","CANTIDAD","FACTURADO/IMPORTE","COSTOS","RESULTADO","MEDIO DE PAGO","CATEGORÍA"]];
+  ord.forEach(o=>rows.push(["Reparación",o.fecha,o.local,"Orden #"+o.n+" "+(o.marca||"")+" "+(o.modelo||"")+" - "+(o.cliente||""),1,+o.total||0,orderCostTotal(o),(+o.total||0)-orderCostTotal(o),o.pago||"",o.tipoOrden||"Particular"]));
+  salesFiltered.forEach(x=>rows.push(["Venta",x.fecha,x.local,x.producto,x.cantidad,+x.total||0,(+x.costoUnitario||+x.costo||0)*(+x.cantidad||1),(+x.total||0)-((+x.costoUnitario||+x.costo||0)*(+x.cantidad||1)),x.pago||"", "Accesorios"]));
+  mov.forEach(x=>rows.push([x.tipo,x.fecha,x.local,x.concepto,"",+x.importe||0,"",x.tipo==="Ingreso"?(+x.importe||0):-(+x.importe||0),x.pago||"",x.categoria||"Otros"]));
+  downloadCSV("E30-reporte-"+(selectedMonth||"completo")+"-"+(local==="Todas"?"todos-los-locales":"sucursal")+".csv",rows);
+}
 function renderReports(){
-  const selectedMonth=document.getElementById("rMes").value;
-  const local=document.getElementById("rLocal").value;
-  const matchesLocal=o=>local==="Todas"||o.local===local;
-  const matchesMonth=o=>!selectedMonth||orderMonthKey(o)===selectedMonth;
-  const ord=orders.filter(o=>matchesLocal(o)&&matchesMonth(o));
-  const salesFiltered=sales.filter(s=>{
-    const lm=local==="Todas"||s.local===local;
-    const mm=!selectedMonth||saleMonthKey(s)===selectedMonth;
-    return lm&&mm;
-  });
+  const {selectedMonth,local,ord,salesFiltered,mov}=reportFilterData();
   const fact=ord.reduce((a,o)=>a+(+o.total||0),0);
   const cobrado=ord.reduce((a,o)=>a+Math.min(+o.total||0,paymentTotal(o)),0)+salesFiltered.reduce((a,s)=>a+(+s.total||0),0);
   const costos=ord.reduce((a,o)=>a+orderCostTotal(o),0);
   const acc=salesFiltered.reduce((a,s)=>a+(+s.total||0),0);
   const ganancia=(fact-costos)+acc;
-  const rep=ord.length;
-  const ticket=rep?fact/rep:0;
-  const margen=(fact+acc)>0?(ganancia/(fact+acc))*100:0;
+  const rep=ord.length,ticket=rep?fact/rep:0,margen=(fact+acc)>0?(ganancia/(fact+acc))*100:0;
   document.getElementById("rFacturado").textContent=money(fact+acc);
   document.getElementById("rCobrado").textContent=money(cobrado);
   document.getElementById("rCostos").textContent=money(costos);
@@ -1689,33 +1704,39 @@ function renderReports(){
   document.getElementById("rTicket").textContent=money(ticket);
   document.getElementById("rAcc").textContent=money(acc);
   document.getElementById("rMargen").textContent=margen.toFixed(1)+"%";
-  const part=ord.filter(o=>(o.tipoOrden||"Particular")!=="Gremio"), grem=ord.filter(o=>(o.tipoOrden||"Particular")==="Gremio");
-const partFact=part.reduce((a,o)=>a+(+o.total||0),0), gremFact=grem.reduce((a,o)=>a+(+o.total||0),0);
-const partCost=part.reduce((a,o)=>a+orderCostTotal(o),0), gremCost=grem.reduce((a,o)=>a+orderCostTotal(o),0);
-const partGain=partFact-partCost, gremGain=gremFact-gremCost;
-document.getElementById("reportBreakdown").innerHTML=`<h3 style="margin-top:0">Detalle</h3>
-  <div style="padding:8px 0;border-bottom:1px solid var(--line)">Particulares: <b>${part.length} órdenes</b> · Facturado ${money(partFact)} · Costos ${money(partCost)} · Ganancia ${money(partGain)}</div>
-  <div style="padding:8px 0;border-bottom:1px solid var(--line)">Gremio: <b>${grem.length} órdenes</b> · Facturado ${money(gremFact)} · Costos ${money(gremCost)} · Ganancia ${money(gremGain)}</div>
-  <div style="padding:8px 0;border-bottom:1px solid var(--line)">Ventas de accesorios: <b>${money(acc)}</b></div>
-  <div style="padding:8px 0;border-bottom:1px solid var(--line)">Costos de reparaciones: <b>${money(costos)}</b></div>
-  <div style="padding:8px 0"><b>Resultado bruto: ${money(ganancia)}</b></div>`;
+  const part=ord.filter(o=>(o.tipoOrden||"Particular")!=="Gremio"),grem=ord.filter(o=>(o.tipoOrden||"Particular")==="Gremio");
+  const partFact=part.reduce((a,o)=>a+(+o.total||0),0),gremFact=grem.reduce((a,o)=>a+(+o.total||0),0);
+  const partCost=part.reduce((a,o)=>a+orderCostTotal(o),0),gremCost=grem.reduce((a,o)=>a+orderCostTotal(o),0);
+  const partGain=partFact-partCost,gremGain=gremFact-gremCost;
+  document.getElementById("reportBreakdown").innerHTML=`<h3 style="margin-top:0">Detalle</h3>
+    <div style="padding:8px 0;border-bottom:1px solid var(--line)">Particulares: <b>${part.length} órdenes</b> · Facturado ${money(partFact)} · Costos ${money(partCost)} · Ganancia ${money(partGain)}</div>
+    <div style="padding:8px 0;border-bottom:1px solid var(--line)">Gremio: <b>${grem.length} órdenes</b> · Facturado ${money(gremFact)} · Costos ${money(gremCost)} · Ganancia ${money(gremGain)}</div>
+    <div style="padding:8px 0;border-bottom:1px solid var(--line)">Ventas de accesorios: <b>${money(acc)}</b></div>
+    <div style="padding:8px 0;border-bottom:1px solid var(--line)">Costos de reparaciones: <b>${money(costos)}</b></div>
+    <div style="padding:8px 0"><b>Resultado bruto estimado: ${money(ganancia)}</b></div>
+    <div class="small-muted">La ganancia de accesorios es provisoria hasta que el sistema tenga el costo de compra de cada producto vendido.</div>`;
   const maxVal=Math.max(partFact,gremFact,partCost,gremCost,Math.abs(partGain),Math.abs(gremGain),acc,1);
-  const bar=(label,value,kind="")=>`<div class="report-bar-row"><div class="report-bar-label">${label}</div><div><div class="report-bar-track"><div class="report-bar-fill ${kind}" style="width:${Math.max(0,Math.min(100,(Math.abs(value)/maxVal)*100))}%"></div></div><div class="report-chart-value">${money(value)}</div></div></div>`;
+  const bar=(label,value,kind="")=>`<div class="report-bar-row"><div class="report-bar-label">${escapeHtml(label)}</div><div><div class="report-bar-track"><div class="report-bar-fill ${kind}" style="width:${Math.max(0,Math.min(100,(Math.abs(value)/maxVal)*100))}%"></div></div><div class="report-chart-value">${money(value)}</div></div></div>`;
   document.getElementById("reportCharts").innerHTML=`
-    <div class="report-chart-card">
-      <h3>Facturación por tipo</h3><div class="chart-sub">Comparación de órdenes según los filtros elegidos.</div>
-      ${bar("Particulares",partFact)}
-      ${bar("Gremio",gremFact)}
-      ${bar("Accesorios",acc)}
-      <div class="report-legend"><span><i></i>Importes facturados</span></div>
-    </div>
-    <div class="report-chart-card">
-      <h3>Resultado por tipo</h3><div class="chart-sub">Facturación, costos y ganancia bruta de reparaciones.</div>
-      ${bar("Part. costos",partCost,"cost")}
-      ${bar("Part. ganancia",partGain,"profit")}
-      ${bar("Gremio costos",gremCost,"cost")}
-      ${bar("Gremio ganancia",gremGain,"profit")}
-      <div class="report-legend"><span><i class="cost-dot"></i>Costos</span><span><i class="profit-dot"></i>Ganancia bruta</span></div>
+    <div class="report-chart-card"><h3>Facturación por tipo</h3><div class="chart-sub">Según mes y sucursal elegidos.</div>${bar("Particulares",partFact)}${bar("Gremio",gremFact)}${bar("Accesorios",acc)}<div class="report-legend"><span><i></i>Importes facturados</span></div></div>
+    <div class="report-chart-card"><h3>Resultado por tipo</h3><div class="chart-sub">Costos y ganancia bruta de reparaciones.</div>${bar("Part. costos",partCost,"cost")}${bar("Part. ganancia",partGain,"profit")}${bar("Gremio costos",gremCost,"cost")}${bar("Gremio ganancia",gremGain,"profit")}<div class="report-legend"><span><i class="cost-dot"></i>Costos</span><span><i class="profit-dot"></i>Ganancia bruta</span></div></div>`;
+  const topProducts={};
+  salesFiltered.forEach(x=>{const k=x.producto||"Producto sin nombre";topProducts[k]??={qty:0,total:0};topProducts[k].qty+=(+x.cantidad||1);topProducts[k].total+=(+x.total||0);});
+  const topModels={};
+  ord.forEach(o=>{const k=((o.marca||"")+" "+(o.modelo||"")).trim()||"Modelo sin especificar";topModels[k]??={qty:0,total:0};topModels[k].qty++;topModels[k].total+=(+o.total||0);});
+  const productRows=Object.entries(topProducts).sort((a,b)=>b[1].qty-a[1].qty).slice(0,5);
+  const modelRows=Object.entries(topModels).sort((a,b)=>b[1].qty-a[1].qty).slice(0,5);
+  const low=stock.filter(x=>x.activo!==false&&(Number(x.cantidad)||0)<=2).sort((a,b)=>(+a.cantidad||0)-(+b.cantidad||0)).slice(0,8);
+  const expenses={};mov.filter(x=>x.tipo==="Gasto").forEach(x=>{const k=x.categoria||"Otros";expenses[k]=(expenses[k]||0)+(+x.importe||0);});
+  const expenseRows=Object.entries(expenses).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const list=(arr,fn,empty)=>arr.length?arr.map(fn).join(""):`<div class="small-muted">${empty}</div>`;
+  document.getElementById("reportInsights").innerHTML=`
+    <h3 style="margin-top:0">📊 Datos para decidir qué comprar</h3>
+    <div class="form">
+      <div><h4>Accesorios más vendidos</h4>${list(productRows,([name,v])=>`<div style="padding:8px 0;border-bottom:1px solid var(--line)"><b>${escapeHtml(name)}</b><div class="small-muted">${v.qty} unidades · ${money(v.total)} facturados</div></div>`,"Todavía no hay ventas en este período.")}</div>
+      <div><h4>Modelos que más ingresan</h4>${list(modelRows,([name,v])=>`<div style="padding:8px 0;border-bottom:1px solid var(--line)"><b>${escapeHtml(name)}</b><div class="small-muted">${v.qty} órdenes · ${money(v.total)} facturados</div></div>`,"Todavía no hay órdenes en este período.")}</div>
+      <div><h4>Stock bajo (2 unidades o menos)</h4>${list(low,x=>`<div style="padding:8px 0;border-bottom:1px solid var(--line)"><b>${escapeHtml(x.producto)}</b><div class="small-muted">${x.cantidad} u. · Categoría: ${escapeHtml(x.categoria||"Sin categoría")}</div></div>`,"No hay productos con stock bajo.")}</div>
+      <div><h4>Gastos por categoría</h4>${list(expenseRows,([name,total])=>`<div style="padding:8px 0;border-bottom:1px solid var(--line)"><b>${escapeHtml(name)}</b><div class="small-muted">${money(total)}</div></div>`,"No hay gastos registrados en este período.")}</div>
     </div>`;
 }
 function pdfEscape(v){return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}

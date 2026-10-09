@@ -1195,7 +1195,7 @@ async function updatePrintJob(job,patch){
   return value;
 }
 function isMobileClient(){
-  return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (navigator.maxTouchPoints>1 && window.innerWidth<1000);
+  return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
 }
 async function qzPrintRaw(data,jobName,allowQueue=true){
   // En celular NO intentamos conectar con QZ Tray: el trabajo va directo a Supabase.

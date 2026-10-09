@@ -1365,16 +1365,24 @@ function importBulkStock(){
   const raw=document.getElementById("bulkStock").value.trim();
   if(!raw){alert("Copiá las filas de Excel y pegálas acá.");return;}
   const lines=raw.split(/\r?\n/).map(x=>x.trim()).filter(Boolean),parsed=[];
+  const num=v=>Number(String(v||"0").replace(/[^\d,.-]/g,"").replace(/\.(?=\d{3}(\D|$))/g,"").replace(",","."));
   for(let i=0;i<lines.length;i++){
     const line=lines[i].replace(/^\uFEFF/,"");
-    if(i===0 && /producto/i.test(line) && /(costo|venta|precio)/i.test(line))continue;
     const parts=(line.includes("\t")?line.split("\t"):(line.includes("|")?line.split("|"):(line.includes(";")?line.split(";"):line.split(",")))).map(x=>x.trim().replace(/^"|"$/g,""));
-    if(parts.length<5){alert(`Fila ${i+1}: necesitás 5 columnas: Producto, Categoría, Costo, Precio de venta y Stock inicial. Si no tenés categoría, dejá esa celda vacía.`);return;}
-    const [producto,categoria,costoRaw,ventaRaw,cantidadRaw]=parts;
-    const num=v=>Number(String(v||"0").replace(/[^\d,.-]/g,"").replace(/\.(?=\d{3}(\D|$))/g,"").replace(",","."));
+    if(i===0 && /producto/i.test(line) && /(costo|venta|precio|stock|cantidad)/i.test(line))continue;
+    let producto,categoria="",costoRaw,ventaRaw,cantidadRaw;
+    if(parts.length>=5){
+      // Formato nuevo: Producto | Categoría | Costo | Precio de venta | Stock inicial
+      [producto,categoria,costoRaw,ventaRaw,cantidadRaw]=parts;
+    }else if(parts.length===4){
+      // Formato del Excel original: Producto | Cantidad | Costo | Precio de venta
+      [producto,cantidadRaw,costoRaw,ventaRaw]=parts;
+    }else{
+      alert(`Fila ${i+1}: no pude reconocer las columnas. Pegá las 4 columnas del Excel original (Producto, Cantidad, Costo, Precio de venta) o las 5 del formato nuevo.`);return;
+    }
     const costo=num(costoRaw),venta=num(ventaRaw),cantidad=num(cantidadRaw);
     if(!producto||!Number.isFinite(costo)||!Number.isFinite(venta)||costo<0||venta<0||!Number.isFinite(cantidad)||cantidad<0){
-      alert(`Fila ${i+1}: revisá producto, costo, precio de venta y cantidad.`);return;
+      alert(`Fila ${i+1}: revisá producto, cantidad, costo y precio de venta.`);return;
     }
     parsed.push({producto,categoria:categoria||"",costo,venta,cantidad:Math.floor(cantidad)});
   }

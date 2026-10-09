@@ -1902,7 +1902,7 @@ async function printTicket(n){
   const o=orders.find(x=>x.n===n); if(!o)return;
   const saldo=paymentBalance(o);
   const clean=(v)=>String(v??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[\r\n]+/g," ").trim();
-  const wrap=(txt,width=48)=>{
+  const wrap=(txt,width=42)=>{
     txt=clean(txt); if(!txt)return [""];
     const words=txt.split(/\s+/), out=[]; let line="";
     for(const w of words){
@@ -1913,37 +1913,39 @@ async function printTicket(n){
     if(line)out.push(line); return out;
   };
   const ESC="\x1B", GS="\x1D", LF="\n";
+  const ticketMoney=(v)=>"$ "+Math.round(Number(v)||0).toLocaleString("es-AR").replace(/[.\u00A0\u202F]/g,(m)=>m==="."?".":".").replace(/\s/g,"");
   let d="";
   d+=ESC+"@";
+  d+=ESC+"t"+"\x00";
   d+=ESC+"a"+"\x01"+ESC+"E"+"\x01"+"E30 | TECNICO DE CELULARES"+ESC+"E"+"\x00"+LF;
   d+=clean(o.local)+LF;
-  d+="Tel: "+clean(businessConfig.phone)+"  Instagram: "+clean(businessConfig.instagram)+LF;
-  d+="-----------------------------------------------"+LF;
+  wrap("Tel: "+clean(businessConfig.phone)+"  Instagram: "+clean(businessConfig.instagram),42).forEach(x=>d+=x+LF);
+  d+="------------------------------------------"+LF;
   d+=ESC+"a"+"\x00"+ESC+"E"+"\x01"+"ORDEN #"+String(o.n).padStart(4,"0")+ESC+"E"+"\x00"+LF;
   d+="Fecha: "+clean(o.fecha)+LF;
   d+="Cliente: "+clean(o.cliente)+LF;
   d+="Tel: "+clean(o.telefono)+LF;
   d+="Equipo: "+clean((o.marca||"")+" "+(o.modelo||""))+LF;
   if(o.imei)d+="IMEI: "+clean(o.imei)+LF;
-  d+="-----------------------------------------------"+LF;
-  d+="Falla: "+LF; wrap(o.falla||"-").forEach(x=>d+="  "+x+LF);
-  d+="Trabajo: "+LF; wrap(o.trabajo||"-").forEach(x=>d+="  "+x+LF);
+  d+="------------------------------------------"+LF;
+  d+="Falla: "+LF; wrap(o.falla||"-",42).forEach(x=>d+="  "+x+LF);
+  d+="Trabajo: "+LF; wrap(o.trabajo||"-",42).forEach(x=>d+="  "+x+LF);
   d+="Estado: "+clean(o.estado)+LF;
   if(o.entrega)d+="Entrega estimada: "+clean(o.entrega)+LF;
-  d+="-----------------------------------------------"+LF;
-  d+="Total: "+money(o.total)+LF;
-  d+="Pagado: "+money(paymentTotal(o))+LF;
-  d+=ESC+"E"+"\x01"+"Saldo: "+money(saldo)+ESC+"E"+"\x00"+LF;
+  d+="------------------------------------------"+LF;
+  d+="Total: "+ticketMoney(o.total)+LF;
+  d+="Pagado: "+ticketMoney(paymentTotal(o))+LF;
+  d+=ESC+"E"+"\x01"+"Saldo: "+ticketMoney(saldo)+ESC+"E"+"\x00"+LF;
   if(o.obsEquipo){
-    d+="-----------------------------------------------"+LF;
+    d+="------------------------------------------"+LF;
     d+="Estado del equipo:"+LF;
     wrap(o.obsEquipo).forEach(x=>d+="  "+x+LF);
   }
-  d+="-----------------------------------------------"+LF;
+  d+="------------------------------------------"+LF;
   d+=ESC+"E"+"\x01"+"GARANTIA DE LA REPARACION: 30 DIAS"+ESC+"E"+"\x00"+LF;
   d+="La garantia cubre exclusivamente la reparacion realizada y los componentes o repuestos colocados como parte de ella."+LF;
   d+="No cubre nuevas fallas ni componentes ajenos al trabajo realizado."+LF;
-  d+="-----------------------------------------------"+LF;
+  d+="------------------------------------------"+LF;
   d+=ESC+"E"+"\x01"+"TERMINOS Y CONDICIONES"+ESC+"E"+"\x00"+LF;
   const terms=[
     "1. Este comprobante es el unico valido para retirar el equipo.",
@@ -1953,8 +1955,8 @@ async function printTicket(n){
     "5. El cliente declara ser propietario o estar autorizado por su propietario.",
     "6. No nos responsabilizamos por perdida de informacion o datos. Se recomienda realizar copia de seguridad."
   ];
-  terms.forEach(t=>wrap(t).forEach(x=>d+=x+LF));
-  d+="-----------------------------------------------"+LF;
+  terms.forEach(t=>wrap(t,42).forEach(x=>d+=x+LF));
+  d+="------------------------------------------"+LF;
   d+=ESC+"a"+"\x01"+"Conserve este comprobante"+LF+LF+LF+LF;
   await qzPrintRaw(e30FinishTicket(d),`E30 Orden #${o.n}`);
 }

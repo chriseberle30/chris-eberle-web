@@ -1100,21 +1100,22 @@ function resetOrder(){
 
 function importBulkPrices(){
   const raw=document.getElementById("bulkPrices").value.trim();
-  if(!raw){alert("Pegá los precios antes de cargar.");return;}
+  if(!raw){alert("Copiá las celdas de Excel y pegálas acá, o pegá el contenido del CSV.");return;}
   const lines=raw.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
   const parsed=[];
   for(let i=0;i<lines.length;i++){
-    let line=lines[i];
+    let line=lines[i].replace(/^\uFEFF/,"");
     if(i===0 && /marca/i.test(line) && /modelo/i.test(line) && /precio/i.test(line)) continue;
-    let parts=line.includes("|")?line.split("|"):(line.includes(";")?line.split(";"):line.split(","));
+    // Excel copia las columnas separadas por tabulaciones; también admitimos |, ; y CSV.
+    let parts=line.includes("\t")?line.split("\t"):(line.includes("|")?line.split("|"):(line.includes(";")?line.split(";"):line.split(",")));
     parts=parts.map(x=>x.trim().replace(/^"|"$/g,""));
-    if(parts.length<4){alert(`Línea ${i+1} inválida. Usá: Marca | Modelo | Reparación | Precio`);return;}
+    if(parts.length<4){alert(`Línea ${i+1} inválida. Copiá las 4 columnas de Excel: Marca, Modelo, Reparación y Precio.`);return;}
     const [marca,modelo,reparacion,precioRaw]=parts;
     const precio=Number(String(precioRaw).replace(/[^\d]/g,""));
-    if(!marca||!modelo||!reparacion||!precio){alert(`Línea ${i+1} inválida. Revisá los datos.`);return;}
+    if(!marca||!modelo||!reparacion||!precio){alert(`Línea ${i+1} inválida. Revisá Marca, Modelo, Reparación y Precio.`);return;}
     parsed.push({marca,modelo,reparacion,precio});
   }
-  if(!parsed.length){alert("No encontré precios válidos.");return;}
+  if(!parsed.length){alert("No encontré precios válidos. Revisá que hayas copiado las filas con datos.");return;}
   const duplicates=parsed.filter(x=>prices.some(p=>p.marca.trim().toLowerCase()===x.marca.toLowerCase()&&p.modelo.trim().toLowerCase()===x.modelo.toLowerCase()&&p.reparacion.trim().toLowerCase()===x.reparacion.toLowerCase()));
   const updateDuplicates=duplicates.length?confirm(`Encontré ${duplicates.length} precio(s) que ya existen con la misma Marca + Modelo + Reparación.\n\nAceptar = actualizar esos precios.\nCancelar = mantener los existentes y agregar solo los nuevos.`):false;
   let nextId=prices.length?Math.max(...prices.map(p=>p.id)):0,added=0,updated=0;

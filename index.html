@@ -1370,6 +1370,8 @@ function importBulkStock(){
     const line=lines[i].replace(/^\uFEFF/,"");
     const parts=(line.includes("\t")?line.split("\t"):(line.includes("|")?line.split("|"):(line.includes(";")?line.split(";"):line.split(",")))).map(x=>x.trim().replace(/^"|"$/g,""));
     if(i===0 && /producto/i.test(line) && /(costo|venta|precio|stock|cantidad)/i.test(line))continue;
+    // Ignorar filas de resumen del Excel, como TOTAL, y separadores sin datos.
+    if(/^total\b/i.test(line) || /^subtotal\b/i.test(line) || /^[-=]+$/.test(line))continue;
     let producto,categoria="",costoRaw,ventaRaw,cantidadRaw;
     if(parts.length>=5){
       // Formato nuevo: Producto | Categoría | Costo | Precio de venta | Stock inicial

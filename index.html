@@ -1918,7 +1918,7 @@ async function printTicket(n){
   d+=ESC+"@";
   d+=ESC+"t"+"\x00";
   d+=ESC+"a"+"\x01"+ESC+"E"+"\x01"+"E30 | TECNICO DE CELULARES"+ESC+"E"+"\x00"+LF;
-  d+=clean(o.local)+LF;
+  d+=clean(o.local).replace(/[—–]/g,"-")+LF;
   wrap("Tel: "+clean(businessConfig.phone)+"  Instagram: "+clean(businessConfig.instagram),42).forEach(x=>d+=x+LF);
   d+="------------------------------------------"+LF;
   d+=ESC+"a"+"\x00"+ESC+"E"+"\x01"+"ORDEN #"+String(o.n).padStart(4,"0")+ESC+"E"+"\x00"+LF;

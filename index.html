@@ -409,9 +409,11 @@ qz.security.setSignaturePromise(function(toSign){
 <div class="card"><h2 style="margin-top:0">Movimientos</h2>
 <div class="form">
 <div><label>Tipo</label><select id="mTipo"><option>Gasto</option><option>Ingreso</option></select></div>
-<div><label>Concepto</label><input id="mConcepto" placeholder="Ej.: Compra de repuestos"></div>
-<div><label>Importe</label><input id="mImporte" type="number" min="0"></div>
-<div><label>Medio de pago</label><select id="mPago"><option>Efectivo</option><option>Transferencia</option><option>Mercado Pago</option><option>Tarjeta</option><option>Otro</option></select></div>
+<div><label>Concepto</label><input id="mConcepto" placeholder="Ej.: Yerba, pegamento, repuesto"></div>
+<div><label>Categoría</label><select id="mCategoria"><option>Gastos diarios</option><option>Insumos técnicos</option><option>Mantenimiento</option><option>Servicios</option><option>Alquiler</option><option>Mercadería / stock</option><option>Pago al dealer</option><option>Retiro personal</option><option>Otros</option></select></div>
+<div><label>Importe</label><input id="mImporte" type="number" min="0" step="0.01"></div>
+<div><label>Sucursal</label><select id="mLocal"><option>Demóstenes 3110 — Las Flores</option><option>Piovano 2960 — Moreno</option></select></div>
+<div><label>Medio de pago</label><select id="mPago"><option>Mercado Pago</option><option>Efectivo</option><option>Transferencia</option><option>Tarjeta</option><option>Otro</option></select></div>
 <div class="full"><button class="btn" type="button" onclick="addMovement()">+ Registrar movimiento</button></div>
 </div></div>
 <div class="card"><div class="stat-grid">
@@ -841,7 +843,7 @@ function applyBusinessConfig(){
   const ids={cfgBusiness:businessConfig.business,cfgPhone:businessConfig.phone,cfgInstagram:businessConfig.instagram,cfgAddress:businessConfig.address,cfgBranch2:businessConfig.branch2};
   Object.entries(ids).forEach(([id,v])=>{const el=document.getElementById(id);if(el)el.value=v||"";});
   const opts=[businessConfig.address,businessConfig.branch2].filter(Boolean);
-  document.querySelectorAll("#local,#rLocal").forEach(sel=>{if(!sel)return;const current=sel.value;sel.innerHTML=(sel.id==="rLocal"?'<option value="Todas">Todas</option>':"")+opts.map(x=>`<option>${escapeHtml(x)}</option>`).join("");if([...sel.options].some(o=>o.value===current))sel.value=current;});
+  document.querySelectorAll("#local,#rLocal,#mLocal").forEach(sel=>{if(!sel)return;const current=sel.value;sel.innerHTML=(sel.id==="rLocal"?'<option value="Todas">Todas</option>':"")+opts.map(x=>`<option>${escapeHtml(x)}</option>`).join("");if([...sel.options].some(o=>o.value===current))sel.value=current;});
 }
 async function saveBusinessConfig(){
   businessConfig={business:(document.getElementById("cfgBusiness")?.value||DEFAULT_BUSINESS_CONFIG.business).trim(),phone:(document.getElementById("cfgPhone")?.value||DEFAULT_BUSINESS_CONFIG.phone).trim(),instagram:(document.getElementById("cfgInstagram")?.value||DEFAULT_BUSINESS_CONFIG.instagram).trim(),address:(document.getElementById("cfgAddress")?.value||DEFAULT_BUSINESS_CONFIG.address).trim(),branch2:(document.getElementById("cfgBranch2")?.value||DEFAULT_BUSINESS_CONFIG.branch2).trim()};
@@ -1588,7 +1590,7 @@ function showClientDetail(encoded){
 
 function addMovement(){
   const amount=+mImporte.value||0;if(amount<=0){alert("Ingresá un importe.");return;}
-  const m={n:movements.length?Math.max(...movements.map(x=>x.n))+1:1,tipo:mTipo.value,concepto:mConcepto.value.trim()||"Sin concepto",importe:amount,pago:mPago.value,fecha:new Date().toLocaleDateString("es-AR")};
+  const m={n:movements.length?Math.max(...movements.map(x=>x.n))+1:1,tipo:mTipo.value,concepto:mConcepto.value.trim()||"Sin concepto",categoria:document.getElementById("mCategoria")?.value||"Otros",local:document.getElementById("mLocal")?.value||businessConfig.address,importe:amount,pago:mPago.value,fecha:new Date().toLocaleDateString("es-AR")};
   movements.unshift(m);saveMovements();recordActivity(m.tipo==="Ingreso"?"cobro":"movimiento",m.tipo==="Ingreso"?"Ingreso registrado":"Gasto registrado",`${m.concepto||"Sin concepto"} · ${money(m.importe)}`,m.n);mConcepto.value="";mImporte.value="";renderMovements();renderDashboard();
 }
 function renderMovements(){
@@ -1601,7 +1603,7 @@ function renderMovements(){
   const days=Object.entries(groups);
   document.getElementById("movementsList").innerHTML=days.map(([date,items])=>{
     const dayNet=items.reduce((a,m)=>a+(m.tipo==="Ingreso"?m.importe:-m.importe),0);
-    return `<div class="movement-day"><div class="movement-day-head"><b>${escapeHtml(date)}</b><span class="movement-day-total">Neto ${money(dayNet)}</span></div><div style="overflow:hidden;border-radius:12px;box-shadow:0 3px 14px rgba(20,16,76,.045)">${items.map(m=>`<div class="movement-row"><div class="movement-mark">${m.tipo==="Ingreso"?"+":"−"}</div><div class="movement-main"><b>${escapeHtml(m.concepto||"Sin concepto")}</b><span>${escapeHtml(m.pago||"Sin medio de pago")} · ${escapeHtml(m.tipo)}</span></div><div class="movement-amount ${m.tipo==="Ingreso"?"ingreso":"gasto"}">${m.tipo==="Ingreso"?"+":"−"}${money(m.importe)}</div></div>`).join("")}</div></div>`;
+    return `<div class="movement-day"><div class="movement-day-head"><b>${escapeHtml(date)}</b><span class="movement-day-total">Neto ${money(dayNet)}</span></div><div style="overflow:hidden;border-radius:12px;box-shadow:0 3px 14px rgba(20,16,76,.045)">${items.map(m=>`<div class="movement-row"><div class="movement-mark">${m.tipo==="Ingreso"?"+":"−"}</div><div class="movement-main"><b>${escapeHtml(m.concepto||"Sin concepto")}</b><span>${escapeHtml(m.categoria||"Otros")} · ${escapeHtml(m.local||"Sucursal sin asignar")} · ${escapeHtml(m.pago||"Sin medio de pago")} · ${escapeHtml(m.tipo)}</span></div><div class="movement-amount ${m.tipo==="Ingreso"?"ingreso":"gasto"}">${m.tipo==="Ingreso"?"+":"−"}${money(m.importe)}</div></div>`).join("")}</div></div>`;
   }).join("")||'<div class="card empty">Todavía no hay movimientos.</div>';
 }
 

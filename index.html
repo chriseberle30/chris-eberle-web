@@ -1444,7 +1444,7 @@ document.getElementById("saleForm").onsubmit=e=>{
  const x=stock.find(p=>p.id===+saleProduct.value),qty=+saleQty.value||0,unit=+salePrice.value||0;
  if(!x){alert("Seleccioná un producto.");return;} if(qty<1){alert("La cantidad debe ser mayor a 0.");return;} if(x.cantidad<qty){alert(`No hay stock suficiente. Disponible: ${x.cantidad}.`);return;}
  const now=new Date(),warranty=new Date(now);warranty.setDate(warranty.getDate()+7);
- const sale={n:sales.length?Math.max(...sales.map(s=>s.n))+1:1,productoId:x.id,producto:x.producto,cantidad:qty,unit,total:unit*qty,cliente:saleClient.value.trim(),telefono:salePhone.value.trim(),local:saleLocal.value,pago:salePayment.value,fecha:now.toLocaleDateString("es-AR"),warranty:warranty.toLocaleDateString("es-AR"),createdAt:now.toISOString()};
+ const sale={n:sales.length?Math.max(...sales.map(s=>s.n))+1:1,productoId:x.id,producto:x.producto,cantidad:qty,unit,costoUnitario:+x.costo||0,total:unit*qty,cliente:saleClient.value.trim(),telefono:salePhone.value.trim(),local:saleLocal.value,pago:salePayment.value,fecha:now.toLocaleDateString("es-AR"),warranty:warranty.toLocaleDateString("es-AR"),createdAt:now.toISOString()};
  x.cantidad-=qty;sales.unshift(sale);saveStock();saveSales();recordActivity("venta","Venta realizada",`${sale.producto||"Producto"} × ${sale.cantidad} · ${money(sale.total)}`,sale.n);resetSaleForm();renderSaleProducts();renderStock();renderSales();renderDashboard();
  if(confirm("Venta registrada. ¿Querés imprimir el ticket ahora?"))printSaleTicket(sale.n);
 };
@@ -1675,7 +1675,7 @@ function reportFilterData(){
 }
 function csvCell(v){return '"'+String(v??"").replace(/"/g,'""')+'"';}
 function downloadCSV(filename,rows){
-  const csv="\\uFEFF"+rows.map(row=>row.map(csvCell).join(";")).join("\\r\\n");
+  const csv="\uFEFF"+rows.map(row=>row.map(csvCell).join(";")).join("\r\n");
   const blob=new Blob([csv],{type:"text/csv;charset=utf-8;"});
   const url=URL.createObjectURL(blob),a=document.createElement("a");
   a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);

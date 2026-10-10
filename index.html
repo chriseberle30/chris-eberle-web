@@ -330,7 +330,7 @@ qz.security.setSignaturePromise(function(toSign){
 <div class="card search-hero" style="padding:22px;margin-bottom:18px">
 <h2 style="margin:0 0 6px;font-size:25px;letter-spacing:-.5px">Buscar precio</h2>
 <div class="sub" style="margin-bottom:10px">Consultá rápido cuánto cobrar por una reparación.</div>
-<input id="search" class="search" style="font-size:18px;padding:15px" placeholder="Ej.: iPhone 13 pantalla, Moto G31 módulo..." oninput="renderSearch()" autofocus>
+<input id="search" name="e30-price-search" class="search" style="font-size:18px;padding:15px" placeholder="Ej.: iPhone 13 pantalla, Moto G31 módulo..." oninput="renderSearch()" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
 </div>
 <div id="results"></div>
 <div class="quick-actions">
@@ -795,7 +795,7 @@ function enterApp(){
   authed=true;
   document.getElementById("loginScreen").style.display="none";
   document.getElementById("appRoot").style.setProperty("display","block","important");
-  orders.forEach(o=>{if(!o.costos)o.costos=[];});ensureClients();document.getElementById("rMes").value=new Date().toISOString().slice(0,7);renderSearch();renderDashboard();renderActivity();toggleGremioField();applyBusinessConfig();loadSavedLogo();updatePrinterPill();refreshAdminUI();setTimeout(()=>document.getElementById("search")?.focus(),100);setTimeout(restorePrinterReceiver,500);
+  orders.forEach(o=>{if(!o.costos)o.costos=[];});ensureClients();document.getElementById("rMes").value=new Date().toISOString().slice(0,7);const priceSearch=document.getElementById("search");if(priceSearch)priceSearch.value="";renderSearch();renderDashboard();renderActivity();toggleGremioField();applyBusinessConfig();loadSavedLogo();updatePrinterPill();refreshAdminUI();setTimeout(restorePrinterReceiver,500);
 }
 (async function init(){
   try{

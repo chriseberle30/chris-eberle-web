@@ -1515,7 +1515,7 @@ async function printSaleTicket(n){
   d+="-----------------------------------------------"+LF;
   escWrap("La garantia corresponde al accesorio vendido y cubre fallas de funcionamiento. No cubre danos por golpes, humedad, uso indebido o manipulacion.",46).forEach(x=>d+=x+LF);
   d+="-----------------------------------------------"+LF+"Conserve este comprobante"+LF+LF+LF;
-  await qzPrintRaw(e30FinishTicket(d),\`E30 Venta #\${s.n}\`);
+  await qzPrintRaw(e30FinishTicket(d),"E30 Venta #"+s.n);
 }
 function statusClass(s){
   if(s==="Recibido")return"status-recibido";

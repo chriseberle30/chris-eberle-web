@@ -1497,25 +1497,25 @@ function deleteSale(n){
 }
 async function printSaleTicket(n){
   const s=sales.find(x=>x.n===n);if(!s)return;
-  const ESC="\\x1B",LF="\\n";let d=ESC+"@";
-  const ticketMoney=(v)=>"$ "+Math.round(Number(v)||0).toLocaleString("es-AR").replace(/\\u00A0/g,".");
-  d+=ESC+"a"+"\\x01"+ESC+"E"+"\\x01"+"E30 | TECNICO DE CELULARES"+ESC+"E"+"\\x00"+LF;
-  d+=ESC+"a"+"\\x00";
+  const ESC="\x1B",LF="\n";let d=ESC+"@";
+  const ticketMoney=(v)=>"$ "+Math.round(Number(v)||0).toLocaleString("es-AR").replace(/\u00A0/g,".");
+  d+=ESC+"a"+"\x01"+ESC+"E"+"\x01"+"E30 | TECNICO DE CELULARES"+ESC+"E"+"\x00"+LF;
+  d+=ESC+"a"+"\x00";
   d+=escTicketText(s.local)+LF+"Tel: "+escTicketText(businessConfig.phone)+"  "+escTicketText(businessConfig.instagram)+LF;
   d+="-----------------------------------------------"+LF;
-  d+=ESC+"a"+"\\x01"+ESC+"E"+"\\x01"+"COMPROBANTE DE VENTA #"+String(s.n).padStart(4,"0")+ESC+"E"+"\\x00"+LF;
-  d+=ESC+"a"+"\\x00"+"-----------------------------------------------"+LF;
+  d+=ESC+"a"+"\x01"+ESC+"E"+"\x01"+"COMPROBANTE DE VENTA #"+String(s.n).padStart(4,"0")+ESC+"E"+"\x00"+LF;
+  d+=ESC+"a"+"\x00"+"-----------------------------------------------"+LF;
   d+="Fecha: "+escTicketText(s.fecha)+LF;
   if(s.cliente)d+="Cliente: "+escTicketText(s.cliente)+LF;
   if(s.telefono)d+="Tel: "+escTicketText(s.telefono)+LF;
   d+="Producto: "+escTicketText(s.producto)+LF+"Cantidad: "+s.cantidad+LF+"Precio unit.: "+ticketMoney(s.unit)+LF;
   d+="-----------------------------------------------"+LF;
-  d+=ESC+"E"+"\\x01"+"TOTAL: "+ticketMoney(s.total)+ESC+"E"+"\\x00"+LF+"Pago: "+escTicketText(s.pago)+LF;
+  d+=ESC+"E"+"\x01"+"TOTAL: "+ticketMoney(s.total)+ESC+"E"+"\x00"+LF+"Pago: "+escTicketText(s.pago)+LF;
   d+="-----------------------------------------------"+LF+"GARANTIA: 7 DIAS"+LF+"Valida hasta: "+escTicketText(s.warranty)+LF;
   d+="-----------------------------------------------"+LF;
   escWrap("La garantia corresponde al accesorio vendido y cubre fallas de funcionamiento. No cubre danos por golpes, humedad, uso indebido o manipulacion.",46).forEach(x=>d+=x+LF);
   d+="-----------------------------------------------"+LF+"Conserve este comprobante"+LF+LF+LF;
-  await qzPrintRaw(e30FinishTicket(d),`E30 Venta #${s.n}`);
+  await qzPrintRaw(e30FinishTicket(d),\`E30 Venta #\${s.n}\`);
 }
 function statusClass(s){
   if(s==="Recibido")return"status-recibido";

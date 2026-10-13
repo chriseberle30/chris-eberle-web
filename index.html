@@ -713,8 +713,7 @@ async function loadAll(attempt){
     const accesoriosIniciales=[
       {producto:"Cable Apple USB-C a Lightning (1 m) — original",categoria:"Cables / Apple original",costo:25000,venta:40000,cantidad:2,activo:true},
       {producto:"Cable Apple USB-C a USB-C (1 m, 60 W) — original",categoria:"Cables / Apple original",costo:31000,venta:45000,cantidad:2,activo:true},
-      {producto:"Cable USB-C a USB-C (1 m) — alternativo",categoria:"Cables / Alternativo",costo:6000,venta:15000,cantidad:3,activo:true},
-      {producto:"Adaptador Apple USB-C 20 W (A2305)",categoria:"Cargadores / Las Flores",costo:31000,venta:45000,cantidad:2,activo:true}
+      {producto:"Cable USB-C a USB-C (1 m) — alternativo",categoria:"Cables / Alternativo",costo:6000,venta:15000,cantidad:3,activo:true}
     ];
     let accesoriosAgregados=false;
     for(const item of accesoriosIniciales){
@@ -739,14 +738,14 @@ async function loadAll(attempt){
     throw e;
   }
 }
-function saveOrders(){kvSet("e30-orders",orders);}
-function saveBudgets(){kvSet("e30-budgets",budgets);}
-function savePrices(){kvSet("e30-prices",prices);}
-function saveStock(){kvSet("e30-stock",stock);}
-function saveSales(){kvSet("e30-sales",sales);}
-function saveMovements(){kvSet("e30-movements",movements);}
-function saveActivity(){kvSet("e30-activity",activity);}
-function saveClients(){kvSet("e30-clients",clients);}
+function saveOrders(){return kvSet("e30-orders",orders);}
+function saveBudgets(){return kvSet("e30-budgets",budgets);}
+function savePrices(){return kvSet("e30-prices",prices);}
+function saveStock(){return kvSet("e30-stock",stock);}
+function saveSales(){return kvSet("e30-sales",sales);}
+function saveMovements(){return kvSet("e30-movements",movements);}
+function saveActivity(){return kvSet("e30-activity",activity);}
+function saveClients(){return kvSet("e30-clients",clients);}
 function localDateTime(){const d=new Date();return {date:d.toLocaleDateString("es-AR"),time:d.toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit",hour12:false}),iso:d.toISOString()};}
 function recordActivity(type,title,detail,ref){
   const dt=localDateTime();

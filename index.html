@@ -1679,18 +1679,21 @@ function renderCostModal(){
   document.getElementById("costList").innerHTML=(o.costos||[]).map((c,i)=>`<div style="display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)"><span>${c.concepto}</span><b>${money(c.importe)}</b><button class="btn danger" style="padding:5px 8px" onclick="deleteOrderCost(${i})">×</button></div>`).join("")||'<div class="sub">Todavía no hay costos cargados.</div>';
   document.getElementById("costList").innerHTML += `<div style="margin-top:12px"><b>Total costos: ${money(total)}</b> · <b>Ganancia bruta: ${money(ganancia)}</b></div>`;
 }
-function addOrderCost(){
+async function addOrderCost(){
   const o=orders.find(x=>x.n===window.costOrderId);if(!o)return;
   const concept=document.getElementById("costConcept").value.trim(),amount=+document.getElementById("costAmount").value||0;
   if(!concept||amount<=0){alert("Ingresá concepto e importe.");return;}
   if(!o.costos)o.costos=[];
   o.costos.push({concepto:concept,importe:amount});
-  saveOrders();document.getElementById("costConcept").value="";document.getElementById("costAmount").value="";renderCostModal();renderOrders();renderDashboard();document.getElementById("costConcept")?.focus();
+  try{await saveOrders();document.getElementById("costConcept").value="";document.getElementById("costAmount").value="";renderCostModal();renderOrders();renderDashboard();document.getElementById("costConcept")?.focus();}
+  catch(e){o.costos.pop();alert("No se pudo guardar el costo. Revisá la conexión e intentá de nuevo.");}
 }
-function deleteOrderCost(i){
+async function deleteOrderCost(i){
   const o=orders.find(x=>x.n===window.costOrderId);if(!o)return;
   if(!confirm("¿Eliminar este costo?"))return;
-  o.costos.splice(i,1);saveOrders();renderCostModal();renderOrders();renderDashboard();
+  const removed=o.costos.splice(i,1);
+  try{await saveOrders();renderCostModal();renderOrders();renderDashboard();}
+  catch(e){o.costos.splice(i,0,...removed);alert("No se pudo guardar el cambio. Revisá la conexión e intentá de nuevo.");}
 }
 function closeCostModal(){document.getElementById("costModal").style.display="none";}
 

@@ -1718,7 +1718,8 @@ function orderMonthKey(o){
 function reportFilterData(){
   const selectedMonth=document.getElementById("rMes")?.value||"";
   const local=document.getElementById("rLocal")?.value||"Todas";
-  const matchesLocal=x=>local==="Todas"||x.local===local;
+  const normLocal=v=>{const s=String(v||"").toLowerCase();if(s.includes("las flores")||s.includes("demóstenes 3101")||s.includes("demóstenes 3110"))return "las flores";if(s.includes("moreno")||s.includes("piovano"))return "moreno";return s;};
+  const matchesLocal=x=>local==="Todas"||normLocal(x.local)===normLocal(local);
   const matchesMonth=x=>!selectedMonth||(x.fecha?monthKeyFromDateString(x.fecha):orderMonthKey(x))===selectedMonth;
   const ord=orders.filter(o=>matchesLocal(o)&&(!selectedMonth||orderMonthKey(o)===selectedMonth));
   const salesFiltered=sales.filter(x=>matchesLocal(x)&&(!selectedMonth||saleMonthKey(x)===selectedMonth));
@@ -1744,9 +1745,11 @@ function renderReports(){
   const {selectedMonth,local,ord,salesFiltered,mov}=reportFilterData();
   const fact=ord.reduce((a,o)=>a+(+o.total||0),0);
   const cobrado=ord.reduce((a,o)=>a+Math.min(+o.total||0,paymentTotal(o)),0)+salesFiltered.reduce((a,s)=>a+(+s.total||0),0);
-  const costos=ord.reduce((a,o)=>a+orderCostTotal(o),0);
+  const costosReparaciones=ord.reduce((a,o)=>a+orderCostTotal(o),0);
   const acc=salesFiltered.reduce((a,s)=>a+(+s.total||0),0);
-  const ganancia=(fact-costos)+acc;
+  const costosAccesorios=salesFiltered.reduce((a,s)=>a+((+s.costoUnitario||+s.costo||0)*(+s.cantidad||1)),0);
+  const costos=costosReparaciones+costosAccesorios;
+  const ganancia=(fact-costosReparaciones)+(acc-costosAccesorios);
   const rep=ord.length,ticket=rep?fact/rep:0,margen=(fact+acc)>0?(ganancia/(fact+acc))*100:0;
   document.getElementById("rFacturado").textContent=money(fact+acc);
   document.getElementById("rCobrado").textContent=money(cobrado);
@@ -1764,9 +1767,10 @@ function renderReports(){
     <div style="padding:8px 0;border-bottom:1px solid var(--line)">Particulares: <b>${part.length} órdenes</b> · Facturado ${money(partFact)} · Costos ${money(partCost)} · Ganancia ${money(partGain)}</div>
     <div style="padding:8px 0;border-bottom:1px solid var(--line)">Gremio: <b>${grem.length} órdenes</b> · Facturado ${money(gremFact)} · Costos ${money(gremCost)} · Ganancia ${money(gremGain)}</div>
     <div style="padding:8px 0;border-bottom:1px solid var(--line)">Ventas de accesorios: <b>${money(acc)}</b></div>
-    <div style="padding:8px 0;border-bottom:1px solid var(--line)">Costos de reparaciones: <b>${money(costos)}</b></div>
+    <div style="padding:8px 0;border-bottom:1px solid var(--line)">Costos de reparaciones: <b>${money(costosReparaciones)}</b></div>
+    <div style="padding:8px 0;border-bottom:1px solid var(--line)">Costo de compra de accesorios: <b>${money(costosAccesorios)}</b></div>
     <div style="padding:8px 0"><b>Resultado bruto estimado: ${money(ganancia)}</b></div>
-    <div class="small-muted">La ganancia de accesorios es provisoria hasta que el sistema tenga el costo de compra de cada producto vendido.</div>`;
+    <div class="small-muted">La ganancia descuenta los costos registrados de las reparaciones y el costo de compra de los accesorios vendidos.</div>`;
   const maxVal=Math.max(partFact,gremFact,partCost,gremCost,Math.abs(partGain),Math.abs(gremGain),acc,1);
   const bar=(label,value,kind="")=>`<div class="report-bar-row"><div class="report-bar-label">${escapeHtml(label)}</div><div><div class="report-bar-track"><div class="report-bar-fill ${kind}" style="width:${Math.max(0,Math.min(100,(Math.abs(value)/maxVal)*100))}%"></div></div><div class="report-chart-value">${money(value)}</div></div></div>`;
   document.getElementById("reportCharts").innerHTML=`

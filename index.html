@@ -470,6 +470,11 @@ qz.security.setSignaturePromise(function(toSign){
 </div>
 <div class="sub" style="margin-top:8px">También acepta CSV con columnas: Marca, Modelo, Reparación, Precio.</div>
 </div>
+<div class="card">
+<h2 style="margin-top:0">Buscar precio</h2>
+<input id="priceSearch" type="search" placeholder="Buscar por marca, modelo o reparación..." oninput="renderPrices()" autocomplete="off">
+<div class="sub" style="margin-top:6px">Ej.: iPhone 13 Pro, Samsung A15, pantalla, pin de carga.</div>
+</div>
 <div id="prices"></div>
 </section>
 
@@ -1037,14 +1042,16 @@ function toggleUnlock(n,b){
 }
 function toggleTechObs(n,b){const o=orders.find(x=>x.n===n),el=document.getElementById("techobs-"+n);if(el.style.display==="none"){el.textContent=o.obsTecnico||"Sin observaciones";el.style.display="inline";b.textContent="Ocultar"}else{el.style.display="none";b.textContent="Mostrar"}}
 function renderPrices(){
-  document.getElementById("prices").innerHTML=prices.map(p=>`<div class="card" id="price-${p.id}">
+  const q=(document.getElementById("priceSearch")?.value||"").trim().toLocaleLowerCase("es-AR");
+  const filtered=prices.filter(p=>[`${p.marca||""} ${p.modelo||""} ${p.reparacion||""}`].some(t=>t.toLocaleLowerCase("es-AR").includes(q)));
+  document.getElementById("prices").innerHTML=filtered.map(p=>`<div class="card" id="price-${p.id}">
     <div class="order"><div><b>${p.marca} ${p.modelo}</b><div class="sub">${p.reparacion}${p.activo===false?" · (desactivado)":""}</div></div>
     <div><div class="price">${money(p.precio)}</div></div></div>
     <div class="actions" style="margin-top:10px">
       <button class="btn secondary" onclick="editPrice(${p.id})">Editar</button>
       <button class="btn secondary" onclick="togglePrice(${p.id})">${p.activo===false?"Activar":"Desactivar"}</button>
       <button class="btn danger" onclick="deletePrice(${p.id})">Eliminar</button>
-    </div></div>`).join("")||'<div class="card empty">No hay precios cargados.</div>';
+    </div></div>`).join("")||(q?'<div class="card empty">No se encontraron precios para esa búsqueda.</div>':'<div class="card empty">No hay precios cargados.</div>');
 }
 function addPrice(){
   const maxId=prices.length?Math.max(...prices.map(p=>p.id)):0;

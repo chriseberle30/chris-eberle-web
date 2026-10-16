@@ -1379,6 +1379,7 @@ async function restorePrinterReceiver(){
   if(b)b.textContent="🟠 Reintentar impresora";
   setPrinterStatus("No se pudo reconectar. Verificá que QZ Tray esté abierto y la XP-80 encendida; después tocá Activar impresora.");
 }
+function moneyTicketInternal(v){return "$"+Math.round(Number(v)||0).toLocaleString("es-AR").replace(/[.\u00A0\u202F]/g,".");}
 function escTicketText(v){return String(v??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[\r\n]+/g," ").trim();}
 function escWrap(txt,width=48){
   txt=escTicketText(txt); if(!txt)return [""];
@@ -1409,8 +1410,9 @@ async function printTechnician(n){
   d+="-----------------------------------------------"+LF;
   d+=ESC+"E"+"\x01"+"OBSERVACIONES TECNICAS:"+ESC+"E"+"\x00"+LF;
   escWrap(o.obsTecnico||"Sin observaciones internas.",46).forEach(x=>d+=x+LF);
+  if(o.obsEquipo){d+="-----------------------------------------------"+LF+"ESTADO DEL EQUIPO AL INGRESAR:"+LF;escWrap(o.obsEquipo,46).forEach(x=>d+=x+LF);}
   d+="-----------------------------------------------"+LF;
-  d+="Total: "+money(o.total)+LF+"Sena: "+money(o.sena)+LF+"Saldo: "+money(saldo)+LF+LF+LF;
+  d+="Total: "+moneyTicketInternal(o.total)+LF+"Sena: "+moneyTicketInternal(o.sena)+LF+"Saldo: "+moneyTicketInternal(saldo)+LF+LF+LF;
   await qzPrintRaw(e30FinishTicket(d),`E30 Orden tecnica #${o.n}`);
 }
 

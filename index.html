@@ -912,18 +912,22 @@ function resolveClientForOrder(){
   return c?.id||"";
 }
 
-document.getElementById("orderForm").onsubmit=e=>{
+document.getElementById("orderForm").onsubmit=async e=>{
 e.preventDefault();
 const editingId=window.editingOrderId;
 if(editingId){
   const o=orders.find(x=>x.n===editingId);
   if(!o)return;
+  const previous=JSON.parse(JSON.stringify(o));
   o.cliente=cliente.value;o.telefono=telefono.value;o.clientId=resolveClientForOrder();o.marca=marca.value;o.modelo=modelo.value;o.imei=imei.value;o.tipoOrden=tipoOrden.value;o.gremio=gremio.value;o.local=local.value;o.desbloqueo=desbloqueo.value;o.unlockType=unlockMode;o.patron=pattern.join("-");o.estado=estado.value;o.falla=falla.value;o.trabajo=trabajo.value;o.total=+total.value||0;o.sena=+sena.value||0;o.pago=pago.value;o.entrega=entrega.value;o.obsTecnico=obsTecnico.value;o.obsEquipo=obsEquipo.value;
-  saveOrders();window.editingOrderId=null;resetOrder();renderOrders();renderDashboard();show("ordenes");return;
+  try{await saveOrders();}catch(err){Object.assign(o,previous);alert("No se pudieron guardar los cambios de la orden. No se confirmó el guardado en la base de datos. Revisá la conexión e intentá nuevamente.");return;}
+  window.editingOrderId=null;resetOrder();renderOrders();renderDashboard();show("ordenes");return;
 }
 const n=(orders.length?Math.max(...orders.map(o=>o.n)):0)+1;
 const o={n,cliente:cliente.value,telefono:telefono.value,clientId:resolveClientForOrder(),marca:marca.value,modelo:modelo.value,imei:imei.value,tipoOrden:tipoOrden.value,gremio:gremio.value,local:local.value,desbloqueo:desbloqueo.value,unlockType:unlockMode,patron:pattern.join("-"),estado:estado.value,falla:falla.value,trabajo:trabajo.value,total:+total.value||0,sena:+sena.value||0,pago:pago.value,entrega:entrega.value,obsTecnico:obsTecnico.value,obsEquipo:obsEquipo.value,costos:[],pagos:[],fecha:new Date().toLocaleDateString("es-AR"),createdAt:new Date().toISOString()};
-orders.unshift(o);saveOrders();recordActivity("orden",`Se creó la orden #${String(n).padStart(4,"0")}`,`${(o.marca||"")} ${(o.modelo||"")} · ${o.cliente||"Cliente"}`,n);resetOrder();renderOrders();renderDashboard();show("ordenes");setTimeout(()=>showPrintQuestion(o.n),80);
+orders.unshift(o);
+try{await saveOrders();}catch(err){orders=orders.filter(x=>x!==o);renderOrders();renderDashboard();alert("No se pudo confirmar el guardado de la orden en la base de datos. No se imprimió el ticket. Revisá la conexión y volvé a intentar; no vuelvas a crearla sin comprobar antes si ya existe.");return;}
+recordActivity("orden",`Se creó la orden #${String(n).padStart(4,"0")}`,`${(o.marca||"")} ${(o.modelo||"")} · ${o.cliente||"Cliente"}`,n);resetOrder();renderOrders();renderDashboard();show("ordenes");setTimeout(()=>showPrintQuestion(o.n),80);
 };
 let pendingPrintOrderId=null;
 function showPrintQuestion(n){

@@ -976,7 +976,7 @@ function orderCard(o){const ct=orderCostTotal(o),missing=ct===0&&(+o.total||0)>0
 </div><div><select onchange="setStatus(${o.n},this.value)" style="width:auto;padding:6px 8px;font-size:12px;border-radius:8px">${ESTADOS.map(s=>`<option ${o.estado===s?"selected":""}>${s}</option>`).join("")}</select><div style="margin-top:6px"><span class="status-badge ${statusClass(o.estado)}">${o.estado}</span></div><div class="price">${money(o.total)}</div></div></div><hr>
 <div><b>Pagado:</b> ${money(paymentTotal(o))} · <b>Saldo:</b> ${money(paymentBalance(o))}</div>
 <div class="cost-line ${missing?"cost-warning":""}"><b>Costos:</b> ${missing?"Falta cargar":money(ct)}${missing?"":" · <b>Ganancia bruta:</b> "+money(Math.max(0,(+o.total||0)-ct))}</div>${o.obsEquipo?`<div class="sub" style="margin-top:7px"><b>Estado del equipo:</b> ${o.obsEquipo}</div>`:""}
-<div class="actions" style="margin-top:12px"><button class="btn secondary" type="button" onclick="openPaymentModal(${o.n})">+ Pago</button><button class="btn secondary" type="button" onclick="orderWhatsAppMessage(${o.n})">WhatsApp</button><button class="btn secondary" type="button" onclick="editOrder(${o.n})">Editar</button><button class="btn secondary admin-cost-btn" type="button" onclick="adminManageCosts(${o.n})" style="display:${adminAuthed?"inline-flex":"none"}">Costos</button><button class="btn" onclick="printTicket(${o.n})">Ticket cliente</button><button class="btn secondary" onclick="openClientPDF('order',${o.n})">PDF / WhatsApp</button><button class="btn secondary" onclick="openWarrantyPDF(${o.n})">PDF garantía</button><button class="btn secondary" onclick="printTechnician(${o.n})">Orden técnico</button>${o.estado==="Entregado"?`<button class="btn secondary" onclick="printDeliveryReceipt(${o.n})">Orden de entrega</button>`:""}<button class="btn danger" onclick="deleteOrder(${o.n})">Eliminar</button></div></div>`}
+<div class="actions" style="margin-top:12px"><button class="btn secondary" type="button" onclick="openPaymentModal(${o.n})">+ Pago</button><button class="btn secondary" type="button" onclick="orderWhatsAppMessage(${o.n})">WhatsApp</button><button class="btn secondary" type="button" onclick="editOrder(${o.n})">Editar</button><button class="btn secondary admin-cost-btn" type="button" onclick="adminManageCosts(${o.n})" style="display:${adminAuthed?"inline-flex":"none"}">Costos</button><button class="btn" onclick="printTicket(${o.n})">Ticket cliente</button><button class="btn secondary" onclick="openClientPDF('order',${o.n})">PDF / WhatsApp</button><button class="btn secondary" onclick="printTechnician(${o.n})">Orden técnico</button>${o.estado==="Entregado"?`<button class="btn secondary" onclick="printDeliveryReceipt(${o.n})">Orden de entrega</button>`:""}<button class="btn danger" onclick="deleteOrder(${o.n})">Eliminar</button></div></div>`}
 
 function renderOrders(){const q=(document.getElementById("orderSearch")?.value||"").toLowerCase();const arr=orders.filter(orderVisible).filter(o=>JSON.stringify(o).toLowerCase().includes(q));document.getElementById("orders").innerHTML=arr.map(orderCard).join("")||'<div class="card empty">No hay órdenes.</div>'; }
 const ESTADOS=["Recibido","Pendiente","Esperando repuesto","En reparación","Listo","Entregado","Cancelado"];
@@ -1004,7 +1004,7 @@ function showDeliveryModal(n){
     return;
   }
   modal.dataset.order=n;
-  text.textContent=`La orden #${String(n).padStart(4,"0")} fue entregada. ¿Querés imprimir el comprobante de entrega para el cliente?`;
+  text.textContent=`La orden #${String(n).padStart(4,"0")} fue entregada. Elegí cómo querés generar la orden de entrega con la garantía incluida.`;
   modal.style.display="flex";
 }
 function closeDeliveryModal(){
@@ -1014,6 +1014,13 @@ function deliveryPrintYes(){
   const m=document.getElementById("deliveryPrintModal");const n=Number(m?.dataset.order||0);
   closeDeliveryModal();
   if(n)printDeliveryReceipt(n);
+  const o=orders.find(x=>x.n===n);
+  if(o && (+o.total||0)>0 && orderCostTotal(o)===0)setTimeout(()=>showPendingCostsModal(n),250);
+}
+function deliverySavePDF(){
+  const m=document.getElementById("deliveryPrintModal");const n=Number(m?.dataset.order||0);
+  closeDeliveryModal();
+  if(n)openDeliveryPDF(n);
   const o=orders.find(x=>x.n===n);
   if(o && (+o.total||0)>0 && orderCostTotal(o)===0)setTimeout(()=>showPendingCostsModal(n),250);
 }
@@ -1918,6 +1925,18 @@ function e30FinishTicket(data){
   return data + ESC+"d"+"\x07" + GS+"V"+"\x42"+"\x00" + ESC+"i";
 }
 
+function openDeliveryPDF(n){
+  const o=orders.find(x=>x.n===n);if(!o)return;
+  const days=Number(o.garantiaDias)||30,total=Number(o.total)||0,paid=paymentTotal(o),saldo=Math.max(0,total-paid);
+  const delivered=o.entregadoAt?new Date(o.entregadoAt):new Date();
+  const fecha=delivered.toLocaleString("es-AR",{dateStyle:"short",timeStyle:"short"});
+  const hasta=new Date(delivered.getTime()+days*86400000).toLocaleDateString("es-AR");
+  const b=branchInfo(o.local),logo=localStorage.getItem("e30-logo")||"";
+  const w=window.open("","_blank","width=900,height=1000");if(!w){alert("Permití ventanas emergentes para guardar el PDF.");return;}
+  w.document.open();
+  w.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Orden de entrega E30 #${String(o.n).padStart(4,"0")}</title><style>*{box-sizing:border-box}body{margin:0;background:#eef0f6;font-family:Arial,sans-serif;color:#24223f}.sheet{width:210mm;min-height:297mm;margin:20px auto;background:white;padding:16mm 17mm}.top{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #14104C;padding-bottom:16px}.brand{display:flex;align-items:center;gap:12px}.brand img{width:56px;height:56px;object-fit:contain}.logo{font-size:27px;font-weight:800;color:#14104C}.sub{font-size:11px;color:#77758a;margin-top:4px}.title{text-align:right;color:#14104C;font-weight:800;font-size:19px}.meta{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:18px 0}.box{border:1px solid #e1e3ec;border-radius:10px;padding:13px}.label{font-size:9px;letter-spacing:1px;color:#77758a;font-weight:700;margin-top:12px}.label:first-child{margin-top:0}.value{font-size:13px;font-weight:600;line-height:1.5;margin-top:4px}.warranty{background:#14104C;color:white;border-radius:10px;padding:16px;margin-top:16px;font-size:18px;font-weight:800}.terms{font-size:11px;line-height:1.6;color:#555;margin-top:18px}.sign{margin-top:28px;display:grid;grid-template-columns:1fr 1fr;gap:30px;font-size:10px;color:#666}.line{border-top:1px solid #888;padding-top:7px;margin-top:28px}.footer{margin-top:24px;border-top:1px solid #ddd;padding-top:10px;font-size:10px;color:#777}@media print{body{background:white}.sheet{margin:0;width:210mm;min-height:297mm}}@page{size:A4;margin:0}</style></head><body><main class="sheet"><div class="top"><div class="brand">${logo?`<img src="${logo}" alt="E30">`:``}<div><div class="logo">E30</div><div class="sub">TÉCNICO DE CELULARES</div></div></div><div class="title">ORDEN DE ENTREGA<br><span style="font-size:13px">N.º ${String(o.n).padStart(4,"0")}</span></div></div><div class="meta"><div class="box"><div class="label">CLIENTE</div><div class="value">${pdfEscape(o.cliente||"-")}</div><div class="label">TELÉFONO</div><div class="value">${pdfEscape(o.telefono||"-")}</div></div><div class="box"><div class="label">SUCURSAL</div><div class="value">${pdfEscape(b.name)}</div><div class="label">FECHA DE ENTREGA</div><div class="value">${pdfEscape(fecha)}</div></div></div><div class="box"><div class="label">EQUIPO ENTREGADO</div><div class="value">${pdfEscape((o.marca||"")+" "+(o.modelo||""))}</div>${o.imei?`<div class="label">IMEI</div><div class="value">${pdfEscape(o.imei)}</div>`:""}<div class="label">REPARACIÓN REALIZADA</div><div class="value">${pdfEscape(o.trabajo||"-")}</div><div class="label">TOTAL</div><div class="value">${pdfEscape(pdfMoney(total))} · Pagado: ${pdfEscape(pdfMoney(paid))} · Saldo: ${pdfEscape(pdfMoney(saldo))}</div></div><div class="warranty">GARANTÍA DE REPARACIÓN: ${days} DÍAS</div><div class="terms"><b>Vigencia:</b> desde ${pdfEscape(fecha)} hasta ${pdfEscape(hasta)}.<br><br><b>Alcance:</b> La garantía cubre exclusivamente la reparación realizada y los componentes o repuestos colocados como parte de ella. No cubre nuevas fallas ni componentes ajenos al trabajo realizado, daños por golpes o humedad, manipulación por terceros ni uso indebido, sin perjuicio de los derechos que correspondan por ley.<br><br>El cliente declara recibir el equipo correspondiente a esta orden y deja constancia de su entrega. Conserve este comprobante para cualquier consulta posterior.</div><div class="sign"><div class="line">Firma del cliente</div><div class="line">Aclaración</div></div><div class="footer">E30 · Técnico de celulares · @eberle30</div></main><script>window.onload=function(){setTimeout(function(){window.print()},250)};<\/script></body></html>`);
+  w.document.close();
+}
 async function printDeliveryReceipt(n){
   const o=orders.find(x=>x.n===n); if(!o)return;
   const total=Number(o.total)||0;
@@ -2043,8 +2062,9 @@ async function printTicket(n){
     <h2 style="margin:0 0 8px">Orden entregada</h2>
     <div id="deliveryPrintText" class="sub" style="line-height:1.5;margin-bottom:20px"></div>
     <div class="actions" style="justify-content:flex-end">
-      <button class="btn secondary" type="button" onclick="deliveryPrintNo()">Ahora no</button>
-      <button class="btn" type="button" onclick="deliveryPrintYes()">Imprimir comprobante</button>
+      <button class="btn secondary" type="button" onclick="deliveryPrintNo()">Cerrar</button>
+      <button class="btn secondary" type="button" onclick="deliverySavePDF()">Guardar como PDF</button>
+      <button class="btn" type="button" onclick="deliveryPrintYes()">Imprimir</button>
     </div>
   </div>
 </div>

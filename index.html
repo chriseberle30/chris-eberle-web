@@ -374,7 +374,7 @@ qz.security.setSignaturePromise(function(toSign){
 </div>
 <div id="unlockModeText" class="sub" style="margin-top:5px">Dato privado. No se imprime.</div>
 </div>
-<div><label>Estado</label><select id="estado"><option>Recibido</option><option>Pendiente</option><option>Esperando repuesto</option><option>En reparación</option><option>Listo</option><option>Entregado</option><option>Cancelado</option></select></div>
+<div><label>Estado</label><select id="estado"><option>Recibido</option><option>Pendiente</option><option>Esperando repuesto</option><option>En reparación</option><option>Listo</option><option>Entregado</option><option>Cancelado</option></select></div><div><label>Garantía de reparación</label><select id="garantiaDias"><option value="30" selected>30 días</option><option value="60">60 días</option></select></div>
 <div class="full"><label>Falla / problema</label><textarea id="falla"></textarea></div>
 <div class="full"><label>Trabajo a realizar</label><textarea id="trabajo"></textarea></div>
 <div><label>Total</label><input id="total" type="number" min="0" value="0"></div><div><label>Pago inicial / seña</label><input id="sena" type="number" min="0" value="0"></div>
@@ -919,12 +919,12 @@ if(editingId){
   const o=orders.find(x=>x.n===editingId);
   if(!o)return;
   const previous=JSON.parse(JSON.stringify(o));
-  o.cliente=cliente.value;o.telefono=telefono.value;o.clientId=resolveClientForOrder();o.marca=marca.value;o.modelo=modelo.value;o.imei=imei.value;o.tipoOrden=tipoOrden.value;o.gremio=gremio.value;o.local=local.value;o.desbloqueo=desbloqueo.value;o.unlockType=unlockMode;o.patron=pattern.join("-");o.estado=estado.value;o.falla=falla.value;o.trabajo=trabajo.value;o.total=+total.value||0;o.sena=+sena.value||0;o.pago=pago.value;o.entrega=entrega.value;o.obsTecnico=obsTecnico.value;o.obsEquipo=obsEquipo.value;
+  o.cliente=cliente.value;o.telefono=telefono.value;o.clientId=resolveClientForOrder();o.marca=marca.value;o.modelo=modelo.value;o.imei=imei.value;o.tipoOrden=tipoOrden.value;o.gremio=gremio.value;o.local=local.value;o.desbloqueo=desbloqueo.value;o.unlockType=unlockMode;o.patron=pattern.join("-");o.estado=estado.value;o.garantiaDias=Number(document.getElementById("garantiaDias").value)||30;o.falla=falla.value;o.trabajo=trabajo.value;o.total=+total.value||0;o.sena=+sena.value||0;o.pago=pago.value;o.entrega=entrega.value;o.obsTecnico=obsTecnico.value;o.obsEquipo=obsEquipo.value;
   try{await saveOrders();}catch(err){Object.assign(o,previous);alert("No se pudieron guardar los cambios de la orden. No se confirmó el guardado en la base de datos. Revisá la conexión e intentá nuevamente.");return;}
   window.editingOrderId=null;resetOrder();renderOrders();renderDashboard();show("ordenes");return;
 }
 const n=(orders.length?Math.max(...orders.map(o=>o.n)):0)+1;
-const o={n,cliente:cliente.value,telefono:telefono.value,clientId:resolveClientForOrder(),marca:marca.value,modelo:modelo.value,imei:imei.value,tipoOrden:tipoOrden.value,gremio:gremio.value,local:local.value,desbloqueo:desbloqueo.value,unlockType:unlockMode,patron:pattern.join("-"),estado:estado.value,falla:falla.value,trabajo:trabajo.value,total:+total.value||0,sena:+sena.value||0,pago:pago.value,entrega:entrega.value,obsTecnico:obsTecnico.value,obsEquipo:obsEquipo.value,costos:[],pagos:[],fecha:new Date().toLocaleDateString("es-AR"),createdAt:new Date().toISOString()};
+const o={n,cliente:cliente.value,telefono:telefono.value,clientId:resolveClientForOrder(),marca:marca.value,modelo:modelo.value,imei:imei.value,tipoOrden:tipoOrden.value,gremio:gremio.value,local:local.value,desbloqueo:desbloqueo.value,unlockType:unlockMode,patron:pattern.join("-"),estado:estado.value,garantiaDias:Number(document.getElementById("garantiaDias").value)||30,falla:falla.value,trabajo:trabajo.value,total:+total.value||0,sena:+sena.value||0,pago:pago.value,entrega:entrega.value,obsTecnico:obsTecnico.value,obsEquipo:obsEquipo.value,costos:[],pagos:[],fecha:new Date().toLocaleDateString("es-AR"),createdAt:new Date().toISOString()};
 orders.unshift(o);
 try{await saveOrders();}catch(err){orders=orders.filter(x=>x!==o);renderOrders();renderDashboard();alert("No se pudo confirmar el guardado de la orden en la base de datos. No se imprimió el ticket. Revisá la conexión y volvé a intentar; no vuelvas a crearla sin comprobar antes si ya existe.");return;}
 recordActivity("orden",`Se creó la orden #${String(n).padStart(4,"0")}`,`${(o.marca||"")} ${(o.modelo||"")} · ${o.cliente||"Cliente"}`,n);resetOrder();renderOrders();renderDashboard();show("ordenes");setTimeout(()=>showPrintQuestion(o.n),80);
@@ -955,7 +955,7 @@ function confirmPrintOrder(){const n=pendingPrintOrderId;closePrintQuestion();if
 function editOrder(n){
  const o=orders.find(x=>x.n===n);if(!o)return;
  window.editingOrderId=n;
- cliente.value=o.cliente||"";cliente.dataset.clientId=o.clientId||"";telefono.value=o.telefono||"";marca.value=o.marca||"";modelo.value=o.modelo||"";imei.value=o.imei||"";tipoOrden.value=o.tipoOrden||"Particular";gremio.value=o.gremio||"";toggleGremioField();local.value=o.local||local.value;estado.value=o.estado||"Recibido";falla.value=o.falla||"";trabajo.value=o.trabajo||"";total.value=o.total||0;sena.value=o.sena||0;pago.value=o.pago||"Sin pago";entrega.value=o.entrega||"";obsTecnico.value=o.obsTecnico||"";obsEquipo.value=o.obsEquipo||"";
+ cliente.value=o.cliente||"";cliente.dataset.clientId=o.clientId||"";telefono.value=o.telefono||"";marca.value=o.marca||"";modelo.value=o.modelo||"";imei.value=o.imei||"";tipoOrden.value=o.tipoOrden||"Particular";gremio.value=o.gremio||"";toggleGremioField();local.value=o.local||local.value;estado.value=o.estado||"Recibido";document.getElementById("garantiaDias").value=String(Number(o.garantiaDias)||30);falla.value=o.falla||"";trabajo.value=o.trabajo||"";total.value=o.total||0;sena.value=o.sena||0;pago.value=o.pago||"Sin pago";entrega.value=o.entrega||"";obsTecnico.value=o.obsTecnico||"";obsEquipo.value=o.obsEquipo||"";
  desbloqueo.value=o.desbloqueo||"";unlockMode=o.unlockType||"codigo";pattern=(o.patron||"").split("-").filter(x=>x!=="").map(Number);setUnlockMode(unlockMode);document.querySelectorAll(".pattern-dot").forEach(d=>d.classList.toggle("selected",pattern.includes(Number(d.dataset.i))));document.getElementById("patternStatus").textContent=pattern.length?`Patrón: ${pattern.map(x=>x+1).join(" → ")}`:"";
  document.getElementById("orderFormTitle").textContent=`Editar orden #${String(n).padStart(4,"0")}`;document.getElementById("orderSubmitBtn").textContent="Guardar cambios";show("orden");window.scrollTo({top:0,behavior:"smooth"});
 }
@@ -1816,7 +1816,7 @@ function openClientPDF(type,n){
     const b=branchInfo(o.local); title="ORDEN DE SERVICIO"; number="#"+String(o.n).padStart(4,"0"); client=o.cliente; phone=o.telefono; branch=b;
     rows=`<div class="label">EQUIPO</div><div class="value">${pdfEscape((o.marca||"")+" "+(o.modelo||""))}</div>${o.imei?`<div class="label">IMEI</div><div class="value mono">${pdfEscape(o.imei)}</div>`:""}<div class="label">FALLA INFORMADA</div><div class="value">${pdfEscape(o.falla||"-")}</div><div class="label">TRABAJO</div><div class="value">${pdfEscape(o.trabajo||"-")}</div>${o.entrega?`<div class="label">ENTREGA ESTIMADA</div><div class="value">${pdfEscape(o.entrega)}</div>`:""}`;
     total=pdfMoney(o.total); note=o.obsEquipo||"";
-    terms=`<div class="terms-title">Términos y condiciones</div><ol><li>Este comprobante es el único válido para retirar el equipo.</li><li>Una vez notificada la finalización, el equipo deberá retirarse dentro de 30 días. Vencido ese plazo, podrá cobrarse estadía. A los 90 días, podrá venderse para cubrir gastos.</li><li>El diagnóstico puede requerir desarme. Equipos con líquido o golpes no cuentan con garantía asegurada.</li><li><b>Garantía de la reparación: 30 días.</b> Cubre exclusivamente la reparación realizada y los componentes o repuestos colocados como parte de ella. No cubre nuevas fallas ni componentes ajenos al trabajo realizado.</li><li>El cliente declara ser propietario o estar autorizado por su propietario.</li><li>No nos responsabilizamos por pérdida de información o datos. Se recomienda realizar copia de seguridad.</li></ol>`;
+    terms=`<div class="terms-title">Términos y condiciones</div><ol><li>Este comprobante es el único válido para retirar el equipo.</li><li>Una vez notificada la finalización, el equipo deberá retirarse dentro de 30 días. Vencido ese plazo, podrá cobrarse estadía. A los 90 días, podrá venderse para cubrir gastos.</li><li>El diagnóstico puede requerir desarme. Equipos con líquido o golpes no cuentan con garantía asegurada.</li><li><b>Garantía de la reparación: ${Number(o.garantiaDias)||30} días.</b> Cubre exclusivamente la reparación realizada y los componentes o repuestos colocados como parte de ella. No cubre nuevas fallas ni componentes ajenos al trabajo realizado.</li><li>El cliente declara ser propietario o estar autorizado por su propietario.</li><li>No nos responsabilizamos por pérdida de información o datos. Se recomienda realizar copia de seguridad.</li></ol>`;
   }else if(type==="sale"){
     const s=sales.find(x=>x.n===n); if(!s)return;
     const b=branchInfo(s.local); title="COMPROBANTE DE VENTA"; number="#"+String(s.n).padStart(4,"0"); client=s.cliente||"Consumidor final"; phone=s.telefono||""; branch=b;
@@ -1946,7 +1946,7 @@ async function printDeliveryReceipt(n){
   d+="Pagado: "+moneyTicket(paid)+LF;
   d+="Saldo: "+moneyTicket(saldo)+LF;
   d+="-----------------------------------------------"+LF;
-  d+="GARANTIA DE LA REPARACION: 30 DIAS"+LF;
+  d+="GARANTIA DE LA REPARACION: "+(Number(o.garantiaDias)||30)+" DIAS"+LF;
   wrap("La garantia cubre exclusivamente la reparacion realizada y los componentes o repuestos colocados como parte de ella.").forEach(x=>d+=x+LF);
   wrap("No cubre nuevas fallas, danos, humedad, manipulacion por terceros ni componentes ajenos al trabajo realizado, sin perjuicio de los derechos que correspondan por ley.").forEach(x=>d+=x+LF);
   d+="-----------------------------------------------"+LF;

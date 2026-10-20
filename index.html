@@ -480,7 +480,7 @@ qz.security.setSignaturePromise(function(toSign){
 <div class="full"><label>Estado del equipo al ingresar</label><textarea id="obsEquipo" rows="2" placeholder="Ej.: pantalla despegada, tapa rota, golpes visibles"></textarea><div class="sub">Dejá asentado cómo lo recibís.</div></div>
 <div class="full"><label>Trabajo a realizar</label><textarea id="trabajo" rows="2" placeholder="Ej.: cambio de batería"></textarea></div>
 <div><label>Total</label><input id="total" type="number" min="0" value="0" inputmode="numeric"></div>
-<div><label>Lugar de recepción</label><select id="local"><option>Demóstenes 3110 — Las Flores</option><option>Piovano 2960 — Moreno</option></select></div>
+<div><label>Lugar de recepción</label><select id="local"><option>Demóstenes 3101 — Las Flores</option><option>Piovano 2960 — Moreno</option></select></div>
 <div class="full"><details class="order-extra"><summary>Más datos (IMEI, código, garantía y pago)</summary><div class="form order-extra-grid">
 <div><label>IMEI (opcional)</label><input id="imei" autocomplete="off"></div>
 <div><label>Tipo de orden</label><select id="tipoOrden" onchange="toggleGremioField()"><option>Particular</option><option>Gremio</option></select></div>
@@ -528,7 +528,7 @@ qz.security.setSignaturePromise(function(toSign){
 <div><label>Concepto</label><input id="mConcepto" placeholder="Ej.: Yerba, pegamento, repuesto"></div>
 <div><label>Categoría</label><select id="mCategoria"><option>Gastos diarios</option><option>Insumos técnicos</option><option>Mantenimiento</option><option>Servicios</option><option>Alquiler</option><option>Mercadería / stock</option><option>Pago al dealer</option><option>Retiro personal</option><option>Otros</option></select></div>
 <div><label>Importe</label><input id="mImporte" type="number" min="0" step="0.01"></div>
-<div><label>Sucursal</label><select id="mLocal"><option>Demóstenes 3110 — Las Flores</option><option>Piovano 2960 — Moreno</option></select></div>
+<div><label>Sucursal</label><select id="mLocal"><option>Demóstenes 3101 — Las Flores</option><option>Piovano 2960 — Moreno</option></select></div>
 <div><label>Medio de pago</label><select id="mPago"><option>Mercado Pago</option><option>Efectivo</option><option>Transferencia</option><option>Tarjeta</option><option>Otro</option></select></div>
 <div class="full"><button class="btn" type="button" onclick="addMovement()">+ Registrar movimiento</button></div>
 </div></div>
@@ -546,7 +546,7 @@ qz.security.setSignaturePromise(function(toSign){
 <div class="card"><h2 style="margin-top:0">Rentabilidad</h2>
 <div class="form">
 <div><label>Mes</label><input id="rMes" type="month"></div>
-<div><label>Sucursal</label><select id="rLocal"><option value="Todas">Todas</option><option>Demóstenes 3110 — Las Flores</option><option>Piovano 2960 — Moreno</option></select></div>
+<div><label>Sucursal</label><select id="rLocal"><option value="Todas">Todas</option><option>Demóstenes 3101 — Las Flores</option><option>Piovano 2960 — Moreno</option></select></div>
 <div class="full actions"><button class="btn" type="button" onclick="renderReports()">Actualizar reporte</button><button class="btn secondary" type="button" onclick="exportMonthlyReport()">Descargar CSV del mes</button></div>
 </div></div>
 <div class="stat-grid">
@@ -630,7 +630,7 @@ qz.security.setSignaturePromise(function(toSign){
 <div><label>Precio unitario</label><input id="salePrice" type="number" min="0" required></div>
 <div><label>Cliente (opcional)</label><input id="saleClient" placeholder="Nombre"></div>
 <div><label>Teléfono (opcional)</label><input id="salePhone" placeholder="11..."></div>
-<div><label>Lugar</label><select id="saleLocal"><option>Demóstenes 3110 — Las Flores</option><option>Piovano 2960 — Moreno</option></select></div>
+<div><label>Lugar</label><select id="saleLocal"><option>Demóstenes 3101 — Las Flores</option><option>Piovano 2960 — Moreno</option></select></div>
 <div><label>Medio de pago</label><select id="salePayment"><option>Efectivo</option><option>Transferencia</option><option>Mercado Pago</option><option>Tarjeta</option><option>Otro</option></select></div>
 <div class="full"><div class="sub">Garantía del accesorio: <b>7 días</b> desde la fecha de venta.</div></div>
 <div class="full actions"><button class="btn" type="submit">Registrar venta</button><button class="btn secondary" type="button" onclick="resetSaleForm()">Limpiar</button></div>
@@ -643,7 +643,7 @@ qz.security.setSignaturePromise(function(toSign){
 <div><label>Teléfono</label><input id="bTelefono"></div>
 <div><label>Marca</label><input id="bMarca" required></div>
 <div><label>Modelo</label><input id="bModelo" required></div>
-<div><label>Sucursal</label><select id="bLocal"><option>Demóstenes 3110 — Las Flores</option><option>Piovano 2960 — Moreno</option></select></div>
+<div><label>Sucursal</label><select id="bLocal"><option>Demóstenes 3101 — Las Flores</option><option>Piovano 2960 — Moreno</option></select></div>
 <div><label>Precio</label><input id="bPrecio" type="number" min="0" required></div>
 <div class="full"><label>Reparación / concepto</label><input id="bConcepto" required placeholder="Ej.: Cambio de pantalla"></div>
 <div class="full"><label>Observaciones (opcional)</label><textarea id="bObs"></textarea></div>
@@ -661,7 +661,7 @@ qz.security.setSignaturePromise(function(toSign){
 <div><label>Nombre comercial</label><input id="cfgBusiness" placeholder="E30 | Técnico de celulares"></div>
 <div><label>Teléfono</label><input id="cfgPhone" placeholder="11 4445-8553"></div>
 <div><label>Instagram</label><input id="cfgInstagram" placeholder="@eberle30"></div>
-<div><label>Dirección principal</label><input id="cfgAddress" placeholder="Demóstenes 3110 — Las Flores"></div>
+<div><label>Dirección principal</label><input id="cfgAddress" placeholder="Demóstenes 3101 — Las Flores"></div>
 <div><label>Sucursal 2</label><input id="cfgBranch2" placeholder="Piovano 2960 — Moreno"></div>
 <div class="full"><button class="btn" type="button" onclick="saveBusinessConfig()">Guardar datos</button><span id="cfgSaved" class="sub" style="margin-left:10px"></span></div>
 </div></div>
@@ -1014,7 +1014,7 @@ function sideGo(id,btn){show(id,btn);document.querySelectorAll(".side-item").for
 function toggleSideMenu(){document.getElementById("sideMenu").classList.toggle("open");document.getElementById("menuOverlay").classList.toggle("open");}
 function closeSideMenu(){document.getElementById("sideMenu").classList.remove("open");document.getElementById("menuOverlay").classList.remove("open");}
 function focusPriceSearch(btn){sideGo("dashboard",null);const el=document.getElementById("search");if(el){el.focus();el.select();}}
-const DEFAULT_BUSINESS_CONFIG={business:"E30 | Técnico de celulares",phone:"11 4445-8553",instagram:"@eberle30",address:"Demóstenes 3110 — Las Flores",branch2:"Piovano 2960 — Moreno"};
+const DEFAULT_BUSINESS_CONFIG={business:"E30 | Técnico de celulares",phone:"11 4445-8553",instagram:"@eberle30",address:"Demóstenes 3101 — Las Flores",branch2:"Piovano 2960 — Moreno"};
 let businessConfig=Object.assign({},DEFAULT_BUSINESS_CONFIG);
 async function loadBusinessConfig(){try{const c=await kvGet("e30-config");if(c)businessConfig=Object.assign({},DEFAULT_BUSINESS_CONFIG,c);}catch(e){}applyBusinessConfig();}
 function applyBusinessConfig(){
@@ -1884,7 +1884,7 @@ function orderMonthKey(o){
 function reportFilterData(){
   const selectedMonth=document.getElementById("rMes")?.value||"";
   const local=document.getElementById("rLocal")?.value||"Todas";
-  const normLocal=v=>{const s=String(v||"").toLowerCase();if(s.includes("las flores")||s.includes("demóstenes 3101")||s.includes("demóstenes 3110"))return "las flores";if(s.includes("moreno")||s.includes("piovano"))return "moreno";return s;};
+  const normLocal=v=>{const s=String(v||"").toLowerCase();if(s.includes("las flores")||s.includes("demóstenes 3101")||s.includes("demóstenes 3101"))return "las flores";if(s.includes("moreno")||s.includes("piovano"))return "moreno";return s;};
   const matchesLocal=x=>local==="Todas"||normLocal(x.local)===normLocal(local);
   const matchesMonth=x=>!selectedMonth||(x.fecha?monthKeyFromDateString(x.fecha):orderMonthKey(x))===selectedMonth;
   const ord=orders.filter(o=>!isKnownTestOrder(o)&&matchesLocal(o)&&(!selectedMonth||orderMonthKey(o)===selectedMonth));
@@ -1969,9 +1969,9 @@ function renderReports(){
 function pdfEscape(v){return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 function branchInfo(local){
   const x=String(local||"").toLowerCase();
-  if(x.includes("las flores")) return {name:"Las Flores",address:"Demóstenes 3110 — Las Flores"};
+  if(x.includes("las flores")) return {name:"Las Flores",address:"Demóstenes 3101 — Las Flores"};
   if(x.includes("moreno")) return {name:"Moreno",address:"Piovano 2960 — Moreno"};
-  return {name:local||"E30",address:"Demóstenes 3110 — Las Flores"};
+  return {name:local||"E30",address:"Demóstenes 3101 — Las Flores"};
 }
 function pdfMoney(n){return money(n);}
 function openClientPDF(type,n){
@@ -2117,7 +2117,7 @@ async function printDeliveryReceipt(n){
   };
   const ESC="\x1B",GS="\x1D",LF="\n";
   const fechaEntrega=o.entregadoAt?new Date(o.entregadoAt).toLocaleString("es-AR",{dateStyle:"short",timeStyle:"short"}):new Date().toLocaleString("es-AR",{dateStyle:"short",timeStyle:"short"});
-  const localText=String(o.local||"").toLowerCase().includes("moreno")?"Piovano 2960 - Moreno":"Demostenes 3110 - Las Flores";
+  const localText=String(o.local||"").toLowerCase().includes("moreno")?"Piovano 2960 - Moreno":"Demostenes 3101 - Las Flores";
   let d=ESC+"@";
   d+=ESC+"t"+"\x00";
   d+=ESC+"a"+"\x01"+"E30 | TECNICO DE CELULARES"+LF;

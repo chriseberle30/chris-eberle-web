@@ -315,6 +315,23 @@ body .e30-bottom-nav{display:none!important;visibility:hidden!important;pointer-
   .side-inner{overflow-y:auto;overscroll-behavior:contain;box-sizing:border-box;padding-bottom:calc(105px + env(safe-area-inset-bottom,0px))!important;}
   .side-spacer{flex:0 0 10px!important;min-height:10px!important;}
 }
+
+/* E30 — Administración: jerarquía, accesos uniformes y métricas */
+.admin-heading-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.admin-close-button{flex:0 0 auto;min-height:34px;padding:7px 10px!important;font-size:12px!important;border-radius:11px!important;white-space:nowrap}
+.admin-access-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch;gap:14px}
+.admin-access-card{box-sizing:border-box;width:100%;min-width:0;min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;align-self:stretch;margin:0;transform:none!important;box-shadow:0 8px 24px rgba(25,28,55,.045)!important;transition:background-color .15s,border-color .15s!important;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.admin-access-card .qa-icon{position:relative;display:flex;align-items:center;justify-content:center;width:36px;height:36px;margin-bottom:2px}
+.admin-access-card .qa-icon svg{width:32px;height:32px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.admin-access-card b{line-height:1.25;text-align:center}
+.admin-access-card small{display:block;max-width:100%;font-size:12px;line-height:1.35;text-align:center;overflow-wrap:anywhere}
+.admin-access-card:active,.admin-access-card:focus,.admin-access-card:focus-visible{transform:none!important;box-shadow:0 8px 24px rgba(25,28,55,.045)!important;outline:none}
+.admin-access-card:focus-visible{border-color:#aeb9e8!important}
+.admin-cost-clock{position:absolute;right:-5px;bottom:-3px;width:17px;height:17px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#e5e7eb;color:#6b7280;font-size:12px;font-weight:800;border:2px solid #fff}
+.admin-metric-neutral{color:#7b8190!important;font-weight:600}
+.admin-metric-alert{color:#b45309!important;font-weight:800}
+.admin-config-card{grid-column:1/-1}
+@media(max-width:700px){.admin-heading-row{align-items:flex-start}.admin-heading-card{padding:18px!important}.admin-access-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.admin-access-card{min-height:142px;padding:16px 10px!important;gap:8px;border-radius:18px!important}.admin-config-card{grid-column:1/-1;min-height:112px}.admin-close-button{font-size:11px!important;padding:7px 9px!important}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.3.0/qz-tray.js"></script>
 <script>
@@ -426,14 +443,13 @@ qz.security.setSignaturePromise(function(toSign){
 
 
 <section id="administracion" style="display:none">
-<div class="card"><div style="display:flex;align-items:center;justify-content:space-between;gap:12px"><div><h2 style="margin:0">🔐 Administración</h2><div class="sub" style="margin-top:5px">Información y herramientas privadas del negocio.</div></div><span class="pill" style="background:#eef2ff;color:#14104C">Acceso privado</span></div><button class="btn secondary" type="button" onclick="adminAuthed=false;refreshAdminUI();sideGo('dashboard')">🔒 Cerrar administración</button></div>
-<div class="card" style="margin-top:12px"><h3 style="margin:0 0 6px">Contraseña administrativa</h3><div class="sub" style="margin-bottom:12px">Cambiá la clave privada de administración por un PIN numérico de 4 dígitos.</div><button class="btn secondary" type="button" onclick="changeAdminPassword()">Cambiar contraseña</button></div>
-<div class="stat-grid">
-  <button class="card quick-action" type="button" onclick="sideGo('costospendientes')"><span class="qa-icon"><svg viewBox="0 0 24 24"><path d="M12 3v18M7 7h7a3 3 0 0 1 0 6H9a3 3 0 0 0 0 6h8"/></svg></span><b>Costos pendientes</b><small id="adminPendingCount">0 pendientes</small></button>
-  <button class="card quick-action" type="button" onclick="sideGo('reportes')"><span class="qa-icon"><svg viewBox="0 0 24 24"><path d="M5 19V10M12 19V5M19 19v-7M4 19h17"/></svg></span><b>Rentabilidad</b><small>Facturación y ganancias</small></button>
-  <button class="card quick-action" type="button" onclick="sideGo('movimientos')"><span class="qa-icon"><svg viewBox="0 0 24 24"><path d="M5 7h14M5 12h14M5 17h14"/></svg></span><b>Movimientos</b><small>Ingresos y gastos</small></button>
-  <button class="card quick-action" type="button" onclick="sideGo('precios')"><span class="qa-icon"><svg viewBox="0 0 24 24"><path d="M5 5h14v14H5z"/><path d="M9 9h6M8 13h8M9 17h6"/></svg></span><b>Gestión de precios</b><small>Editar valores</small></button>
-  <button class="card quick-action" type="button" onclick="sideGo('configuracion')"><span class="qa-icon"><svg viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/><circle cx="12" cy="12" r="4"/></svg></span><b>Configuración</b><small>Datos y sistema</small></button>
+<div class="card admin-heading-card"><div class="admin-heading-row"><div><h2 style="margin:0">🔐 Administración</h2><div class="sub" style="margin-top:5px">Información y herramientas privadas del negocio.</div></div><button class="btn secondary admin-close-button" type="button" onclick="adminAuthed=false;refreshAdminUI();sideGo('dashboard')">Cerrar</button></div></div>
+<div class="stat-grid admin-access-grid">
+  <button class="card quick-action admin-access-card" type="button" onclick="sideGo('costospendientes')"><span class="qa-icon"><svg viewBox="0 0 24 24"><path d="M12 3v18M7 7h7a3 3 0 0 1 0 6H9a3 3 0 0 0 0 6h8"/></svg><span class="admin-cost-clock">!</span></span><b>Costos pendientes</b><small id="adminPendingCount" class="admin-metric-neutral">0 pendientes</small></button>
+  <button class="card quick-action admin-access-card" type="button" onclick="sideGo('reportes')"><span class="qa-icon"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V5M16 20v-8M2 20h20"/></svg></span><b>Rentabilidad</b><small id="adminProfitMetric">Este mes: $ 0</small></button>
+  <button class="card quick-action admin-access-card" type="button" onclick="sideGo('movimientos')"><span class="qa-icon"><svg viewBox="0 0 24 24"><path d="M4 5h7M4 12h16M4 19h10"/><circle cx="16" cy="5" r="2"/><circle cx="7" cy="19" r="2"/></svg></span><b>Movimientos</b><small id="adminMovementMetric">Hoy: +$ 0 / −$ 0</small></button>
+  <button class="card quick-action admin-access-card" type="button" onclick="sideGo('precios')"><span class="qa-icon"><svg viewBox="0 0 24 24"><path d="M4 5h16M4 10h10M4 15h16M4 20h10"/><circle cx="17" cy="10" r="2"/><circle cx="13" cy="20" r="2"/></svg></span><b>Gestión de precios</b><small>Editar valores</small></button>
+  <button class="card quick-action admin-access-card admin-config-card" type="button" onclick="sideGo('configuracion')"><span class="qa-icon"><svg viewBox="0 0 24 24"><path d="M7 4 9 3h6l2 1 3 3-1 3v4l1 3-3 3-2 1H9l-2-1-3-3 1-3V7L4 7z" transform="translate(0 0)"/><circle cx="12" cy="12" r="3"/></svg></span><b>Configuración</b><small>Datos, sistema y contraseña</small></button>
 </div>
 </section>
 
@@ -574,6 +590,7 @@ qz.security.setSignaturePromise(function(toSign){
 </section>
 
 <section id="configuracion" style="display:none">
+<div class="card"><h3 style="margin-top:0">Contraseña administrativa</h3><div class="sub" style="margin-bottom:12px">Cambiá la clave privada de administración por un PIN numérico de 4 dígitos.</div><button class="btn secondary" type="button" onclick="changeAdminPassword()">Cambiar contraseña</button></div>
 <div class="card"><div class="eyebrow">NEGOCIO</div><h2 style="margin:4px 0 6px">Configuración</h2><div class="sub">Datos que aparecen en órdenes, tickets y presupuestos.</div></div>
 <div class="card">
 <h3 style="margin-top:0">Datos comerciales</h3>
@@ -866,7 +883,16 @@ function refreshAdminUI(){
   document.querySelectorAll(".admin-cost-btn").forEach(b=>b.style.display=adminAuthed?"inline-flex":"none");
   renderPendingCosts();
   const c=document.getElementById("adminPendingCount");
-  if(c){const n=orders.filter(o=>o.estado==="Entregado"&&orderCostTotal(o)===0&&(+o.total||0)>0).length;c.textContent=`${n} pendiente${n===1?"":"s"}`;}
+  const pending=orders.filter(o=>o.estado==="Entregado"&&orderCostTotal(o)===0&&(+o.total||0)>0).length;
+  if(c){c.textContent=pending+" pendiente"+(pending===1?"":"s");c.classList.toggle("admin-metric-alert",pending>0);c.classList.toggle("admin-metric-neutral",pending===0);}
+  const now=new Date();const monthKey=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0");
+  const monthOrders=orders.filter(o=>orderMonthKey(o)===monthKey),monthSales=sales.filter(x=>saleMonthKey(x)===monthKey);
+  const billed=monthOrders.reduce((a,o)=>a+(+o.total||0),0)+monthSales.reduce((a,x)=>a+(+x.total||0),0);
+  const costs=monthOrders.reduce((a,o)=>a+orderCostTotal(o),0)+monthSales.reduce((a,x)=>a+((+x.costoUnitario||+x.costo||0)*(+x.cantidad||1)),0);
+  const profit=document.getElementById("adminProfitMetric");if(profit)profit.textContent="Este mes: "+money(billed-costs);
+  const today=new Date().toLocaleDateString("es-AR");
+  const todaysMovements=movements.filter(m=>m.fecha===today),income=todaysMovements.filter(m=>m.tipo==="Ingreso").reduce((a,m)=>a+(+m.importe||0),0),expenses=todaysMovements.filter(m=>m.tipo==="Gasto").reduce((a,m)=>a+(+m.importe||0),0);
+  const movementMetric=document.getElementById("adminMovementMetric");if(movementMetric)movementMetric.textContent="Hoy: +"+money(income)+" / −"+money(expenses);
 }
 function adminGate(target,btn){
   if(adminAuthed){ if(target==="administracion")sideGo("administracion",btn); else sideGo(target,btn); return; }

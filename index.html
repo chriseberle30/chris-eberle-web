@@ -913,7 +913,7 @@ function refreshAdminUI(){
   const pending=orders.filter(o=>o.estado==="Entregado"&&orderCostTotal(o)===0&&(+o.total||0)>0).length;
   if(c){c.textContent=pending+" pendiente"+(pending===1?"":"s");c.classList.toggle("admin-metric-alert",pending>0);c.classList.toggle("admin-metric-neutral",pending===0);}
   const now=new Date();const monthKey=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0");
-  const monthOrders=orders.filter(o=>orderMonthKey(o)===monthKey),monthSales=sales.filter(x=>saleMonthKey(x)===monthKey);
+  const monthOrders=orders.filter(o=>!isKnownTestOrder(o)&&orderMonthKey(o)===monthKey),monthSales=sales.filter(x=>saleMonthKey(x)===monthKey);
   const billed=monthOrders.reduce((a,o)=>a+(+o.total||0),0)+monthSales.reduce((a,x)=>a+(+x.total||0),0);
   const costs=monthOrders.reduce((a,o)=>a+orderCostTotal(o),0)+monthSales.reduce((a,x)=>a+((+x.costoUnitario||+x.costo||0)*(+x.cantidad||1)),0);
   const profit=document.getElementById("adminProfitMetric");if(profit)profit.textContent="Bruta mes: "+money(billed-costs);

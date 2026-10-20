@@ -459,7 +459,7 @@ qz.security.setSignaturePromise(function(toSign){
 <div class="card search-hero" style="padding:22px;margin-bottom:18px">
 <h2 style="margin:0 0 6px;font-size:25px;letter-spacing:-.5px">Buscar precio</h2>
 <div class="sub" style="margin-bottom:10px">Consultá rápido cuánto cobrar por una reparación.</div>
-<input id="search" name="e30-price-search" class="search" style="font-size:18px;padding:15px" placeholder="Ej.: iPhone 13 pantalla" oninput="renderSearch()" onkeydown="if(event.key===\'Enter\'){event.preventDefault();this.blur();}" enterkeyhint="search" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+<input id="search" name="e30-price-search" class="search" style="font-size:18px;padding:15px" placeholder="Ej.: iPhone 13 pantalla" oninput="renderSearch()" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}" enterkeyhint="search" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
 </div>
 <div id="results"></div>
 <div class="quick-actions">

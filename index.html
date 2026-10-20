@@ -1884,7 +1884,7 @@ function orderMonthKey(o){
 function reportFilterData(){
   const selectedMonth=document.getElementById("rMes")?.value||"";
   const local=document.getElementById("rLocal")?.value||"Todas";
-  const normLocal=v=>{const s=String(v||"").toLowerCase();if(s.includes("las flores")||s.includes("demóstenes 3101")||s.includes("demóstenes 3101"))return "las flores";if(s.includes("moreno")||s.includes("piovano"))return "moreno";return s;};
+  const normLocal=v=>{const s=String(v||"").toLowerCase();if(s.includes("las flores")||s.includes("demóstenes 3101")||s.includes("demóstenes 3110"))return "las flores";if(s.includes("moreno")||s.includes("piovano"))return "moreno";return s;};
   const matchesLocal=x=>local==="Todas"||normLocal(x.local)===normLocal(local);
   const matchesMonth=x=>!selectedMonth||(x.fecha?monthKeyFromDateString(x.fecha):orderMonthKey(x))===selectedMonth;
   const ord=orders.filter(o=>!isKnownTestOrder(o)&&matchesLocal(o)&&(!selectedMonth||orderMonthKey(o)===selectedMonth));

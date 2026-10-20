@@ -353,6 +353,11 @@ body .e30-bottom-nav{display:none!important;visibility:hidden!important;pointer-
 .report-month-comparison{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;margin-bottom:16px;background:#f7f8fc;border:1px solid var(--line);border-radius:13px}
 .report-month-comparison>b{font-size:14px}
 .report-change-up{color:#16834a;font-weight:800}.report-change-down{color:#b42318;font-weight:800}.report-change-neutral{color:#737987;font-weight:650}
+
+/* E30 — estado vacío del inicio */
+.empty-state{display:flex;flex-direction:column;gap:4px;padding:20px;background:#fff;border:1px solid #e5e7f0;border-radius:20px;box-sizing:border-box;width:100%;min-width:0}
+.empty-state strong{font-size:16px;line-height:1.35;color:var(--ink,#171923)}
+.empty-state span{color:#6b7280;font-size:14px;line-height:1.45}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.3.0/qz-tray.js"></script>
 <script>
@@ -1683,7 +1688,7 @@ function renderDashboard(){
       <div class="dash-order-main"><div class="order-device"><span class="dash-order-id">#${String(o.n).padStart(4,"0")}</span> · ${device}</div><div class="dash-order-meta">${client}${o.fecha?" · "+escapeHtml(o.fecha):""}</div></div>
       <div class="dash-order-side"><span class="status-dot"></span><span class="status-text ${statusClass(o.estado)}">${status}</span></div>
     </div>`;
-  }).join("")||'<div class="dashboard-empty"><b>No hay órdenes en curso</b><span>Las reparaciones activas aparecerán acá.</span></div>';
+  }).join("")||'<div class="empty-state"><strong>No hay órdenes en curso</strong><span>Las reparaciones activas aparecerán acá.</span></div>';
   renderActivity();
 }
 

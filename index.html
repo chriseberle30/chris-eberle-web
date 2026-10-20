@@ -1441,7 +1441,7 @@ function previewBulkPrices(){
 async function confirmBulkPrices(){
   if(!pendingBulkPrices)return;
   const {items}=pendingBulkPrices;if(!items.length){alert("No hay filas válidas para importar.");return;}
-  const snapshot=prices.map(p=>({...p));let added=0,updated=0,nextId=prices.length?Math.max(...prices.map(p=>Number(p.id)||0)):0;
+  const snapshot=prices.map(p=>({...p}));let added=0,updated=0,nextId=prices.length?Math.max(...prices.map(p=>Number(p.id)||0)):0;
   items.forEach(x=>{const existing=findDuplicatePrice(x);if(existing){existing.precio=x.precio;existing.activo=true;updated++;}else{prices.push({id:++nextId,marca:x.marca,modelo:x.modelo,reparacion:x.reparacion,precio:x.precio,activo:true});added++;}});
   try{
     await savePrices();document.getElementById("bulkPrices").value="";

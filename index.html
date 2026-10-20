@@ -623,6 +623,12 @@ qz.security.setSignaturePromise(function(toSign){
 <button class="btn secondary" type="button" onclick="closeCostModal()">Cerrar</button>
 </div>
 </div></div>
+<nav class="e30-bottom-nav" aria-label="Navegación principal">
+  <button type="button" onclick="bottomNavGo('dashboard')" aria-label="Inicio"><svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M9.5 20v-5h5v5"/></svg><span>Inicio</span></button>
+  <button type="button" onclick="bottomNavGo('ordenes')" aria-label="Órdenes"><svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="16" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg><span>Órdenes</span></button>
+  <button type="button" onclick="bottomNavGo('ventas')" aria-label="Ventas"><svg viewBox="0 0 24 24"><path d="M5 7h14l-1 12H6L5 7Z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg><span>Ventas</span></button>
+  <button type="button" onclick="bottomNavGo('movimientos')" aria-label="Caja"><svg viewBox="0 0 24 24"><rect x="3.5" y="6" width="17" height="14" rx="2"/><path d="M3.5 10h17M7 15h4M7 3.5h10"/></svg><span>Caja</span></button>
+</nav>
 </div>
 
 <script>
@@ -871,8 +877,8 @@ function renderPendingCosts(){
 function show(id,btn){
   const adminSections=["administracion","costospendientes","movimientos","reportes","precios","configuracion"];
   if(adminSections.includes(id) && !adminAuthed){ adminGate("administracion",btn); return; }
-  document.querySelectorAll("section").forEach(x=>x.style.display="none");const sec=document.getElementById(id);if(sec)sec.style.display="block";if(id==="dashboard")renderDashboard();if(id==="administracion")refreshAdminUI();if(id==="costospendientes")renderPendingCosts();if(id==="ordenes")renderOrders();if(id==="clientes")renderClients();if(id==="precios")renderPrices();if(id==="presupuestos")renderBudgets();if(id==="stock")renderStock();if(id==="ventas"){renderSaleProducts();renderSales();}if(id==="movimientos")renderMovements();if(id==="configuracion"){loadSavedLogo();applyBusinessConfig();}if(window.innerWidth<=700)closeSideMenu();}
-function updateBottomNav(id){const nav=document.querySelector(".e30-bottom-nav");if(!nav)return;nav.querySelectorAll("button").forEach(b=>b.classList.remove("active"));const map={dashboard:0,ordenes:1,ventas:2,movimientos:3};if(map[id]!==undefined)nav.querySelectorAll("button")[map[id]]?.classList.add("active");}
+  document.querySelectorAll("section").forEach(x=>x.style.display="none");const sec=document.getElementById(id);if(sec)sec.style.display="block";if(id==="dashboard")renderDashboard();if(id==="administracion")refreshAdminUI();if(id==="costospendientes")renderPendingCosts();if(id==="ordenes")renderOrders();if(id==="clientes")renderClients();if(id==="precios")renderPrices();if(id==="presupuestos")renderBudgets();if(id==="stock")renderStock();if(id==="ventas"){renderSaleProducts();renderSales();}if(id==="movimientos")renderMovements();if(id==="configuracion"){loadSavedLogo();applyBusinessConfig();}updateBottomNav(id);if(window.innerWidth<=700)closeSideMenu();}
+function updateBottomNav(id){const nav=document.querySelector(".e30-bottom-nav");if(!nav)return;nav.querySelectorAll("button").forEach(b=>b.classList.remove("active"));const map={dashboard:0,ordenes:1,orden:1,ventas:2,movimientos:3};if(map[id]!==undefined)nav.querySelectorAll("button")[map[id]]?.classList.add("active");}
 function bottomNavGo(id){sideGo(id,null);updateBottomNav(id);if(id==="movimientos"&&!adminAuthed){const nav=document.querySelector(".e30-bottom-nav");if(nav)nav.querySelectorAll("button").forEach(b=>b.classList.remove("active"));}}
 function sideGo(id,btn){show(id,btn);document.querySelectorAll(".side-item").forEach(x=>x.classList.remove("active"));if(btn&&btn.classList.contains("side-item"))btn.classList.add("active");else{const m=[...document.querySelectorAll(".side-item")].find(x=>x.getAttribute("onclick")?.includes("'"+id+"'"));if(m)m.classList.add("active");}document.querySelectorAll(".top-actions button").forEach(x=>x.classList.remove("active"));updateBottomNav(id);if(window.innerWidth<=700)closeSideMenu();}
 function toggleSideMenu(){document.getElementById("sideMenu").classList.toggle("open");document.getElementById("menuOverlay").classList.toggle("open");}
@@ -2095,12 +2101,7 @@ async function printTicket(n){
     </div>
   </div>
 </div>
-<nav class="e30-bottom-nav" aria-label="Navegación principal">
-  <button type="button" onclick="bottomNavGo('dashboard')" aria-label="Inicio"><svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M9.5 20v-5h5v5"/></svg><span>Inicio</span></button>
-  <button type="button" onclick="bottomNavGo('ordenes')" aria-label="Órdenes"><svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="16" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg><span>Órdenes</span></button>
-  <button type="button" onclick="bottomNavGo('ventas')" aria-label="Ventas"><svg viewBox="0 0 24 24"><path d="M5 7h14l-1 12H6L5 7Z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg><span>Ventas</span></button>
-  <button type="button" onclick="bottomNavGo('movimientos')" aria-label="Caja"><svg viewBox="0 0 24 24"><rect x="3.5" y="6" width="17" height="14" rx="2"/><path d="M3.5 10h17M7 15h4M7 3.5h10"/></svg><span>Caja</span></button>
-</nav>
+
 <div id="pendingCostsModal" class="modal-back" style="display:none;z-index:99998">
   <div class="modal" style="max-width:430px">
     <div style="width:42px;height:42px;border-radius:12px;background:#f4f5f7;color:#14104C;display:flex;align-items:center;justify-content:center;margin-bottom:14px;font-size:19px">$</div>

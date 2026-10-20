@@ -954,7 +954,7 @@ async function changeAdminPassword(){
   adminPassHash=await sha256Hex(next);await kvSet("e30-admin-pass",adminPassHash);alert("Contraseña administrativa actualizada.");
 }
 function adminManageCosts(n){if(!adminAuthed){adminGate("costospendientes");return;}manageCosts(n);}
-function isKnownTestOrder(o){return String(o?.cliente||"").trim().toLowerCase()==="prueba 123"&&Math.abs((Number(o?.total)||0)-100)<0.01&&/iphone\\s*14\\s*pro/i.test(String((o?.marca||"")+" "+(o?.modelo||"")));}
+function isKnownTestOrder(o){return String(o?.cliente||"").trim().toLowerCase()==="prueba 123"&&Math.abs((Number(o?.total)||0)-100)<0.01&&/iphone\s*14\s*pro/i.test(String((o?.marca||"")+" "+(o?.modelo||"")));}
 function renderReceivables(){
   const listEl=document.getElementById("receivablesList"),totalEl=document.getElementById("receivablesTotal");if(!listEl)return;
   if(!adminAuthed){listEl.innerHTML='<div class="card empty">Acceso administrativo requerido.</div>';return;}

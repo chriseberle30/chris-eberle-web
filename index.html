@@ -275,12 +275,12 @@ body .e30-bottom-nav{display:none!important;visibility:hidden!important;pointer-
 .activity-main span{color:#777e8d}
 .activity-toggle{margin-top:8px;border:0;background:transparent;color:#315fb5;font-size:13px;font-weight:700;padding:7px 2px}
 @media(max-width:700px){
-  body .e30-bottom-nav{display:grid!important;visibility:visible!important;pointer-events:auto!important;position:fixed;left:0;right:0;bottom:0;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;min-height:66px;height:auto;padding:5px 8px calc(5px + env(safe-area-inset-bottom,0px));background:rgba(255,255,255,.97);border-top:1px solid #e3e5eb;box-shadow:0 -5px 22px rgba(20,16,76,.08);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);z-index:1500}
-  body .e30-bottom-nav button{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:0;min-height:52px;padding:5px 2px;border:0;background:transparent;color:#737784;font-family:inherit;font-size:11px;font-weight:650;line-height:1.1}
+  body .e30-bottom-nav{display:grid!important;visibility:visible!important;pointer-events:auto!important;position:fixed;left:0;right:0;bottom:0;z-index:1500;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;height:calc(66px + env(safe-area-inset-bottom,0px));min-height:calc(66px + env(safe-area-inset-bottom,0px));box-sizing:border-box;margin:0;padding:5px 8px env(safe-area-inset-bottom,0px);background:rgba(255,255,255,.98);border:0;border-top:1px solid #e3e5eb;box-shadow:0 -5px 22px rgba(20,16,76,.08);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+  body .e30-bottom-nav button{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:0;min-height:52px;height:56px;padding:5px 2px;border:0;background:transparent;color:#737784;font-family:inherit;font-size:11px;font-weight:650;line-height:1.1}
   body .e30-bottom-nav button.active{color:#14104C}
   body .e30-bottom-nav button.active:before{content:"";position:absolute;top:-5px;width:28px;height:3px;border-radius:0 0 3px 3px;background:#14104C}
   body .e30-bottom-nav svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-  html body{padding-bottom:calc(78px + env(safe-area-inset-bottom,0px))!important}
+  html body{padding-bottom:calc(82px + env(safe-area-inset-bottom,0px))!important;min-height:100vh;min-height:100dvh}
   body .app{padding-bottom:18px!important}
   .activity-title{margin-top:20px}
 }
@@ -623,13 +623,15 @@ qz.security.setSignaturePromise(function(toSign){
 <button class="btn secondary" type="button" onclick="closeCostModal()">Cerrar</button>
 </div>
 </div></div>
+
+</div>
+
 <nav class="e30-bottom-nav" aria-label="Navegación principal">
   <button type="button" onclick="bottomNavGo('dashboard')" aria-label="Inicio"><svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M9.5 20v-5h5v5"/></svg><span>Inicio</span></button>
   <button type="button" onclick="bottomNavGo('ordenes')" aria-label="Órdenes"><svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="16" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg><span>Órdenes</span></button>
   <button type="button" onclick="bottomNavGo('ventas')" aria-label="Ventas"><svg viewBox="0 0 24 24"><path d="M5 7h14l-1 12H6L5 7Z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg><span>Ventas</span></button>
   <button type="button" onclick="bottomNavGo('movimientos')" aria-label="Caja"><svg viewBox="0 0 24 24"><rect x="3.5" y="6" width="17" height="14" rx="2"/><path d="M3.5 10h17M7 15h4M7 3.5h10"/></svg><span>Caja</span></button>
 </nav>
-</div>
 
 <script>
 /* ============================================================
@@ -1086,7 +1088,7 @@ function renderPrices(){
 }
 function addPrice(){
   const maxId=prices.length?Math.max(...prices.map(p=>p.id)):0;
-  prices.push({id:maxId+1,marca:document.getElementById("npMarca").value.trim(),modelo:document.getElementById("npModelo").value.trim(),reparacion:document.getElementById("npReparacion").value.trim(),precio:+document.getElementById("npPrecio").value||0,activo:true});
+  prices.push({id:maxId+1,marca:document.getElementById("npMarca").value.trim(),modelo:normalizeIPhoneModel(document.getElementById("npModelo").value),reparacion:document.getElementById("npReparacion").value.trim(),precio:+document.getElementById("npPrecio").value||0,activo:true});
   savePrices();["npMarca","npModelo","npReparacion","npPrecio"].forEach(id=>document.getElementById(id).value="");renderPrices();
 }
 function editPrice(id){
@@ -1102,7 +1104,7 @@ function editPrice(id){
 function savePriceEdit(id){
   const p=prices.find(x=>x.id===id);
   p.marca=document.getElementById("ep-marca-"+id).value.trim();
-  p.modelo=document.getElementById("ep-modelo-"+id).value.trim();
+  p.modelo=normalizeIPhoneModel(document.getElementById("ep-modelo-"+id).value);
   p.reparacion=document.getElementById("ep-reparacion-"+id).value.trim();
   p.precio=+document.getElementById("ep-precio-"+id).value||0;
   savePrices();renderPrices();
@@ -1114,7 +1116,7 @@ document.getElementById("budgetForm").onsubmit=e=>{
 e.preventDefault();
 const n=(budgets.length?Math.max(...budgets.map(x=>x.n)):0)+1;
 const issued=new Date(), valid=new Date(issued);valid.setDate(valid.getDate()+7);
-const o={n,cliente:bCliente.value,telefono:bTelefono.value,marca:bMarca.value,modelo:bModelo.value,local:bLocal.value,precio:+bPrecio.value||0,concepto:bConcepto.value,obs:bObs.value,emitida:issued.toLocaleDateString("es-AR"),valida:valid.toLocaleDateString("es-AR"),createdAt:new Date().toISOString()};
+const o={n,cliente:bCliente.value,telefono:bTelefono.value,marca:bMarca.value.trim(),modelo:normalizeIPhoneModel(bModelo.value),local:bLocal.value,precio:+bPrecio.value||0,concepto:bConcepto.value,obs:bObs.value,emitida:issued.toLocaleDateString("es-AR"),valida:valid.toLocaleDateString("es-AR"),createdAt:new Date().toISOString()};
 budgets.unshift(o);saveBudgets();recordActivity("presupuesto",`Presupuesto #${String(n).padStart(4,"0")} creado`,`${(o.marca||"")} ${(o.modelo||"")} · ${money(o.precio)}`,n);resetBudget();renderBudgets();
 };
 function resetBudget(){document.getElementById("budgetForm").reset();}
@@ -1186,13 +1188,13 @@ function importBulkPrices(){
     let parts=line.includes("\t")?line.split("\t"):(line.includes("|")?line.split("|"):(line.includes(";")?line.split(";"):line.split(",")));
     parts=parts.map(x=>x.trim().replace(/^"|"$/g,""));
     if(parts.length<4){alert(`Línea ${i+1} inválida. Copiá las 4 columnas de Excel: Marca, Modelo, Reparación y Precio.`);return;}
-    const [marca,modelo,reparacion,precioRaw]=parts;
+    const [marca,modeloRaw,reparacion,precioRaw]=parts;const modelo=normalizeIPhoneModel(modeloRaw);
     const precio=Number(String(precioRaw).replace(/[^\d]/g,""));
     if(!marca||!modelo||!reparacion||!precio){alert(`Línea ${i+1} inválida. Revisá Marca, Modelo, Reparación y Precio.`);return;}
     parsed.push({marca,modelo,reparacion,precio});
   }
   if(!parsed.length){alert("No encontré precios válidos. Revisá que hayas copiado las filas con datos.");return;}
-  const duplicates=parsed.filter(x=>prices.some(p=>p.marca.trim().toLowerCase()===x.marca.toLowerCase()&&p.modelo.trim().toLowerCase()===x.modelo.toLowerCase()&&p.reparacion.trim().toLowerCase()===x.reparacion.toLowerCase()));
+  const duplicates=parsed.filter(x=>prices.some(p=>p.marca.trim().toLowerCase()===x.marca.toLowerCase()&&p.modelo.trim().toLowerCase()===normalizeIPhoneModel(x.modelo).toLowerCase()&&p.reparacion.trim().toLowerCase()===x.reparacion.toLowerCase()));
   const updateDuplicates=duplicates.length?confirm(`Encontré ${duplicates.length} precio(s) que ya existen con la misma Marca + Modelo + Reparación.\n\nAceptar = actualizar esos precios.\nCancelar = mantener los existentes y agregar solo los nuevos.`):false;
   let nextId=prices.length?Math.max(...prices.map(p=>p.id)):0,added=0,updated=0;
   parsed.forEach(x=>{

@@ -2275,6 +2275,34 @@ function openDeliveryPDF(n){
  #appRoot .order-status-card .order-primary-actions .btn{padding:10px 5px!important;font-size:12px!important}
 }
 @media(min-width:701px){#appRoot #dashboard .quick-actions{grid-template-columns:repeat(3,minmax(0,1fr))}#appRoot #dashboard .quick-actions .quick-action:first-child{grid-column:auto}}
+
+/* E30 · Ajuste visible de inicio: reglas finales para neutralizar capas anteriores */
+@media(max-width:700px){
+  #appRoot #dashboard>.search-hero{padding:14px!important;margin-bottom:10px!important;border-radius:16px!important}
+  #appRoot #dashboard>.search-hero h2{font-size:21px!important;margin:0 0 3px!important}
+  #appRoot #dashboard>.search-hero .sub{display:none!important}
+  #appRoot #dashboard>.search-hero .search{font-size:16px!important;padding:12px 14px!important;min-height:46px!important}
+  #appRoot #dashboard .quick-actions{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;margin-bottom:18px!important}
+  #appRoot #dashboard .quick-actions .quick-action{min-height:70px!important;padding:11px!important;border-radius:12px!important;display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;gap:10px!important;text-align:left!important}
+  #appRoot #dashboard .quick-actions .quick-action:first-child{grid-column:1/-1!important;min-height:54px!important;background:#14104C!important;color:#fff!important;border-color:#14104C!important}
+  #appRoot #dashboard .quick-actions .quick-action:first-child .qa-icon{background:rgba(255,255,255,.13)!important;color:#fff!important;margin:0!important}
+  #appRoot #dashboard .quick-actions .quick-action:first-child small{margin-left:auto!important;color:#fff!important}
+  #appRoot #dashboard .quick-actions .quick-action:not(:first-child) .qa-icon{margin:0!important;flex:0 0 30px}
+  #appRoot #dashboard .quick-actions .quick-action b{font-size:13px!important;line-height:1.2!important}
+  #appRoot #dashboard .quick-actions .quick-action small{font-size:10px!important;line-height:1.3!important}
+  #appRoot #dashboard .dashboard-section-title{display:flex!important;flex-wrap:wrap!important;gap:8px!important;margin:18px 0 10px!important}
+  #appRoot #dashboard .dashboard-section-title>div{min-width:0;flex:1 1 100%}
+  #appRoot #dashboard .dashboard-section-title .eyebrow{display:none!important}
+  #appRoot #dashboard .dashboard-section-title h2{font-size:19px!important;line-height:1.2!important;margin:0!important}
+  #appRoot #dashboard .dashboard-section-title .sub{display:none!important}
+  #appRoot #dashboard .dashboard-section-title .dash-view-all{font-size:12px!important;padding:0!important;margin:0!important}
+  #appRoot #dashboard .dashboard-orders{gap:7px!important}
+  #appRoot #dashboard .empty-state{padding:16px!important;border-radius:12px!important;border:1px solid #DDE2EC!important;box-shadow:none!important;gap:5px!important}
+  #appRoot #dashboard .empty-state strong{font-size:14px!important}
+  #appRoot #dashboard .empty-state span{font-size:12px!important}
+  #appRoot #dashboard .activity-title{margin-top:20px!important}
+  #appRoot #dashboard .activity-title .dash-view-all{margin-left:0!important}
+}
 </style></head><body><main class="sheet"><div class="top"><div class="brand">${logo?`<img src="${logo}" alt="E30">`:``}<div><div class="logo">E30</div><div class="sub">TÉCNICO DE CELULARES</div></div></div><div class="title">ORDEN DE ENTREGA<br><span style="font-size:13px">N.º ${String(o.n).padStart(4,"0")}</span></div></div><div class="meta"><div class="box"><div class="label">CLIENTE</div><div class="value">${pdfEscape(o.cliente||"-")}</div><div class="label">TELÉFONO</div><div class="value">${pdfEscape(o.telefono||"-")}</div></div><div class="box"><div class="label">SUCURSAL</div><div class="value">${pdfEscape(b.name)}</div><div class="label">FECHA DE ENTREGA</div><div class="value">${pdfEscape(fecha)}</div></div></div><div class="box"><div class="label">EQUIPO ENTREGADO</div><div class="value">${pdfEscape((o.marca||"")+" "+(o.modelo||""))}</div>${o.imei?`<div class="label">IMEI</div><div class="value">${pdfEscape(o.imei)}</div>`:""}${o.obsEquipo?`<div class="label">ESTADO DEL EQUIPO AL INGRESO</div><div class="value">${pdfEscape(o.obsEquipo)}</div>`:""}<div class="label">REPARACIÓN REALIZADA</div><div class="value">${pdfEscape(o.trabajo||"-")}</div><div class="label">TOTAL</div><div class="value">${pdfEscape(pdfMoney(total))} · Pagado: ${pdfEscape(pdfMoney(paid))} · Saldo: ${pdfEscape(pdfMoney(saldo))}</div></div><div class="warranty">GARANTÍA DE REPARACIÓN: ${days} DÍAS</div><div class="terms"><b>Vigencia:</b> desde ${pdfEscape(fecha)} hasta ${pdfEscape(hasta)}.<br><br><b>Alcance:</b> La garantía cubre exclusivamente la reparación realizada y los componentes o repuestos colocados como parte de ella. No cubre nuevas fallas ni componentes ajenos al trabajo realizado, daños por golpes o humedad, manipulación por terceros ni uso indebido, sin perjuicio de los derechos que correspondan por ley.<br><br>El cliente declara recibir el equipo correspondiente a esta orden y deja constancia de su entrega. Conserve este comprobante para cualquier consulta posterior.</div><div class="sign"><div class="line">Firma del cliente</div><div class="line">Aclaración</div></div><div class="footer">E30 · Técnico de celulares · @eberle30</div></main><script>window.onload=function(){setTimeout(function(){window.print()},250)};<\/script></body></html>`);
   w.document.close();
 }

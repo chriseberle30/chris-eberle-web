@@ -309,6 +309,12 @@ body .e30-bottom-nav{display:none!important;visibility:hidden!important;pointer-
 .order-more-button{width:auto!important;min-height:30px!important;padding:4px 8px!important;display:inline-flex;align-items:center;gap:5px;color:#737987!important;background:transparent!important;border:1px solid #e5e7ed!important;box-shadow:none!important;font-size:12px!important;font-weight:500!important;letter-spacing:0!important}
 .order-more-button span{font-size:12px;font-weight:500!important;color:#737987!important}
 @media(max-width:700px){.order-device-title{font-size:15px;margin-top:7px}.order-client-title{font-size:13px;gap:5px}.order-client-phone{font-size:11.5px}.order-more-button{width:auto!important;min-height:28px!important;padding:3px 8px!important;font-size:11.5px!important}.order-more-button span{font-size:11.5px!important}}
+
+/* E30 — mantener Administración visible en el menú móvil */
+@media(max-width:900px){
+  .side-inner{overflow-y:auto;overscroll-behavior:contain;box-sizing:border-box;padding-bottom:calc(105px + env(safe-area-inset-bottom,0px))!important;}
+  .side-spacer{flex:0 0 10px!important;min-height:10px!important;}
+}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.3.0/qz-tray.js"></script>
 <script>

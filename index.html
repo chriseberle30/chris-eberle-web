@@ -300,6 +300,15 @@ body .e30-bottom-nav{display:none!important;visibility:hidden!important;pointer-
 .order-balance.has-balance{font-size:22px;color:#b45309;font-weight:850}
 .order-balance.paid-balance{color:#21734a;font-weight:750}
 @media(max-width:700px){.order-primary-actions{gap:6px}.order-primary-actions .btn{padding:10px 4px;font-size:12.5px;border-radius:10px}.order-more-wrap{margin-top:7px}.order-more-button{width:100%;justify-content:center}.order-more-menu{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;padding:9px}.order-more-menu .btn{width:100%;padding:10px 6px;font-size:12px}.order-balance-line{gap:4px}.order-balance.has-balance{font-size:23px}}
+
+/* E30 — jerarquía del encabezado y menú secundario */
+.order-device-title{font-size:16px;font-weight:750;line-height:1.35;margin:8px 0 3px;color:var(--ink,#171923)}
+.order-client-title{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 4px;font-size:14px;font-weight:650;line-height:1.4}
+.order-client-phone{font-size:12px;font-weight:600;color:#737987;text-decoration:none;white-space:nowrap}
+.order-client-phone:before{content:"·";margin-right:6px;color:#a0a4ad}
+.order-more-button{width:auto!important;min-height:30px!important;padding:4px 8px!important;display:inline-flex;align-items:center;gap:5px;color:#737987!important;background:transparent!important;border:1px solid #e5e7ed!important;box-shadow:none!important;font-size:12px!important;font-weight:500!important;letter-spacing:0!important}
+.order-more-button span{font-size:12px;font-weight:500!important;color:#737987!important}
+@media(max-width:700px){.order-device-title{font-size:15px;margin-top:7px}.order-client-title{font-size:13px;gap:5px}.order-client-phone{font-size:11.5px}.order-more-button{width:auto!important;min-height:28px!important;padding:3px 8px!important;font-size:11.5px!important}.order-more-button span{font-size:11.5px!important}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.3.0/qz-tray.js"></script>
 <script>
@@ -1004,7 +1013,7 @@ function orderVisible(o){
   if(orderFilter==="esperando")return o.estado==="Esperando repuesto";
   return !["Entregado","Cancelado"].includes(o.estado);
 }
-function orderCard(o){const ct=orderCostTotal(o),missing=ct===0&&(+o.total||0)>0,saldo=paymentBalance(o);return `<div id="order-card-${o.n}" data-order-id="${o.n}" class="card order-status-card ${statusClass(o.estado)} ${missing?"cost-missing":""}"><div class="order"><div><b>#${String(o.n).padStart(4,"0")}</b><h3>${o.cliente}</h3><div>${o.marca} ${o.modelo} · ${o.trabajo||"Sin trabajo indicado"}</div><div class="sub">${o.local} · ${o.telefono} · ${o.tipoOrden||"Particular"}${o.tipoOrden==="Gremio"&&o.gremio?` · ${o.gremio}`:""} · ${orderAge(o.fecha)}</div>
+function orderCard(o){const ct=orderCostTotal(o),missing=ct===0&&(+o.total||0)>0,saldo=paymentBalance(o);return `<div id="order-card-${o.n}" data-order-id="${o.n}" class="card order-status-card ${statusClass(o.estado)} ${missing?"cost-missing":""}"><div class="order"><div><b>#${String(o.n).padStart(4,"0")}</b><div class="order-device-title">${o.marca} ${o.modelo} · ${o.trabajo||"Sin trabajo indicado"}</div><h3 class="order-client-title">${o.cliente}${o.telefono?` <a class="order-client-phone" href="tel:${String(o.telefono).replace(/[^+\d]/g,"")}" aria-label="Llamar a ${o.cliente}">${o.telefono}</a>`:""}</h3><div class="sub">${o.local} · ${o.tipoOrden||"Particular"}${o.tipoOrden==="Gremio"&&o.gremio?` · ${o.gremio}`:""} · ${orderAge(o.fecha)}</div>
 <div class="sub" style="margin-top:5px">Código / patrón: <button class="btn secondary" style="padding:4px 8px;font-size:11px" onclick="toggleUnlock(${o.n},this)">Mostrar</button> <span id="unlock-${o.n}" style="display:none;font-weight:600"></span></div>
 <div class="sub" style="margin-top:5px">Obs. internas: <button class="btn secondary" style="padding:4px 8px;font-size:11px" onclick="toggleTechObs(${o.n},this)">Mostrar</button> <span id="techobs-${o.n}" style="display:none;font-weight:600"></span></div>
 </div><div><select onchange="setStatus(${o.n},this.value)" style="width:auto;padding:6px 8px;font-size:12px;border-radius:8px">${ESTADOS.map(s=>`<option ${o.estado===s?"selected":""}>${s}</option>`).join("")}</select><div style="margin-top:6px"><span class="status-badge ${statusClass(o.estado)}">${o.estado}</span></div><div class="price">${money(o.total)}</div></div></div><hr>

@@ -350,6 +350,9 @@ body .e30-bottom-nav{display:none!important;visibility:hidden!important;pointer-
 .receivable-balance{font-size:17px;font-weight:850;color:#b42318;white-space:nowrap}
 .receivable-row .btn{flex:0 0 auto;padding:8px 10px;font-size:12px}
 @media(max-width:700px){#rMes{font-size:14px;padding:10px 8px}.receivable-row{flex-wrap:wrap}.receivable-row .btn{margin-left:auto}.admin-access-grid{align-items:stretch}}
+.report-month-comparison{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;margin-bottom:16px;background:#f7f8fc;border:1px solid var(--line);border-radius:13px}
+.report-month-comparison>b{font-size:14px}
+.report-change-up{color:#16834a;font-weight:800}.report-change-down{color:#b42318;font-weight:800}.report-change-neutral{color:#737987;font-weight:650}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.3.0/qz-tray.js"></script>
 <script>
@@ -1906,7 +1909,19 @@ function renderReports(){
   const expenses={};mov.filter(x=>x.tipo==="Gasto").forEach(x=>{const k=x.categoria||"Otros";expenses[k]=(expenses[k]||0)+(+x.importe||0);});
   const expenseRows=Object.entries(expenses).sort((a,b)=>b[1]-a[1]).slice(0,5);
   const list=(arr,fn,empty)=>arr.length?arr.map(fn).join(""):`<div class="small-muted">${empty}</div>`;
+  let comparisonHtml="";
+  if(selectedMonth){
+    const currentParts=selectedMonth.split("-").map(Number),previousDate=new Date(currentParts[0],currentParts[1]-2,1),previousKey=previousDate.getFullYear()+"-"+String(previousDate.getMonth()+1).padStart(2,"0");
+    const normBranch=v=>{const x=String(v||"").toLowerCase();if(x.includes("las flores")||x.includes("demóstenes"))return "las flores";if(x.includes("moreno")||x.includes("piovano"))return "moreno";return x;};
+    const branchOk=x=>local==="Todas"||normBranch(x.local)===normBranch(local);
+    const prevOrders=orders.filter(o=>!isKnownTestOrder(o)&&branchOk(o)&&orderMonthKey(o)===previousKey),prevSales=sales.filter(x=>branchOk(x)&&saleMonthKey(x)===previousKey);
+    const prevBilled=prevOrders.reduce((a,o)=>a+(+o.total||0),0)+prevSales.reduce((a,x)=>a+(+x.total||0),0),currentBilled=fact+acc;
+    let changeText="Sin base de comparación",changeClass="report-change-neutral";
+    if(prevBilled>0){const pct=((currentBilled-prevBilled)/prevBilled)*100;changeText=(pct>0?"↑ ":pct<0?"↓ ":"→ ")+Math.abs(pct).toFixed(1)+"% vs mes anterior";changeClass=pct>0?"report-change-up":pct<0?"report-change-down":"report-change-neutral";}
+    comparisonHtml='<div class="report-month-comparison"><b>Facturado este mes: '+money(currentBilled)+'</b><span class="'+changeClass+'">'+changeText+'</span></div>';
+  }
   document.getElementById("reportInsights").innerHTML=`
+    ${comparisonHtml}
     <h3 style="margin-top:0">📊 Datos para decidir qué comprar</h3>
     <div class="form">
       <div><h4>Accesorios más vendidos</h4>${list(productRows,v=>`<div style="padding:8px 0;border-bottom:1px solid var(--line)"><b>${escapeHtml(v.name)}</b><div class="small-muted">${v.qty} ${v.qty===1?"unidad":"unidades"} · Ganancia estimada ${money(v.profit)}</div></div>`,"Todavía no hay ventas en este período.")}</div>

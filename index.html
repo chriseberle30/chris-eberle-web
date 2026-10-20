@@ -389,6 +389,9 @@ body .e30-bottom-nav{display:none!important;visibility:hidden!important;pointer-
 @media(max-width:700px){
   #appRoot header{padding-top:8px;padding-bottom:10px}
 }
+
+/* Buscador rápido de precios agrupado por modelo */
+.search-repair-chips{display:flex;gap:7px;overflow-x:auto;padding:2px 1px 11px;margin-top:3px;scrollbar-width:none}.search-repair-chips::-webkit-scrollbar{display:none}.search-chip{flex:0 0 auto;border:1px solid #e1e4ef;background:#fff;color:#4b4d5d;border-radius:999px;padding:8px 12px;font-size:12px;font-weight:650}.search-chip.active{background:#14104C;color:#fff;border-color:#14104C}.search-model-group{background:#fff;border:1px solid #e3e6ef;border-radius:17px;margin:0 0 11px;overflow:hidden;box-shadow:0 5px 18px rgba(20,16,76,.045)}.search-model-heading{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:13px 15px;background:#f8f9fd;border-bottom:1px solid #eceef4}.search-model-heading h3{margin:0;font-size:15px;color:#14104C}.search-model-heading span{font-size:11px;color:#777d8f;white-space:nowrap}.search-price-row{display:grid;grid-template-columns:minmax(0,1fr) auto 32px 32px;gap:8px;align-items:center;padding:11px 12px;border-bottom:1px solid #eff0f5}.search-price-row:last-child{border-bottom:0}.search-repair-name{min-width:0;font-size:13px;font-weight:600;overflow-wrap:anywhere}.search-price-value{font-size:15px;font-weight:800;color:#14104C;white-space:nowrap;font-variant-numeric:tabular-nums}.search-add-btn,.search-wa-btn{width:31px;height:31px;border:0;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:700}.search-add-btn{background:#14104C;color:white}.search-wa-btn{background:#eaf8ef;color:#187746;font-size:17px}@media(max-width:700px){.search-price-row{grid-template-columns:minmax(0,1fr) auto 30px 30px;gap:6px;padding:10px 9px}.search-repair-name{font-size:12px}.search-price-value{font-size:13px}.search-add-btn,.search-wa-btn{width:29px;height:29px}.search-model-heading{padding:12px}.search-model-heading h3{font-size:14px}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.3.0/qz-tray.js"></script>
 <script>
@@ -456,7 +459,7 @@ qz.security.setSignaturePromise(function(toSign){
 <div class="card search-hero" style="padding:22px;margin-bottom:18px">
 <h2 style="margin:0 0 6px;font-size:25px;letter-spacing:-.5px">Buscar precio</h2>
 <div class="sub" style="margin-bottom:10px">Consultá rápido cuánto cobrar por una reparación.</div>
-<input id="search" name="e30-price-search" class="search" style="font-size:18px;padding:15px" placeholder="Ej.: iPhone 13 pantalla" oninput="renderSearch()" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+<input id="search" name="e30-price-search" class="search" style="font-size:18px;padding:15px" placeholder="Ej.: iPhone 13 pantalla" oninput="renderSearch()" onkeydown="if(event.key===\'Enter\'){event.preventDefault();this.blur();}" enterkeyhint="search" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
 </div>
 <div id="results"></div>
 <div class="quick-actions">
@@ -1035,18 +1038,65 @@ async function removeLogo(){try{await kvSet("e30-logo","");}catch(err){alert("No
 function updatePrinterPill(){const pill=document.getElementById("printerPill"),txt=document.getElementById("printerPillText");if(!pill||!txt)return;const on=!!printerReceiver;pill.classList.toggle("off",!on);txt.textContent=on?"Impresora conectada":"Impresora desconectada";}
 
 
+let searchRepairChip="Todos";
 function renderSearch(){
-  const q=document.getElementById("search").value.toLowerCase().trim();
-  const results=document.getElementById("results");
+  const input=document.getElementById("search"),results=document.getElementById("results");
+  if(!input||!results)return;
+  const q=input.value.toLocaleLowerCase("es-AR").trim();
   if(!q){results.innerHTML="";return;}
   const words=q.split(/\s+/).filter(Boolean);
-  const data=prices.filter(p=>p.activo!==false).filter(p=>{
-    const t=`${p.marca} ${p.modelo} ${p.reparacion}`.toLowerCase();
+  let data=prices.filter(p=>p.activo!==false).filter(p=>{
+    const t=`${p.marca||""} ${p.modelo||""} ${p.reparacion||""}`.toLocaleLowerCase("es-AR");
     return words.every(w=>t.includes(w));
   });
-  results.innerHTML=data.map(p=>`<div class="card result"><div><h3>${p.marca} ${p.modelo}</h3><p>${p.reparacion}</p></div><div><div class="price">${money(p.precio)}</div><button class="btn" onclick="newFromPrice(${p.id})">+ Crear orden</button></div></div>`).join("")||'<div class="card empty">No encontré ese precio.</div>';
+  if(searchRepairChip!=="Todos")data=data.filter(p=>searchRepairCategory(p.reparacion)===searchRepairChip);
+  data.sort((a,b)=>compareSearchModels(a,b));
+  const groups=[];
+  data.forEach(p=>{
+    const key=`${String(p.marca||"").trim().toLocaleLowerCase("es-AR")}||${String(p.modelo||"").trim().toLocaleLowerCase("es-AR")}`;
+    let g=groups.find(x=>x.key===key);
+    if(!g){g={key,marca:p.marca||"",modelo:p.modelo||"",items:[]};groups.push(g);}
+    g.items.push(p);
+  });
+  const chips=["Todos","Pantalla","Batería","Pin de carga","Tapa"];
+  const chipHtml=`<div class="search-repair-chips" aria-label="Filtrar tipo de reparación">${chips.map(c=>`<button type="button" class="search-chip ${searchRepairChip===c?"active":""}" onclick="setSearchRepairChip('${c}')">${c}</button>`).join("")}</div>`;
+  const groupsHtml=groups.map(g=>{
+    g.items.sort((a,b)=>searchRepairOrder(a.reparacion)-searchRepairOrder(b.reparacion)||String(a.reparacion).localeCompare(String(b.reparacion),"es"));
+    return `<section class="search-model-group"><div class="search-model-heading"><h3>${g.marca} ${g.modelo}</h3><span>${g.items.length} ${g.items.length===1?"reparación":"reparaciones"}</span></div><div class="search-model-rows">${g.items.map(p=>`<div class="search-price-row"><div class="search-repair-name">${p.reparacion}</div><div class="search-price-value">${money(p.precio)}</div><button type="button" class="search-add-btn" aria-label="Crear orden para ${g.marca} ${g.modelo} - ${p.reparacion}" title="Usar este precio en una orden" onclick="newFromPrice(${p.id})">+</button><button type="button" class="search-wa-btn" title="Enviar precio por WhatsApp" aria-label="Enviar por WhatsApp" onclick="shareSearchPrice(${p.id})">↗</button></div>`).join("")}</div></section>`;
+  }).join("");
+  results.innerHTML=chipHtml+(groupsHtml||'<div class="card empty">No encontré ese precio.</div>');
 }
-function newFromPrice(id){const p=prices.find(x=>x.id===id);show("orden");marca.value=p.marca;modelo.value=p.modelo;trabajo.value=p.reparacion;total.value=p.precio;}
+function searchRepairCategory(value){
+  const t=String(value||"").toLocaleLowerCase("es-AR");
+  if(/pantalla|display|m[oó]dulo|lcd|oled/.test(t))return "Pantalla";
+  if(/bater[ií]a|battery/.test(t))return "Batería";
+  if(/pin\s*(de\s*)?carga|centro\s*de\s*carga|flex\s*(de\s*)?carga|conector\s*(de\s*)?carga/.test(t))return "Pin de carga";
+  if(/tapa|vidrio\s*trasero|backglass|glass\s*trasero/.test(t))return "Tapa";
+  return "Otros";
+}
+function searchRepairOrder(value){
+  const c=searchRepairCategory(value);
+  return ({Pantalla:0,Batería:1,"Pin de carga":2,Tapa:3,Otros:4})[c]??4;
+}
+function setSearchRepairChip(value){searchRepairChip=value;renderSearch();}
+function compareSearchModels(a,b){
+  const brandA=String(a.marca||"").toLocaleLowerCase("es-AR"),brandB=String(b.marca||"").toLocaleLowerCase("es-AR");
+  if(brandA!==brandB)return brandA.localeCompare(brandB,"es");
+  const ma=String(a.modelo||""),mb=String(b.modelo||"");
+  const ia=ma.match(/(\d+)/),ib=mb.match(/(\d+)/);
+  if(ia&&ib&&Number(ia[1])!==Number(ib[1]))return Number(ia[1])-Number(ib[1]);
+  if(ia&&!ib)return -1;if(!ia&&ib)return 1;
+  const va=ma.toLocaleLowerCase("es-AR").replace(/.*?\d+\s*/,""),vb=mb.toLocaleLowerCase("es-AR").replace(/.*?\d+\s*/,"");
+  const rank=v=>v.includes("pro max")?4:v.includes("pro")?3:v.includes("plus")?2:v.includes("mini")?1:0;
+  return rank(va)-rank(vb)||ma.localeCompare(mb,"es",{numeric:true,sensitivity:"base"});
+}
+function shareSearchPrice(id){
+  const p=prices.find(x=>x.id===id);if(!p)return;
+  const message=`${p.marca} ${p.modelo} ${p.reparacion}: ${money(p.precio)}`;
+  const url="https://wa.me/?text="+encodeURIComponent(message);
+  window.open(url,"_blank","noopener,noreferrer");
+}
+function newFromPrice(id){const p=prices.find(x=>x.id===id);if(!p)return;show("orden");marca.value=p.marca;modelo.value=p.modelo;trabajo.value=p.reparacion;total.value=p.precio;}
 
 function resolveClientForOrder(){
   const name=(document.getElementById("cliente")?.value||"").trim(), phone=(document.getElementById("telefono")?.value||"").trim(), input=document.getElementById("cliente");

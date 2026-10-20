@@ -358,6 +358,37 @@ body .e30-bottom-nav{display:none!important;visibility:hidden!important;pointer-
 .empty-state{display:flex;flex-direction:column;gap:4px;padding:20px;background:#fff;border:1px solid #e5e7f0;border-radius:20px;box-sizing:border-box;width:100%;min-width:0}
 .empty-state strong{font-size:16px;line-height:1.35;color:var(--ink,#171923)}
 .empty-state span{color:#6b7280;font-size:14px;line-height:1.45}
+
+/* E30 — vidrio esmerilado del encabezado sin texto bajo la barra de estado */
+@media(max-width:900px){
+  #appRoot header{
+    position:sticky;
+    top:0;
+    z-index:120;
+    box-sizing:border-box;
+    background:rgba(247,248,251,.88);
+    -webkit-backdrop-filter:blur(18px);
+    backdrop-filter:blur(18px);
+    border-bottom:1px solid rgba(225,228,238,.55);
+    border-radius:0 0 14px 14px;
+    margin-top:0;
+  }
+  #appRoot header:before{
+    content:"";
+    position:absolute;
+    left:0;
+    right:0;
+    bottom:100%;
+    height:calc(env(safe-area-inset-top,0px) + 8px);
+    background:rgba(247,248,251,.94);
+    -webkit-backdrop-filter:blur(18px);
+    backdrop-filter:blur(18px);
+    pointer-events:none;
+  }
+}
+@media(max-width:700px){
+  #appRoot header{padding-top:8px;padding-bottom:10px}
+}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.3.0/qz-tray.js"></script>
 <script>

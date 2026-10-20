@@ -472,6 +472,11 @@ qz.security.setSignaturePromise(function(toSign){
 </div>
 </section>
 
+<section id="porcobrar" style="display:none">
+<div class="card"><h2 style="margin-top:0">Por cobrar</h2><div class="sub">Órdenes con saldo pendiente. Tocá WhatsApp para enviar un mensaje con el importe actualizado.</div><div id="receivablesTotal" style="font-size:25px;font-weight:850;color:#b42318;margin-top:10px">$ 0</div></div>
+<div id="receivablesList"></div>
+</section>
+
 <section id="costospendientes" style="display:none">
 <div class="card"><h2 style="margin-top:0">Costos pendientes</h2><div class="sub">Reparaciones entregadas que todavía no tienen sus costos cargados.</div></div>
 <div id="pendingCostsList"></div>
@@ -946,6 +951,14 @@ async function changeAdminPassword(){
   adminPassHash=await sha256Hex(next);await kvSet("e30-admin-pass",adminPassHash);alert("Contraseña administrativa actualizada.");
 }
 function adminManageCosts(n){if(!adminAuthed){adminGate("costospendientes");return;}manageCosts(n);}
+function isKnownTestOrder(o){return String(o?.cliente||"").trim().toLowerCase()==="prueba 123"&&Math.abs((Number(o?.total)||0)-100)<0.01&&/iphone\\s*14\\s*pro/i.test(String((o?.marca||"")+" "+(o?.modelo||"")));}
+function renderReceivables(){
+  const listEl=document.getElementById("receivablesList"),totalEl=document.getElementById("receivablesTotal");if(!listEl)return;
+  if(!adminAuthed){listEl.innerHTML='<div class="card empty">Acceso administrativo requerido.</div>';return;}
+  const dueOrders=orders.filter(o=>o.estado!=="Cancelado"&&!isKnownTestOrder(o)&&paymentBalance(o)>0).sort((a,b)=>paymentBalance(b)-paymentBalance(a));
+  const total=dueOrders.reduce((sum,o)=>sum+paymentBalance(o),0);if(totalEl)totalEl.textContent=money(total);
+  listEl.innerHTML=dueOrders.map(o=>`<div class="card receivable-row"><div class="receivable-main"><b>#${String(o.n).padStart(4,"0")} · ${escapeHtml(o.cliente||"Sin cliente")}</b><div>${escapeHtml(((o.marca||"")+" "+(o.modelo||"")).trim())} · ${escapeHtml(o.estado||"Sin estado")}</div><div class="sub">${escapeHtml(o.local||"")} · Total ${money(o.total)} · Pagado ${money(paymentTotal(o))}</div></div><div class="receivable-balance">${money(paymentBalance(o))}</div><button class="btn secondary" type="button" onclick="orderWhatsAppMessage(${o.n})">WhatsApp</button></div>`).join("")||'<div class="card empty">No hay saldos pendientes. ¡Todo al día!</div>';
+}
 function renderPendingCosts(){
   const el=document.getElementById("pendingCostsList");if(!el)return;
   if(!adminAuthed){el.innerHTML='<div class="card empty">Acceso administrativo requerido.</div>';return;}
@@ -953,9 +966,9 @@ function renderPendingCosts(){
   el.innerHTML=list.map(o=>`<div class="card pending-cost-card"><div class="order"><div><b>ORDEN #${String(o.n).padStart(4,"0")}</b><h3 style="margin:5px 0">${o.cliente||"Sin cliente"}</h3><div>${o.marca||""} ${o.modelo||""} · ${o.trabajo||"Reparación"}</div><div class="sub">Entregada · Total ${money(o.total)}</div></div><button class="btn" onclick="manageCosts(${o.n})">💰 Cargar costos</button></div></div>`).join("")||'<div class="card empty">🎉 No hay costos pendientes.</div>';
 }
 function show(id,btn){
-  const adminSections=["administracion","costospendientes","movimientos","reportes","precios","configuracion"];
+  const adminSections=["administracion","costospendientes","porcobrar","movimientos","reportes","precios","configuracion"];
   if(adminSections.includes(id) && !adminAuthed){ adminGate("administracion",btn); return; }
-  document.querySelectorAll("section").forEach(x=>x.style.display="none");const sec=document.getElementById(id);if(sec)sec.style.display="block";if(id==="dashboard")renderDashboard();if(id==="administracion")refreshAdminUI();if(id==="costospendientes")renderPendingCosts();if(id==="ordenes")renderOrders();if(id==="clientes")renderClients();if(id==="precios")renderPrices();if(id==="presupuestos")renderBudgets();if(id==="stock")renderStock();if(id==="ventas"){renderSaleProducts();renderSales();}if(id==="movimientos")renderMovements();if(id==="configuracion"){loadSavedLogo();applyBusinessConfig();}updateBottomNav(id);if(window.innerWidth<=700)closeSideMenu();}
+  document.querySelectorAll("section").forEach(x=>x.style.display="none");const sec=document.getElementById(id);if(sec)sec.style.display="block";if(id==="dashboard")renderDashboard();if(id==="administracion")refreshAdminUI();if(id==="costospendientes")renderPendingCosts();if(id==="porcobrar")renderReceivables();if(id==="ordenes")renderOrders();if(id==="clientes")renderClients();if(id==="precios")renderPrices();if(id==="presupuestos")renderBudgets();if(id==="stock")renderStock();if(id==="ventas"){renderSaleProducts();renderSales();}if(id==="movimientos")renderMovements();if(id==="configuracion"){loadSavedLogo();applyBusinessConfig();}updateBottomNav(id);if(window.innerWidth<=700)closeSideMenu();}
 function updateBottomNav(id){const nav=document.querySelector(".e30-bottom-nav");if(!nav)return;nav.querySelectorAll("button").forEach(b=>b.classList.remove("active"));const map={dashboard:0,ordenes:1,orden:1,ventas:2,movimientos:3};if(map[id]!==undefined)nav.querySelectorAll("button")[map[id]]?.classList.add("active");}
 function bottomNavGo(id){sideGo(id,null);updateBottomNav(id);if(id==="movimientos"&&!adminAuthed){const nav=document.querySelector(".e30-bottom-nav");if(nav)nav.querySelectorAll("button").forEach(b=>b.classList.remove("active"));}}
 function sideGo(id,btn){show(id,btn);document.querySelectorAll(".side-item").forEach(x=>x.classList.remove("active"));if(btn&&btn.classList.contains("side-item"))btn.classList.add("active");else{const m=[...document.querySelectorAll(".side-item")].find(x=>x.getAttribute("onclick")?.includes("'"+id+"'"));if(m)m.classList.add("active");}document.querySelectorAll(".top-actions button").forEach(x=>x.classList.remove("active"));updateBottomNav(id);if(window.innerWidth<=700)closeSideMenu();}
@@ -1835,7 +1848,7 @@ function reportFilterData(){
   const normLocal=v=>{const s=String(v||"").toLowerCase();if(s.includes("las flores")||s.includes("demóstenes 3101")||s.includes("demóstenes 3110"))return "las flores";if(s.includes("moreno")||s.includes("piovano"))return "moreno";return s;};
   const matchesLocal=x=>local==="Todas"||normLocal(x.local)===normLocal(local);
   const matchesMonth=x=>!selectedMonth||(x.fecha?monthKeyFromDateString(x.fecha):orderMonthKey(x))===selectedMonth;
-  const ord=orders.filter(o=>matchesLocal(o)&&(!selectedMonth||orderMonthKey(o)===selectedMonth));
+  const ord=orders.filter(o=>!isKnownTestOrder(o)&&matchesLocal(o)&&(!selectedMonth||orderMonthKey(o)===selectedMonth));
   const salesFiltered=sales.filter(x=>matchesLocal(x)&&(!selectedMonth||saleMonthKey(x)===selectedMonth));
   const mov=movements.filter(x=>matchesLocal(x)&&(!selectedMonth||monthKeyFromDateString(x.fecha)===selectedMonth));
   return {selectedMonth,local,ord,salesFiltered,mov};
@@ -1877,24 +1890,17 @@ function renderReports(){
   const partFact=part.reduce((a,o)=>a+(+o.total||0),0),gremFact=grem.reduce((a,o)=>a+(+o.total||0),0);
   const partCost=part.reduce((a,o)=>a+orderCostTotal(o),0),gremCost=grem.reduce((a,o)=>a+orderCostTotal(o),0);
   const partGain=partFact-partCost,gremGain=gremFact-gremCost;
-  document.getElementById("reportBreakdown").innerHTML=`<h3 style="margin-top:0">Detalle</h3>
-    <div style="padding:8px 0;border-bottom:1px solid var(--line)">Particulares: <b>${part.length} órdenes</b> · Facturado ${money(partFact)} · Costos ${money(partCost)} · Ganancia ${money(partGain)}</div>
-    <div style="padding:8px 0;border-bottom:1px solid var(--line)">Gremio: <b>${grem.length} órdenes</b> · Facturado ${money(gremFact)} · Costos ${money(gremCost)} · Ganancia ${money(gremGain)}</div>
-    <div style="padding:8px 0;border-bottom:1px solid var(--line)">Ventas de accesorios: <b>${money(acc)}</b></div>
-    <div style="padding:8px 0;border-bottom:1px solid var(--line)">Costos de reparaciones: <b>${money(costosReparaciones)}</b></div>
-    <div style="padding:8px 0;border-bottom:1px solid var(--line)">Costo de compra de accesorios: <b>${money(costosAccesorios)}</b></div>
-    <div style="padding:8px 0"><b>Resultado bruto estimado: ${money(ganancia)}</b></div>
-    <div class="small-muted">La ganancia descuenta los costos registrados de las reparaciones y el costo de compra de los accesorios vendidos.</div>`;
+  document.getElementById("reportBreakdown").innerHTML=`<details><summary>Detalle del cálculo</summary><div style="padding-top:12px"><div style="padding:8px 0;border-bottom:1px solid var(--line)">Particulares: <b>${part.length} ${part.length===1?"orden":"órdenes"}</b> · Facturado ${money(partFact)} · Costos ${money(partCost)} · Ganancia ${money(partGain)}</div><div style="padding:8px 0;border-bottom:1px solid var(--line)">Gremio: <b>${grem.length} ${grem.length===1?"orden":"órdenes"}</b> · Facturado ${money(gremFact)} · Costos ${money(gremCost)} · Ganancia ${money(gremGain)}</div><div style="padding:8px 0;border-bottom:1px solid var(--line)">Ventas de accesorios: <b>${money(acc)}</b></div><div style="padding:8px 0;border-bottom:1px solid var(--line)">Costos de reparaciones: <b>${money(costosReparaciones)}</b></div><div style="padding:8px 0;border-bottom:1px solid var(--line)">Costo de compra de accesorios: <b>${money(costosAccesorios)}</b></div><div style="padding:8px 0"><b>Resultado bruto estimado: ${money(ganancia)}</b></div><div class="small-muted">La ganancia descuenta los costos registrados de las reparaciones y el costo de compra de los accesorios vendidos.</div></div></details>`;
   const maxVal=Math.max(partFact,gremFact,partCost,gremCost,Math.abs(partGain),Math.abs(gremGain),acc,1);
   const bar=(label,value,kind="")=>`<div class="report-bar-row"><div class="report-bar-label">${escapeHtml(label)}</div><div><div class="report-bar-track"><div class="report-bar-fill ${kind}" style="width:${Math.max(0,Math.min(100,(Math.abs(value)/maxVal)*100))}%"></div></div><div class="report-chart-value">${money(value)}</div></div></div>`;
   document.getElementById("reportCharts").innerHTML=`
     <div class="report-chart-card"><h3>Facturación por tipo</h3><div class="chart-sub">Según mes y sucursal elegidos.</div>${bar("Particulares",partFact)}${bar("Gremio",gremFact)}${bar("Accesorios",acc)}<div class="report-legend"><span><i></i>Importes facturados</span></div></div>
-    <div class="report-chart-card"><h3>Resultado por tipo</h3><div class="chart-sub">Costos y ganancia bruta de reparaciones.</div>${bar("Part. costos",partCost,"cost")}${bar("Part. ganancia",partGain,"profit")}${bar("Gremio costos",gremCost,"cost")}${bar("Gremio ganancia",gremGain,"profit")}<div class="report-legend"><span><i class="cost-dot"></i>Costos</span><span><i class="profit-dot"></i>Ganancia bruta</span></div></div>`;
+    <div class="report-chart-card"><h3>Resultado por tipo</h3><div class="chart-sub">Costos y ganancia bruta de reparaciones.</div>${bar("Particulares: costos",partCost,"cost")}${bar("Particulares: ganancia",partGain,"profit")}${bar("Gremio costos",gremCost,"cost")}${bar("Gremio ganancia",gremGain,"profit")}<div class="report-legend"><span><i class="cost-dot"></i>Costos</span><span><i class="profit-dot"></i>Ganancia bruta</span></div></div>`;
   const topProducts={};
   salesFiltered.forEach(x=>{const k=x.producto||"Producto sin nombre";topProducts[k]??={qty:0,total:0};topProducts[k].qty+=(+x.cantidad||1);topProducts[k].total+=(+x.total||0);});
   const topModels={};
   ord.forEach(o=>{const k=((o.marca||"")+" "+(o.modelo||"")).trim()||"Modelo sin especificar";topModels[k]??={qty:0,total:0};topModels[k].qty++;topModels[k].total+=(+o.total||0);});
-  const productRows=Object.entries(topProducts).sort((a,b)=>b[1].qty-a[1].qty).slice(0,5);
+  const productRows=Object.entries(topProducts).map(([name,v])=>({name,...v,profit:v.total-salesFiltered.filter(x=>(x.producto||"Producto sin nombre")===name).reduce((sum,x)=>sum+((+x.costoUnitario||+x.costo||0)*(+x.cantidad||1)),0)})).sort((a,b)=>b.profit-a.profit).slice(0,5);
   const modelRows=Object.entries(topModels).sort((a,b)=>b[1].qty-a[1].qty).slice(0,5);
   const low=stock.filter(x=>x.activo!==false&&(Number(x.cantidad)||0)<=2).sort((a,b)=>(+a.cantidad||0)-(+b.cantidad||0)).slice(0,8);
   const expenses={};mov.filter(x=>x.tipo==="Gasto").forEach(x=>{const k=x.categoria||"Otros";expenses[k]=(expenses[k]||0)+(+x.importe||0);});
@@ -1903,8 +1909,8 @@ function renderReports(){
   document.getElementById("reportInsights").innerHTML=`
     <h3 style="margin-top:0">📊 Datos para decidir qué comprar</h3>
     <div class="form">
-      <div><h4>Accesorios más vendidos</h4>${list(productRows,([name,v])=>`<div style="padding:8px 0;border-bottom:1px solid var(--line)"><b>${escapeHtml(name)}</b><div class="small-muted">${v.qty} unidades · ${money(v.total)} facturados</div></div>`,"Todavía no hay ventas en este período.")}</div>
-      <div><h4>Modelos que más ingresan</h4>${list(modelRows,([name,v])=>`<div style="padding:8px 0;border-bottom:1px solid var(--line)"><b>${escapeHtml(name)}</b><div class="small-muted">${v.qty} órdenes · ${money(v.total)} facturados</div></div>`,"Todavía no hay órdenes en este período.")}</div>
+      <div><h4>Accesorios más vendidos</h4>${list(productRows,v=>`<div style="padding:8px 0;border-bottom:1px solid var(--line)"><b>${escapeHtml(v.name)}</b><div class="small-muted">${v.qty} ${v.qty===1?"unidad":"unidades"} · Ganancia estimada ${money(v.profit)}</div></div>`,"Todavía no hay ventas en este período.")}</div>
+      <div><h4>Modelos que más ingresan</h4>${list(modelRows,([name,v])=>`<div style="padding:8px 0;border-bottom:1px solid var(--line)"><b>${escapeHtml(name)}</b><div class="small-muted">${v.qty} ${v.qty===1?"orden":"órdenes"} · ${money(v.total)} facturados</div></div>`,"Todavía no hay órdenes en este período.")}</div>
       <div><h4>Stock bajo (2 unidades o menos)</h4>${list(low,x=>`<div style="padding:8px 0;border-bottom:1px solid var(--line)"><b>${escapeHtml(x.producto)}</b><div class="small-muted">${x.cantidad} u. · Categoría: ${escapeHtml(x.categoria||"Sin categoría")}</div></div>`,"No hay productos con stock bajo.")}</div>
       <div><h4>Gastos por categoría</h4>${list(expenseRows,([name,total])=>`<div style="padding:8px 0;border-bottom:1px solid var(--line)"><b>${escapeHtml(name)}</b><div class="small-muted">${money(total)}</div></div>`,"No hay gastos registrados en este período.")}</div>
     </div>`;

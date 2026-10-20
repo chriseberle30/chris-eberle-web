@@ -960,8 +960,12 @@ function orderCard(o){const ct=orderCostTotal(o),missing=ct===0&&(+o.total||0)>0
 </div><div><select onchange="setStatus(${o.n},this.value)" style="width:auto;padding:6px 8px;font-size:12px;border-radius:8px">${ESTADOS.map(s=>`<option ${o.estado===s?"selected":""}>${s}</option>`).join("")}</select><div style="margin-top:6px"><span class="status-badge ${statusClass(o.estado)}">${o.estado}</span></div><div class="price">${money(o.total)}</div></div></div><hr>
 <div><b>Pagado:</b> ${money(paymentTotal(o))} · <b>Saldo:</b> ${money(paymentBalance(o))}</div>
 <div class="cost-line ${missing?"cost-warning":""}"><b>Costos:</b> ${missing?"Falta cargar":money(ct)}${missing?"":" · <b>Ganancia bruta:</b> "+money(Math.max(0,(+o.total||0)-ct))}</div>${o.obsEquipo?`<div class="sub" style="margin-top:7px"><b>Estado del equipo:</b> ${o.obsEquipo}</div>`:""}
-<div class="actions" style="margin-top:12px"><button class="btn secondary" type="button" onclick="openPaymentModal(${o.n})">+ Pago</button><button class="btn secondary" type="button" onclick="orderWhatsAppMessage(${o.n})">WhatsApp</button><button class="btn secondary" type="button" onclick="editOrder(${o.n})">Editar</button><button class="btn secondary admin-cost-btn" type="button" onclick="adminManageCosts(${o.n})" style="display:${adminAuthed?"inline-flex":"none"}">Costos</button><button class="btn" onclick="printTicket(${o.n})">Ticket cliente</button><button class="btn secondary" onclick="openClientPDF('order',${o.n})">PDF / WhatsApp</button><button class="btn secondary" onclick="printTechnician(${o.n})">Orden técnico</button>${o.estado==="Entregado"?`<button class="btn secondary" onclick="showDeliveryModal(${o.n})">Orden de entrega</button>`:""}<button class="btn danger" onclick="deleteOrder(${o.n})">Eliminar</button></div></div>`}
+<div class="actions" style="margin-top:12px"><button class="btn secondary" type="button" onclick="openPaymentModal(${o.n})">+ Pago</button><button class="btn secondary" type="button" onclick="orderWhatsAppMessage(${o.n})">WhatsApp</button><button class="btn secondary" type="button" onclick="editOrder(${o.n})">Editar</button><button class="btn secondary admin-cost-btn" type="button" onclick="adminManageCosts(${o.n})" style="display:${adminAuthed?"inline-flex":"none"}">Costos</button><button class="btn" onclick="showClientReceiptModal(${o.n})">Comprobante cliente</button><button class="btn secondary" onclick="printTechnician(${o.n})">Orden técnico</button>${o.estado==="Entregado"?`<button class="btn secondary" onclick="showDeliveryModal(${o.n})">Orden de entrega</button>`:""}<button class="btn danger" onclick="deleteOrder(${o.n})">Eliminar</button></div></div>`}
 
+function showClientReceiptModal(n){const o=orders.find(x=>x.n===n);if(!o)return;const m=document.getElementById("clientReceiptModal");const t=document.getElementById("clientReceiptText");if(!m||!t){openClientPDF("order",n);return;}m.dataset.order=String(n);t.textContent=`Elegí el formato del comprobante para ${o.cliente||"el cliente"} · Orden #${String(n).padStart(4,"0")}.`;m.style.display="flex";}
+function closeClientReceiptModal(){const m=document.getElementById("clientReceiptModal");if(m)m.style.display="none";}
+function clientReceiptPrint(){const m=document.getElementById("clientReceiptModal");const n=Number(m?.dataset.order||0);closeClientReceiptModal();if(n)printTicket(n);}
+function clientReceiptPDF(){const m=document.getElementById("clientReceiptModal");const n=Number(m?.dataset.order||0);closeClientReceiptModal();if(n)openClientPDF("order",n);}
 function renderOrders(){const q=(document.getElementById("orderSearch")?.value||"").toLowerCase();const arr=orders.filter(orderVisible).filter(o=>JSON.stringify(o).toLowerCase().includes(q));document.getElementById("orders").innerHTML=arr.map(orderCard).join("")||'<div class="card empty">No hay órdenes.</div>'; }
 const ESTADOS=["Recibido","Pendiente","Esperando repuesto","En reparación","Listo","Entregado","Cancelado"];
 function setStatus(n,val){
@@ -2050,6 +2054,18 @@ async function printTicket(n){
       <button class="btn secondary" type="button" onclick="deliveryPrintNo()">Cerrar</button>
       <button class="btn secondary" type="button" onclick="deliverySavePDF()">Guardar como PDF</button>
       <button class="btn" type="button" onclick="deliveryPrintYes()">Imprimir</button>
+    </div>
+  </div>
+</div>
+<div id="clientReceiptModal" class="modal-back" style="display:none;z-index:99999">
+  <div class="modal" style="max-width:430px">
+    <div style="width:42px;height:42px;border-radius:12px;background:#14104C;color:#fff;display:flex;align-items:center;justify-content:center;margin-bottom:14px;font-size:20px">▤</div>
+    <h2 style="margin:0 0 8px">Comprobante para el cliente</h2>
+    <div id="clientReceiptText" class="sub" style="line-height:1.5;margin-bottom:20px">Elegí cómo querés entregar el comprobante.</div>
+    <div class="actions" style="justify-content:flex-end">
+      <button class="btn secondary" type="button" onclick="closeClientReceiptModal()">Cerrar</button>
+      <button class="btn secondary" type="button" onclick="clientReceiptPDF()">Guardar como PDF</button>
+      <button class="btn" type="button" onclick="clientReceiptPrint()">Imprimir ticket</button>
     </div>
   </div>
 </div>

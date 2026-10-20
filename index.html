@@ -348,7 +348,7 @@ body .e30-bottom-nav{display:none!important;visibility:hidden!important;pointer-
 .receivable-row:last-child{border-bottom:0}
 .receivable-main{min-width:0;flex:1}.receivable-main b{display:block}.receivable-main .sub{margin-top:3px}
 .receivable-balance{font-size:17px;font-weight:850;color:#b42318;white-space:nowrap}
-.receivable-row .btn{flex:0 0 auto;padding:8px 10px;font-size:12px}
+.receivable-row .btn{flex:0 0 auto;padding:8px 10px;font-size:12px}.receivable-row .btn:first-of-type{background:#e8f5ec;color:#176b3a;border:1px solid #c9e8d2}
 @media(max-width:700px){#rMes{font-size:14px;padding:10px 8px}.receivable-row{flex-wrap:wrap}.receivable-row .btn{margin-left:auto}.admin-access-grid{align-items:stretch}}
 .report-month-comparison{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;margin-bottom:16px;background:#f7f8fc;border:1px solid var(--line);border-radius:13px}
 .report-month-comparison>b{font-size:14px}
@@ -960,7 +960,7 @@ function renderReceivables(){
   if(!adminAuthed){listEl.innerHTML='<div class="card empty">Acceso administrativo requerido.</div>';return;}
   const dueOrders=orders.filter(o=>o.estado!=="Cancelado"&&!isKnownTestOrder(o)&&paymentBalance(o)>0).sort((a,b)=>paymentBalance(b)-paymentBalance(a));
   const total=dueOrders.reduce((sum,o)=>sum+paymentBalance(o),0);if(totalEl)totalEl.textContent=money(total);
-  listEl.innerHTML=dueOrders.map(o=>`<div class="card receivable-row"><div class="receivable-main"><b>#${String(o.n).padStart(4,"0")} · ${escapeHtml(o.cliente||"Sin cliente")}</b><div>${escapeHtml(((o.marca||"")+" "+(o.modelo||"")).trim())} · ${escapeHtml(o.estado||"Sin estado")}</div><div class="sub">${escapeHtml(o.local||"")} · Total ${money(o.total)} · Pagado ${money(paymentTotal(o))}</div></div><div class="receivable-balance">${money(paymentBalance(o))}</div><button class="btn secondary" type="button" onclick="orderWhatsAppMessage(${o.n})">WhatsApp</button></div>`).join("")||'<div class="card empty">No hay saldos pendientes. ¡Todo al día!</div>';
+  listEl.innerHTML=dueOrders.map(o=>`<div class="card receivable-row"><div class="receivable-main"><b>#${String(o.n).padStart(4,"0")} · ${escapeHtml(o.cliente||"Sin cliente")}</b><div>${escapeHtml(((o.marca||"")+" "+(o.modelo||"")).trim())} · ${escapeHtml(o.estado||"Sin estado")}</div><div class="sub">${escapeHtml(o.local||"")} · Total ${money(o.total)} · Pagado ${money(paymentTotal(o))}</div></div><div class="receivable-balance">${money(paymentBalance(o))}</div><button class="btn secondary" type="button" onclick="openPaymentModal(${o.n})">Registrar cobro</button><button class="btn secondary" type="button" onclick="orderWhatsAppMessage(${o.n})">WhatsApp</button></div>`).join("")||'<div class="card empty">No hay saldos pendientes. ¡Todo al día!</div>';
 }
 function renderPendingCosts(){
   const el=document.getElementById("pendingCostsList");if(!el)return;

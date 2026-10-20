@@ -278,7 +278,7 @@ body .e30-bottom-nav{display:none!important;visibility:hidden!important;pointer-
   body .e30-bottom-nav{display:grid!important;visibility:visible!important;pointer-events:auto!important;position:fixed;left:0;right:0;bottom:0;z-index:1500;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;height:calc(66px + env(safe-area-inset-bottom,0px));min-height:calc(66px + env(safe-area-inset-bottom,0px));box-sizing:border-box;margin:0;padding:5px 8px env(safe-area-inset-bottom,0px);background:rgba(255,255,255,.98);border:0;border-top:1px solid #e3e5eb;box-shadow:0 -5px 22px rgba(20,16,76,.08);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
   body .e30-bottom-nav button{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:0;min-height:52px;height:56px;padding:5px 2px;border:0;background:transparent;color:#737784;font-family:inherit;font-size:11px;font-weight:650;line-height:1.1}
   body .e30-bottom-nav button.active{color:#14104C}
-  body .e30-bottom-nav button.active:before{content:"";position:absolute;top:-5px;width:28px;height:3px;border-radius:0 0 3px 3px;background:#14104C}
+  body .e30-bottom-nav{overflow:visible!important}body .e30-bottom-nav button.active:before{content:"";position:absolute;top:0;width:28px;height:3px;border-radius:0 0 3px 3px;background:#14104C}
   body .e30-bottom-nav svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
   html body{padding-bottom:calc(82px + env(safe-area-inset-bottom,0px))!important;min-height:100vh;min-height:100dvh}
   body .app{padding-bottom:18px!important}
@@ -790,7 +790,7 @@ function renderActivity(){
   items=items.slice(0,12);
   const toggle=document.getElementById("activityToggle");if(toggle){toggle.style.display=items.length>3?"inline-flex":"none";toggle.textContent=activityExpanded?"Ver menos":"Ver más";}
   const visible=activityExpanded?items:items.slice(0,3);
-  el.innerHTML=visible.map(x=>`<div class="activity-row"><div class="activity-icon">${activityIcon(x.type)}</div><div class="activity-time">${escapeHtml(x.hora||"—")}</div><div class="activity-main"><b>${escapeHtml(x.title||"Actividad")}</b><span> · ${escapeHtml(x.detail||"")}</span></div></div>`).join("")||'<div class="activity-empty">Todavía no hay actividad registrada hoy.</div>';
+  el.innerHTML=visible.map(x=>`<div class="activity-row"><div class="activity-icon">${activityIcon(x.type)}</div><div class="activity-time">${escapeHtml(x.hora||"—")}</div><div class="activity-main"><b>${escapeHtml(x.title||"Actividad")}</b><span> · ${escapeHtml(x.detail||"")}</span></div></div>`).join("")||'<div class="activity-empty">Todavía no hay actividad hoy.</div>';
 }
 
 function renderLogin(){
@@ -929,7 +929,7 @@ function resolveClientForOrder(){
   return c?.id||"";
 }
 
-function normalizeIPhoneModel(value){return String(value||"").trim().replace(/iphone/gi,"iPhone");}
+function normalizeIPhoneModel(value){return String(value||"").trim().replace(/iphone/gi,"iPhone").replace(/\biPhone\s*(\d+)\s*(pro\s*max|pro\s*mini|pro|max|mini|plus|se|xs\s*max|xs|xr)?\b/gi,(_,n,variant)=>"iPhone "+n+(variant?" "+variant.replace(/\s+/g," ").replace(/\b\w/g,c=>c.toUpperCase()).replace(/\bSe\b/g,"SE"):"")).replace(/\s+/g," ");}
 document.getElementById("orderForm").onsubmit=async e=>{
 e.preventDefault();
 const editingId=window.editingOrderId;
@@ -1700,7 +1700,7 @@ function renderMovements(){
   document.getElementById("movementsList").innerHTML=days.map(([date,items])=>{
     const dayNet=items.reduce((a,m)=>a+(m.tipo==="Ingreso"?m.importe:-m.importe),0);
     return `<div class="movement-day"><div class="movement-day-head"><b>${escapeHtml(date)}</b><span class="movement-day-total">Neto ${money(dayNet)}</span></div><div style="overflow:hidden;border-radius:12px;box-shadow:0 3px 14px rgba(20,16,76,.045)">${items.map(m=>`<div class="movement-row"><div class="movement-mark">${m.tipo==="Ingreso"?"+":"−"}</div><div class="movement-main"><b>${escapeHtml(m.concepto||"Sin concepto")}</b><span>${escapeHtml(m.categoria||"Otros")} · ${escapeHtml(m.local||"Sucursal sin asignar")} · ${escapeHtml(m.pago||"Sin medio de pago")} · ${escapeHtml(m.tipo)}</span></div><div class="movement-amount ${m.tipo==="Ingreso"?"ingreso":"gasto"}">${m.tipo==="Ingreso"?"+":"−"}${money(m.importe)}</div></div>`).join("")}</div></div>`;
-  }).join("")||'<div class="card empty">Todavía no hay movimientos.</div>';
+  }).join("")||'<div class="card empty">Todavía no hay movimientos registrados hoy.</div>';
 }
 
 function orderCostTotal(o){return (o.costos||[]).reduce((a,c)=>a+(+c.importe||0),0);}

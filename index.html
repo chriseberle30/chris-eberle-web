@@ -263,6 +263,27 @@ nav.e30-bottom-nav,
 body .e30-bottom-nav{display:none!important;visibility:hidden!important;pointer-events:none!important}
 @media(max-width:700px){html body{padding-bottom:0!important} .app{padding-bottom:18px!important}}
 
+/* Ajustes móviles: actividad compacta y navegación inferior */
+.dash-wrench svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.activity-list{border-radius:12px;box-shadow:none;background:#fff;border:1px solid #e7e9f0}
+.activity-row{grid-template-columns:25px 42px minmax(0,1fr);gap:7px;padding:8px 10px;min-height:0;border-bottom:1px solid #eff0f4}
+.activity-icon{width:24px;height:24px;border-radius:7px;background:#f3f5fa}
+.activity-icon svg{width:14px;height:14px}
+.activity-time{font-size:11px}
+.activity-main{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.activity-main b,.activity-main span{display:inline;margin:0;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.activity-main span{color:#777e8d}
+.activity-toggle{margin-top:8px;border:0;background:transparent;color:#315fb5;font-size:13px;font-weight:700;padding:7px 2px}
+@media(max-width:700px){
+  body .e30-bottom-nav{display:grid!important;visibility:visible!important;pointer-events:auto!important;position:fixed;left:0;right:0;bottom:0;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;min-height:66px;height:auto;padding:5px 8px calc(5px + env(safe-area-inset-bottom,0px));background:rgba(255,255,255,.97);border-top:1px solid #e3e5eb;box-shadow:0 -5px 22px rgba(20,16,76,.08);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);z-index:1500}
+  body .e30-bottom-nav button{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:0;min-height:52px;padding:5px 2px;border:0;background:transparent;color:#737784;font-family:inherit;font-size:11px;font-weight:650;line-height:1.1}
+  body .e30-bottom-nav button.active{color:#14104C}
+  body .e30-bottom-nav button.active:before{content:"";position:absolute;top:-5px;width:28px;height:3px;border-radius:0 0 3px 3px;background:#14104C}
+  body .e30-bottom-nav svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  html body{padding-bottom:calc(78px + env(safe-area-inset-bottom,0px))!important}
+  body .app{padding-bottom:18px!important}
+  .activity-title{margin-top:20px}
+}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.3.0/qz-tray.js"></script>
 <script>
@@ -330,7 +351,7 @@ qz.security.setSignaturePromise(function(toSign){
 <div class="card search-hero" style="padding:22px;margin-bottom:18px">
 <h2 style="margin:0 0 6px;font-size:25px;letter-spacing:-.5px">Buscar precio</h2>
 <div class="sub" style="margin-bottom:10px">Consultá rápido cuánto cobrar por una reparación.</div>
-<input id="search" name="e30-price-search" class="search" style="font-size:18px;padding:15px" placeholder="Ej.: iPhone 13 pantalla, Moto G31 módulo..." oninput="renderSearch()" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+<input id="search" name="e30-price-search" class="search" style="font-size:18px;padding:15px" placeholder="Ej.: iPhone 13 pantalla" oninput="renderSearch()" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
 </div>
 <div id="results"></div>
 <div class="quick-actions">
@@ -341,7 +362,7 @@ qz.security.setSignaturePromise(function(toSign){
 <div class="dashboard-section-title"><div><div class="eyebrow">OPERACIÓN</div><h2 style="margin:0">Órdenes de servicio recientes</h2><div class="sub">Equipos que todavía están en proceso.</div></div><button class="dash-view-all" onclick="show('ordenes')">Ver todas <span>→</span></button></div>
 <div id="dashOrders" class="dashboard-orders"></div>
 <div class="dashboard-section-title activity-title"><div><div class="eyebrow">HOY</div><h2 style="margin:0">Actividad de hoy</h2><div class="sub">Últimas acciones realizadas en el sistema.</div></div><button class="dash-view-all" type="button" onclick="show('movimientos')">Ver toda la actividad <span>→</span></button></div>
-<div id="activityList" class="activity-list"></div>
+<div id="activityList" class="activity-list"></div><button id="activityToggle" class="activity-toggle" type="button" onclick="toggleActivity()" style="display:none">Ver más</button>
 </section>
 
 <section id="orden" style="display:none"><div class="card"><h2 id="orderFormTitle" style="margin-top:0">Nueva orden</h2>
@@ -674,7 +695,7 @@ const DEFAULT_PRICES=[
 {id:30,marca:"Motorola",modelo:"G31",reparacion:"Módulo",precio:60000,activo:true}
 ];
 
-let prices=[],orders=[],budgets=[],stock=[],sales=[],movements=[],activity=[],clients=[],passHash=null,adminPassHash=null,authed=false,adminAuthed=false,afterOrderId=null;
+let prices=[],orders=[],budgets=[],stock=[],sales=[],movements=[],activity=[],clients=[],passHash=null,adminPassHash=null,authed=false,adminAuthed=false,afterOrderId=null,activityExpanded=false;
 const money=n=>new Intl.NumberFormat("es-AR",{style:"currency",currency:"ARS",maximumFractionDigits:0}).format(n||0);
 function paymentTotal(o){return (Number(o?.sena)||0)+(Array.isArray(o?.pagos)?o.pagos.reduce((a,p)=>a+(Number(p.importe)||0),0):0);}
 function paymentBalance(o){return Math.max(0,(Number(o?.total)||0)-paymentTotal(o));}
@@ -746,6 +767,7 @@ function activityIcon(type){
   const icons={orden:'<svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="16" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',presupuesto:'<svg viewBox="0 0 24 24"><path d="M6 3h12v18H6z"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>',venta:'<svg viewBox="0 0 24 24"><path d="M5 7h14l-1 12H6L5 7Z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>',estado:'<svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></svg>',cobro:'<svg viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="12" rx="2"/><path d="M8 12h8"/></svg>',movimiento:'<svg viewBox="0 0 24 24"><path d="M12 4v16M6 10l6-6 6 6M18 14l-6 6-6-6"/></svg>'};
   return icons[type]||icons.movimiento;
 }
+function toggleActivity(){activityExpanded=!activityExpanded;renderActivity();}
 function renderActivity(){
   const el=document.getElementById("activityList"); if(!el)return;
   const today=new Date().toLocaleDateString("es-AR");
@@ -757,8 +779,10 @@ function renderActivity(){
   movements.filter(m=>m.fecha===today).forEach(m=>legacy.push({type:m.tipo==="Ingreso"?"cobro":"movimiento",title:m.tipo==="Ingreso"?"Ingreso registrado":"Gasto registrado",detail:`${m.concepto||"Sin concepto"} · ${money(m.importe)}`,ref:m.n,hora:"—"}));
   const existing=new Set(items.map(x=>`${x.type}:${x.ref??""}`));
   legacy.forEach(x=>{if(!existing.has(`${x.type}:${x.ref??""}`))items.push(x)});
-  items=items.slice(0,6);
-  el.innerHTML=items.map(x=>`<div class="activity-row"><div class="activity-icon">${activityIcon(x.type)}</div><div class="activity-time">${escapeHtml(x.hora||"—")}</div><div class="activity-main"><b>${escapeHtml(x.title||"Actividad")}</b><span>${escapeHtml(x.detail||"")}</span></div><span class="activity-arrow">›</span></div>`).join("")||'<div class="activity-empty">Todavía no hay actividad registrada hoy.</div>';
+  items=items.slice(0,12);
+  const toggle=document.getElementById("activityToggle");if(toggle){toggle.style.display=items.length>3?"inline-flex":"none";toggle.textContent=activityExpanded?"Ver menos":"Ver más";}
+  const visible=activityExpanded?items:items.slice(0,3);
+  el.innerHTML=visible.map(x=>`<div class="activity-row"><div class="activity-icon">${activityIcon(x.type)}</div><div class="activity-time">${escapeHtml(x.hora||"—")}</div><div class="activity-main"><b>${escapeHtml(x.title||"Actividad")}</b><span> · ${escapeHtml(x.detail||"")}</span></div></div>`).join("")||'<div class="activity-empty">Todavía no hay actividad registrada hoy.</div>';
 }
 
 function renderLogin(){
@@ -848,7 +872,8 @@ function show(id,btn){
   const adminSections=["administracion","costospendientes","movimientos","reportes","precios","configuracion"];
   if(adminSections.includes(id) && !adminAuthed){ adminGate("administracion",btn); return; }
   document.querySelectorAll("section").forEach(x=>x.style.display="none");const sec=document.getElementById(id);if(sec)sec.style.display="block";if(id==="dashboard")renderDashboard();if(id==="administracion")refreshAdminUI();if(id==="costospendientes")renderPendingCosts();if(id==="ordenes")renderOrders();if(id==="clientes")renderClients();if(id==="precios")renderPrices();if(id==="presupuestos")renderBudgets();if(id==="stock")renderStock();if(id==="ventas"){renderSaleProducts();renderSales();}if(id==="movimientos")renderMovements();if(id==="configuracion"){loadSavedLogo();applyBusinessConfig();}if(window.innerWidth<=700)closeSideMenu();}
-function updateBottomNav(id){const nav=document.querySelector(".e30-bottom-nav");if(!nav)return;nav.querySelectorAll("button").forEach(b=>b.classList.remove("active"));const map={dashboard:0,ordenes:1,orden:3};if(map[id]!==undefined)nav.querySelectorAll("button")[map[id]]?.classList.add("active");if(id==="dashboard")nav.querySelectorAll("button")[0]?.classList.add("active");if(id==="precios")nav.querySelectorAll("button")[2]?.classList.add("active");}
+function updateBottomNav(id){const nav=document.querySelector(".e30-bottom-nav");if(!nav)return;nav.querySelectorAll("button").forEach(b=>b.classList.remove("active"));const map={dashboard:0,ordenes:1,ventas:2,movimientos:3};if(map[id]!==undefined)nav.querySelectorAll("button")[map[id]]?.classList.add("active");}
+function bottomNavGo(id){sideGo(id,null);updateBottomNav(id);if(id==="movimientos"&&!adminAuthed){const nav=document.querySelector(".e30-bottom-nav");if(nav)nav.querySelectorAll("button").forEach(b=>b.classList.remove("active"));}}
 function sideGo(id,btn){show(id,btn);document.querySelectorAll(".side-item").forEach(x=>x.classList.remove("active"));if(btn&&btn.classList.contains("side-item"))btn.classList.add("active");else{const m=[...document.querySelectorAll(".side-item")].find(x=>x.getAttribute("onclick")?.includes("'"+id+"'"));if(m)m.classList.add("active");}document.querySelectorAll(".top-actions button").forEach(x=>x.classList.remove("active"));updateBottomNav(id);if(window.innerWidth<=700)closeSideMenu();}
 function toggleSideMenu(){document.getElementById("sideMenu").classList.toggle("open");document.getElementById("menuOverlay").classList.toggle("open");}
 function closeSideMenu(){document.getElementById("sideMenu").classList.remove("open");document.getElementById("menuOverlay").classList.remove("open");}
@@ -896,6 +921,7 @@ function resolveClientForOrder(){
   return c?.id||"";
 }
 
+function normalizeIPhoneModel(value){return String(value||"").trim().replace(/iphone/gi,"iPhone");}
 document.getElementById("orderForm").onsubmit=async e=>{
 e.preventDefault();
 const editingId=window.editingOrderId;
@@ -903,12 +929,12 @@ if(editingId){
   const o=orders.find(x=>x.n===editingId);
   if(!o)return;
   const previous=JSON.parse(JSON.stringify(o));
-  o.cliente=cliente.value;o.telefono=telefono.value;o.clientId=resolveClientForOrder();o.marca=marca.value;o.modelo=modelo.value;o.imei=imei.value;o.tipoOrden=tipoOrden.value;o.gremio=gremio.value;o.local=local.value;o.desbloqueo=desbloqueo.value;o.unlockType=unlockMode;o.patron=pattern.join("-");o.estado=estado.value;o.garantiaDias=Number(document.getElementById("garantiaDias").value)||30;o.falla=falla.value;o.trabajo=trabajo.value;o.total=+total.value||0;o.sena=+sena.value||0;o.pago=pago.value;o.entrega=entrega.value;o.obsTecnico=obsTecnico.value;o.obsEquipo=obsEquipo.value;
+  o.cliente=cliente.value;o.telefono=telefono.value;o.clientId=resolveClientForOrder();o.marca=marca.value.trim();o.modelo=normalizeIPhoneModel(modelo.value);o.imei=imei.value;o.tipoOrden=tipoOrden.value;o.gremio=gremio.value;o.local=local.value;o.desbloqueo=desbloqueo.value;o.unlockType=unlockMode;o.patron=pattern.join("-");o.estado=estado.value;o.garantiaDias=Number(document.getElementById("garantiaDias").value)||30;o.falla=falla.value;o.trabajo=trabajo.value;o.total=+total.value||0;o.sena=+sena.value||0;o.pago=pago.value;o.entrega=entrega.value;o.obsTecnico=obsTecnico.value;o.obsEquipo=obsEquipo.value;
   try{await saveOrders();}catch(err){Object.assign(o,previous);alert("No se pudieron guardar los cambios de la orden. No se confirmó el guardado en la base de datos. Revisá la conexión e intentá nuevamente.");return;}
   window.editingOrderId=null;resetOrder();renderOrders();renderDashboard();show("ordenes");return;
 }
 const n=(orders.length?Math.max(...orders.map(o=>o.n)):0)+1;
-const o={n,cliente:cliente.value,telefono:telefono.value,clientId:resolveClientForOrder(),marca:marca.value,modelo:modelo.value,imei:imei.value,tipoOrden:tipoOrden.value,gremio:gremio.value,local:local.value,desbloqueo:desbloqueo.value,unlockType:unlockMode,patron:pattern.join("-"),estado:estado.value,garantiaDias:Number(document.getElementById("garantiaDias").value)||30,falla:falla.value,trabajo:trabajo.value,total:+total.value||0,sena:+sena.value||0,pago:pago.value,entrega:entrega.value,obsTecnico:obsTecnico.value,obsEquipo:obsEquipo.value,costos:[],pagos:[],fecha:new Date().toLocaleDateString("es-AR"),createdAt:new Date().toISOString()};
+const o={n,cliente:cliente.value,telefono:telefono.value,clientId:resolveClientForOrder(),marca:marca.value.trim(),modelo:normalizeIPhoneModel(modelo.value),imei:imei.value,tipoOrden:tipoOrden.value,gremio:gremio.value,local:local.value,desbloqueo:desbloqueo.value,unlockType:unlockMode,patron:pattern.join("-"),estado:estado.value,garantiaDias:Number(document.getElementById("garantiaDias").value)||30,falla:falla.value,trabajo:trabajo.value,total:+total.value||0,sena:+sena.value||0,pago:pago.value,entrega:entrega.value,obsTecnico:obsTecnico.value,obsEquipo:obsEquipo.value,costos:[],pagos:[],fecha:new Date().toLocaleDateString("es-AR"),createdAt:new Date().toISOString()};
 orders.unshift(o);
 try{await saveOrders();}catch(err){orders=orders.filter(x=>x!==o);renderOrders();renderDashboard();alert("No se pudo confirmar el guardado de la orden en la base de datos. No se imprimió el ticket. Revisá la conexión y volvé a intentar; no vuelvas a crearla sin comprobar antes si ya existe.");return;}
 recordActivity("orden",`Se creó la orden #${String(n).padStart(4,"0")}`,`${(o.marca||"")} ${(o.modelo||"")} · ${o.cliente||"Cliente"}`,n);resetOrder();renderOrders();renderDashboard();show("ordenes");setTimeout(()=>showPrintQuestion(o.n),80);
@@ -1550,7 +1576,7 @@ function renderDashboard(){
     const branch=escapeHtml(o.local||"");
     const status=escapeHtml(o.estado||"Pendiente");
     return `<div class="dashboard-order-row ${statusClass(o.estado)}" role="button" tabindex="0" onclick="openOrderFromDashboard(${o.n})" onkeydown="if(event.key==="Enter"||event.key===" "){openOrderFromDashboard(${o.n})}">
-      <div class="dash-wrench" aria-hidden="true">⌕</div>
+      <div class="dash-wrench" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="7" y="2.8" width="10" height="18.4" rx="2"/><path d="M10 5.5h4M11 18.3h2"/></svg></div>
       <div class="dash-order-main"><div class="order-device"><span class="dash-order-id">#${String(o.n).padStart(4,"0")}</span> · ${device}</div><div class="dash-order-meta">${client}${o.fecha?" · "+escapeHtml(o.fecha):""}</div></div>
       <div class="dash-order-side"><span class="status-dot"></span><span class="status-text ${statusClass(o.estado)}">${status}</span></div>
     </div>`;
@@ -2069,6 +2095,12 @@ async function printTicket(n){
     </div>
   </div>
 </div>
+<nav class="e30-bottom-nav" aria-label="Navegación principal">
+  <button type="button" onclick="bottomNavGo('dashboard')" aria-label="Inicio"><svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M9.5 20v-5h5v5"/></svg><span>Inicio</span></button>
+  <button type="button" onclick="bottomNavGo('ordenes')" aria-label="Órdenes"><svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="16" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg><span>Órdenes</span></button>
+  <button type="button" onclick="bottomNavGo('ventas')" aria-label="Ventas"><svg viewBox="0 0 24 24"><path d="M5 7h14l-1 12H6L5 7Z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg><span>Ventas</span></button>
+  <button type="button" onclick="bottomNavGo('movimientos')" aria-label="Caja"><svg viewBox="0 0 24 24"><rect x="3.5" y="6" width="17" height="14" rx="2"/><path d="M3.5 10h17M7 15h4M7 3.5h10"/></svg><span>Caja</span></button>
+</nav>
 <div id="pendingCostsModal" class="modal-back" style="display:none;z-index:99998">
   <div class="modal" style="max-width:430px">
     <div style="width:42px;height:42px;border-radius:12px;background:#f4f5f7;color:#14104C;display:flex;align-items:center;justify-content:center;margin-bottom:14px;font-size:19px">$</div>

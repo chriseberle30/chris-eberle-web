@@ -407,6 +407,23 @@ body{background:linear-gradient(145deg,#F6F7FB 0%,#EEF0F7 100%);background-attac
 #appRoot nav button.active{box-shadow:0 4px 12px rgba(20,16,76,.14)}
 #appRoot .btn:not(.secondary):not(.danger),#appRoot button.primary{box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 3px 8px rgba(20,16,76,.10)}
 @media(prefers-reduced-motion:reduce){#appRoot .card,#appRoot button,#appRoot input,#appRoot select,#appRoot textarea{transition:none!important}}
+
+/* E30 recent orders: clearer hierarchy, preserving all behavior */
+#appRoot .dashboard-section-title{margin:24px 2px 13px;align-items:center}
+#appRoot .dashboard-section-title h2{font-size:21px;letter-spacing:-.035em}
+#appRoot .dashboard-section-title .sub{margin-top:5px;line-height:1.45}
+#appRoot .dashboard-order-row{position:relative;gap:16px;padding:17px 18px 17px 20px;border:1px solid rgba(20,16,76,.08);border-left:4px solid #7FA8E8;border-radius:16px;box-shadow:0 5px 18px rgba(20,16,76,.045);min-height:78px;background:#fff;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+#appRoot .dashboard-order-row:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(20,16,76,.075)}
+#appRoot .dashboard-order-row .order-number{display:inline-block;font-size:12px;font-weight:800;letter-spacing:.045em;color:#14104C;margin-bottom:3px;font-variant-numeric:tabular-nums}
+#appRoot .dashboard-order-row .order-device{font-size:16px;line-height:1.35;font-weight:750;letter-spacing:-.02em;color:#20203A;margin:2px 0 4px}
+#appRoot .dashboard-order-row .sub{line-height:1.45}
+#appRoot .dashboard-order-row.status-pendiente{border-left-color:#D99A22}
+#appRoot .dashboard-order-row.status-recibido{border-left-color:#7FA8E8}
+#appRoot .dashboard-order-row.status-esperando{border-left-color:#D99A22}
+#appRoot .dashboard-order-row.status-reparacion{border-left-color:#527CC5}
+#appRoot .dashboard-order-row.status-listo{border-left-color:#39966B}
+#appRoot .dashboard-order-row.status-entregado{border-left-color:#A0A5B3}
+@media(max-width:700px){#appRoot .dashboard-order-row{padding:14px 12px 14px 14px;gap:10px;border-radius:14px;min-height:70px}#appRoot .dashboard-order-row .order-device{font-size:14px}#appRoot .dashboard-section-title h2{font-size:18px}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.3.0/qz-tray.js"></script>
 <script>

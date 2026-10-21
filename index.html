@@ -538,6 +538,50 @@ body{background:linear-gradient(145deg,#F6F7FB 0%,#EEF0F7 100%);background-attac
 #appRoot .dashboard-order-row .dash-order-id{color:#14104C!important;font-weight:800}
 #appRoot .dashboard-order-row .dash-order-meta{color:#737B91!important}
 
+
+/* E30: ventas con la misma estética limpia que Órdenes */
+#appRoot #ventas>.sale-form-card{
+  background:#fff!important;border:1px solid #E5E7EF!important;border-radius:18px!important;
+  box-shadow:0 5px 20px rgba(20,16,76,.045)!important;padding:24px!important;
+}
+#appRoot #ventas>.sale-form-card h2{
+  color:#14104C;font-size:24px;letter-spacing:-.035em;margin-bottom:22px!important;
+}
+#appRoot #ventas #saleForm{row-gap:16px;column-gap:12px}
+#appRoot #ventas #saleForm label{font-size:12px;font-weight:650;color:#68718A;margin-bottom:7px}
+#appRoot #ventas #saleForm input,#appRoot #ventas #saleForm select{
+  min-height:44px;border:1px solid #DDE2EF;border-radius:12px;background:#fff;
+  transition:border-color .15s ease,box-shadow .15s ease;
+}
+#appRoot #ventas #saleForm input:focus,#appRoot #ventas #saleForm select:focus{
+  border-color:#8B91B8;box-shadow:0 0 0 3px rgba(20,16,76,.07);outline:none;
+}
+#appRoot #ventas #saleForm .sub{
+  padding:10px 12px;background:#F6F7FB;border:1px solid #E8EAF2;border-radius:11px;
+  color:#68718A;font-size:12px;
+}
+#appRoot #ventas #saleForm .actions{gap:9px}
+#appRoot #ventas #saleForm button[type="submit"]{min-height:42px;border-radius:11px;font-weight:700}
+#appRoot #ventas .sales-history-card{
+  background:#fff!important;border:1px solid #E5E7EF!important;border-radius:16px!important;
+  box-shadow:0 4px 16px rgba(20,16,76,.045)!important;padding:18px 20px!important;margin-bottom:12px;
+}
+#appRoot #ventas .sales-history-card h3{font-size:15px;line-height:1.4;margin:6px 0;color:#24243F}
+#appRoot #ventas .sales-history-card .price{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums}
+#appRoot #ventas .sales-history-card .actions{justify-content:flex-end;gap:8px}
+#appRoot #ventas .sales-history-card .actions .btn{border-radius:10px;padding:9px 12px;font-size:12px}
+@media(max-width:700px){
+ #appRoot #ventas>.sale-form-card{padding:17px!important}
+ #appRoot #ventas>.sale-form-card h2{font-size:21px;margin-bottom:17px!important}
+ #appRoot #ventas #saleForm{row-gap:13px}
+ #appRoot #ventas .sales-history-card{padding:15px!important}
+ #appRoot #ventas .sales-history-card>.order{align-items:flex-start;gap:9px}
+ #appRoot #ventas .sales-history-card .price{font-size:17px}
+ #appRoot #ventas .sales-history-card .actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+ #appRoot #ventas .sales-history-card .actions .btn{min-width:0}
+ #appRoot #ventas .sales-history-card .actions .btn.danger{grid-column:1/-1}
+}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.3.0/qz-tray.js"></script>
 <script>
@@ -773,7 +817,7 @@ qz.security.setSignaturePromise(function(toSign){
 <div id="stockList"></div></section>
 
 <section id="ventas" style="display:none">
-<div class="card"><h2 style="margin-top:0">🛒 Nueva venta</h2>
+<div class="card sale-form-card"><h2 style="margin-top:0">🛒 Nueva venta</h2>
 <form id="saleForm" class="form">
 <div class="full"><label>Buscar producto</label><input id="saleProductSearch" placeholder="Escribí para buscar: funda, cargador, vidrio..." oninput="renderSaleProducts()"></div>
 <div class="full"><label>Producto</label><select id="saleProduct" required></select></div>
@@ -1952,7 +1996,7 @@ document.getElementById("saleForm").onsubmit=async e=>{
 };
 function renderSales(){
  const el=document.getElementById("salesList");
- el.innerHTML=sales.map(s=>`<div class="card"><div class="order"><div><b>VENTA #${String(s.n).padStart(4,"0")}</b><h3>${s.producto} × ${s.cantidad}</h3><div class="sub">${s.cliente||"Consumidor final"} · ${s.local} · ${s.fecha}</div></div><div><div class="price">${money(s.total)}</div><div class="sub">Garantía hasta ${s.warranty}</div></div></div><div class="actions" style="margin-top:10px"><button class="btn" onclick="printSaleTicket(${s.n})">🖨️ Ticket</button><button class="btn secondary" onclick="openClientPDF('sale',${s.n})">PDF / WhatsApp</button><button class="btn danger" onclick="deleteSale(${s.n})">Eliminar</button></div></div>`).join("")||'<div class="card empty">Todavía no hay ventas.</div>';
+ el.innerHTML=sales.map(s=>`<div class="card sales-history-card"><div class="order"><div><b>VENTA #${String(s.n).padStart(4,"0")}</b><h3>${s.producto} × ${s.cantidad}</h3><div class="sub">${s.cliente||"Consumidor final"} · ${s.local} · ${orderAge(s.fecha)}</div></div><div><div class="price">${money(s.total)}</div><div class="sub">Garantía hasta ${s.warranty}</div></div></div><div class="actions" style="margin-top:10px"><button class="btn" onclick="printSaleTicket(${s.n})">🖨️ Ticket</button><button class="btn secondary" onclick="openClientPDF('sale',${s.n})">PDF / WhatsApp</button><button class="btn danger" onclick="deleteSale(${s.n})">Eliminar</button></div></div>`).join("")||'<div class="card empty">Todavía no hay ventas.</div>';
 }
 function deleteSale(n){
  const s=sales.find(x=>x.n===n);if(!s)return;

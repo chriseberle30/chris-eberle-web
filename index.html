@@ -493,6 +493,26 @@ body{background:linear-gradient(145deg,#F6F7FB 0%,#EEF0F7 100%);background-attac
  #appRoot #orders .order-primary-actions .btn{width:100%;padding:8px 4px;font-size:11px}
  #appRoot #orders .order-device-title{font-size:13px}
 }
+
+/* E30: órdenes con superficie blanca lisa y fecha relativa */
+#appRoot #orders>.order-status-card,
+#appRoot #orders>.order-status-card.status-recibido,
+#appRoot #orders>.order-status-card.status-pendiente,
+#appRoot #orders>.order-status-card.status-esperando,
+#appRoot #orders>.order-status-card.status-reparacion,
+#appRoot #orders>.order-status-card.status-listo,
+#appRoot #orders>.order-status-card.status-entregado,
+#appRoot #orders>.order-status-card.status-cancelado{
+  background:#fff!important;
+  border-left:1px solid #E5E7EF!important;
+  border:1px solid #E5E7EF!important;
+  box-shadow:0 4px 16px rgba(20,16,76,.045)!important;
+}
+#appRoot #orders>.order-status-card:hover{
+  background:#fff!important;
+  box-shadow:0 7px 22px rgba(20,16,76,.075)!important;
+}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.3.0/qz-tray.js"></script>
 <script>
@@ -1376,7 +1396,7 @@ function pendingCostsYes(){
   const m=document.getElementById("pendingCostsModal");const n=Number(m?.dataset.order||0);
   closePendingCostsModal();if(n)manageCosts(n);
 }
-function orderAge(value){if(!value)return "Ingreso sin fecha";let d=null;const raw=String(value).trim();const m=raw.match(/^(\\d{1,2})[\\/-](\\d{1,2})[\\/-](\\d{4})$/);if(m)d=new Date(Number(m[3]),Number(m[2])-1,Number(m[1]));else{const parsed=new Date(raw);if(!Number.isNaN(parsed.getTime()))d=new Date(parsed.getFullYear(),parsed.getMonth(),parsed.getDate());}if(!d||Number.isNaN(d.getTime()))return "Ingreso "+raw;const now=new Date();now.setHours(0,0,0,0);const days=Math.max(0,Math.floor((now-d)/86400000));return days===0?"Ingresó hoy":days===1?"Hace 1 día":`Hace ${days} días`;}
+function orderAge(value){if(!value)return "Ingreso sin fecha";let d=null;const raw=String(value).trim();const m=raw.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);if(m)d=new Date(Number(m[3]),Number(m[2])-1,Number(m[1]));else{const parsed=new Date(raw);if(!Number.isNaN(parsed.getTime()))d=new Date(parsed.getFullYear(),parsed.getMonth(),parsed.getDate());}if(!d||Number.isNaN(d.getTime()))return "Ingreso "+raw;const now=new Date();now.setHours(0,0,0,0);const days=Math.max(0,Math.floor((now-d)/86400000));return days===0?"Ingresó hoy":days===1?"Hace 1 día":`Hace ${days} días`;}
 function toggleOrderMenu(n,button){const menu=document.getElementById("order-menu-"+n);if(!menu)return;const opening=menu.hidden;document.querySelectorAll(".order-more-menu").forEach(x=>{x.hidden=true;});document.querySelectorAll(".order-more-button").forEach(x=>x.setAttribute("aria-expanded","false"));menu.hidden=!opening;button.setAttribute("aria-expanded",String(opening));}
 function deleteOrder(n){const o=orders.find(x=>x.n===n);if(!o)return;if(!confirm(`¿Eliminar definitivamente la orden #${String(n).padStart(4,"0")} de ${o.cliente||"este cliente"}? Esta acción no se puede deshacer.`))return;orders=orders.filter(x=>x.n!==n);saveOrders();renderOrders();renderDashboard();}
 function toggleUnlock(n,b){

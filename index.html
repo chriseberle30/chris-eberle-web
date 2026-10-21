@@ -448,6 +448,51 @@ body{background:linear-gradient(145deg,#F6F7FB 0%,#EEF0F7 100%);background-attac
  #appRoot #orders .order-primary-actions{gap:6px}
  #appRoot #orders .order-primary-actions .btn{padding:8px 5px;font-size:11px}
 }
+
+/* E30 order list: compact desktop layout and clear operational hierarchy */
+#appRoot #orders{max-width:1100px;margin-left:auto;margin-right:auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start;gap:14px}
+#appRoot #orders>.order-status-card{width:100%;min-width:0;margin:0!important;padding:16px!important;border-radius:16px;box-shadow:0 6px 20px rgba(20,16,76,.045)}
+#appRoot #orders>.order-status-card>.order{display:grid;grid-template-columns:minmax(0,1fr) 112px;align-items:start;gap:12px}
+#appRoot #orders .order-number-label{font-size:16px;color:#14104C;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+#appRoot #orders .order-device-title{font-size:14px;line-height:1.35;font-weight:750;letter-spacing:-.02em;color:#20203A;margin:5px 0 3px}
+#appRoot #orders .order-client-title{font-size:13px;font-weight:650;margin:5px 0;color:#34354B;line-height:1.4}
+#appRoot #orders .order-client-phone{display:inline-block;color:#486C9F;font-size:12px;font-weight:600;text-decoration:none;margin-left:3px;white-space:nowrap}
+#appRoot #orders .order-client-phone:hover{text-decoration:underline}
+#appRoot #orders .order-meta-line{font-size:11px;line-height:1.45}
+#appRoot #orders .order-status-price{display:flex;flex-direction:column;align-items:stretch;gap:8px;min-width:0}
+#appRoot #orders .order-status-select{appearance:none;width:100%;border:1px solid #DDE3EF;border-radius:999px;background:#F4F6FC;color:#34354B;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer}
+#appRoot #orders .order-status-card.status-recibido .order-status-select,#appRoot #orders .order-status-card.status-pendiente .order-status-select{background:#FFF4CC;color:#7A5B00;border-color:#F1E2A8}
+#appRoot #orders .order-status-card.status-esperando .order-status-select{background:#FFF0D9;color:#8A4B00;border-color:#F2D8B4}
+#appRoot #orders .order-status-card.status-reparacion .order-status-select{background:#E7EFFF;color:#234D9B;border-color:#D3E0FF}
+#appRoot #orders .order-status-card.status-listo .order-status-select{background:#E3F6EA;color:#176B43;border-color:#C6EBD4}
+#appRoot #orders .order-status-card.status-entregado .order-status-select{background:#F0F1F5;color:#5C6170;border-color:#E0E2E9}
+#appRoot #orders .order-total-price{font-size:17px;font-weight:800;text-align:right;font-variant-numeric:tabular-nums;color:#14104C}
+#appRoot #orders .order-no-price{display:flex;flex-direction:column;align-items:flex-end;gap:5px;color:#85899A;font-size:12px;font-weight:650}
+#appRoot #orders .order-add-price{padding:5px 8px;font-size:10px;border-radius:8px}
+#appRoot #orders .private-data-line{margin-top:8px}
+#appRoot #orders .private-data-button{padding:5px 9px;font-size:11px;border-radius:9px}
+#appRoot #orders .private-data-content{margin-top:7px;padding:9px 10px;border:1px solid #E5E8F1;border-radius:10px;background:#F8F9FC;color:#5E6376;font-size:11px;line-height:1.6}
+#appRoot #orders .private-data-content[hidden]{display:none}
+#appRoot #orders .order-balance-line{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;padding:0}
+#appRoot #orders .paid-label{color:#73778A}
+#appRoot #orders .balance-label{font-weight:750}
+#appRoot #orders .balance-due{color:#B66A12}
+#appRoot #orders .balance-clear{color:#198354}
+#appRoot #orders .order-status-card hr{border:0;border-top:1px solid #E8EAF2;margin:12px 0 10px}
+#appRoot #orders .order-primary-actions{display:flex;justify-content:flex-end;gap:7px;margin-top:12px!important}
+#appRoot #orders .order-primary-actions .btn{width:auto;min-width:0;min-height:32px;padding:7px 11px;font-size:11px;border-radius:9px;white-space:nowrap}
+#appRoot #orders .order-primary-actions .btn:last-child{order:3}
+#appRoot #orders .order-more-wrap{margin-top:7px}
+#appRoot #orders .order-more-button{width:auto;padding:5px 8px;font-size:11px}
+#appRoot #orders .order-equipment-note{margin-top:7px}
+@media(max-width:900px){#appRoot #orders{grid-template-columns:1fr;max-width:760px}}
+@media(max-width:700px){
+ #appRoot #orders>.order-status-card{padding:13px!important}
+ #appRoot #orders>.order-status-card>.order{grid-template-columns:minmax(0,1fr) 104px;gap:9px}
+ #appRoot #orders .order-primary-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+ #appRoot #orders .order-primary-actions .btn{width:100%;padding:8px 4px;font-size:11px}
+ #appRoot #orders .order-device-title{font-size:13px}
+}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.3.0/qz-tray.js"></script>
 <script>
@@ -1224,15 +1269,45 @@ function orderVisible(o){
   if(orderFilter==="esperando")return o.estado==="Esperando repuesto";
   return !["Entregado","Cancelado"].includes(o.estado);
 }
-function orderCard(o){const ct=orderCostTotal(o),missing=ct===0&&(+o.total||0)>0,saldo=paymentBalance(o);return `<div id="order-card-${o.n}" data-order-id="${o.n}" class="card order-status-card ${statusClass(o.estado)} ${missing?"cost-missing":""}"><div class="order"><div><b>#${String(o.n).padStart(4,"0")}</b><div class="order-device-title">${o.marca} ${o.modelo} · ${o.trabajo||"Sin trabajo indicado"}</div><h3 class="order-client-title">${o.cliente}${o.telefono?` <a class="order-client-phone" href="tel:${String(o.telefono).replace(/[^+\d]/g,"")}" aria-label="Llamar a ${o.cliente}">${o.telefono}</a>`:""}</h3><div class="sub">${o.local} · ${o.tipoOrden||"Particular"}${o.tipoOrden==="Gremio"&&o.gremio?` · ${o.gremio}`:""} · ${orderAge(o.fecha)}</div>
-<div class="sub" style="margin-top:5px">Código / patrón: <button class="btn secondary" style="padding:4px 8px;font-size:11px" onclick="toggleUnlock(${o.n},this)">Mostrar</button> <span id="unlock-${o.n}" style="display:none;font-weight:600"></span></div>
-<div class="sub" style="margin-top:5px">Obs. internas: <button class="btn secondary" style="padding:4px 8px;font-size:11px" onclick="toggleTechObs(${o.n},this)">Mostrar</button> <span id="techobs-${o.n}" style="display:none;font-weight:600"></span></div>
-</div><div><select onchange="setStatus(${o.n},this.value)" style="width:auto;padding:6px 8px;font-size:12px;border-radius:8px">${ESTADOS.map(s=>`<option ${o.estado===s?"selected":""}>${s}</option>`).join("")}</select><div class="price">${money(o.total)}</div></div></div><hr>
-<div class="order-balance-line"><b>Pagado:</b> ${money(paymentTotal(o))} · <b>Saldo:</b> <strong class="order-balance ${saldo>0?"has-balance":"paid-balance"}">${money(saldo)}</strong></div>
-${o.obsEquipo?`<div class="sub" style="margin-top:7px"><b>Estado del equipo:</b> ${o.obsEquipo}</div>`:""}
-<div class="actions order-primary-actions" style="margin-top:12px"><button class="btn secondary" type="button" onclick="orderWhatsAppMessage(${o.n})">WhatsApp</button><button class="btn secondary" type="button" onclick="openPaymentModal(${o.n})">+ Pago</button><button class="btn" type="button" onclick="showClientReceiptModal(${o.n})">Comprobante</button></div>
-<div class="order-more-wrap"><button class="btn secondary order-more-button" type="button" aria-expanded="false" onclick="toggleOrderMenu(${o.n},this)">⋯ <span>Más acciones</span></button><div id="order-menu-${o.n}" class="order-more-menu" hidden><button class="btn secondary" type="button" onclick="editOrder(${o.n})">Editar</button><button class="btn secondary admin-cost-btn" type="button" onclick="adminManageCosts(${o.n})" style="display:${adminAuthed?"inline-flex":"none"}">Costos</button><button class="btn secondary" type="button" onclick="printTechnician(${o.n})">Orden técnico</button>${o.estado==="Entregado"?`<button class="btn secondary" type="button" onclick="showDeliveryModal(${o.n})">Orden de entrega</button>`:""}<button class="btn danger" type="button" onclick="deleteOrder(${o.n})">Eliminar orden…</button></div></div></div>`}
-
+function orderCard(o){
+ const saldo=paymentBalance(o),total=Number(o.total)||0,phone=waNumber(o.telefono);
+ const phoneLabel=String(o.telefono||"").replace(/\D/g,"").length>=10?String(o.telefono).replace(/\D/g,"").replace(/^(\d{2})(\d{4})(\d{4})$/,"$1 $2-$3"):String(o.telefono||"");
+ return `<div id="order-card-${o.n}" data-order-id="${o.n}" class="card order-status-card ${statusClass(o.estado)}">
+  <div class="order">
+   <div>
+    <b class="order-number-label">#${String(o.n).padStart(4,"0")}</b>
+    <div class="order-device-title">${escapeHtml(o.marca||"")} ${escapeHtml(o.modelo||"")} · ${escapeHtml(o.trabajo||"Sin trabajo indicado")}</div>
+    <h3 class="order-client-title">${escapeHtml(o.cliente||"Cliente")}${o.telefono?` <a class="order-client-phone" href="https://wa.me/${phone}" target="_blank" rel="noopener" aria-label="Abrir WhatsApp de ${escapeHtml(o.cliente||"cliente")}">${escapeHtml(phoneLabel)}</a>`:""}</h3>
+    <div class="sub order-meta-line">${escapeHtml(o.local||"")} · ${escapeHtml(o.tipoOrden||"Particular")}${o.tipoOrden==="Gremio"&&o.gremio?` · ${escapeHtml(o.gremio)}`:""} · ${escapeHtml(orderAge(o.fecha))}</div>
+    <div class="private-data-line"><button class="btn secondary private-data-button" type="button" aria-expanded="false" onclick="toggleOrderPrivate(${o.n},this)">Datos privados <span>⌄</span></button>
+     <div id="private-data-${o.n}" class="private-data-content" hidden>
+      <div><b>Código / patrón:</b> <span id="unlock-${o.n}"></span></div>
+      <div><b>Obs. internas:</b> <span id="techobs-${o.n}"></span></div>
+     </div>
+    </div>
+   </div>
+   <div class="order-status-price">
+    <select aria-label="Estado de la orden" onchange="setStatus(${o.n},this.value)" class="order-status-select">${ESTADOS.map(s=>`<option ${o.estado===s?"selected":""}>${s}</option>`).join("")}</select>
+    ${total>0?`<div class="price order-total-price">${money(total)}</div>`:`<div class="order-no-price">Sin precio <button class="btn secondary order-add-price" type="button" onclick="editOrder(${o.n})">Completar</button></div>`}
+   </div>
+  </div>
+  <hr>
+  <div class="order-balance-line"><span class="paid-label">Pagado: ${money(paymentTotal(o))}</span><span class="balance-label ${saldo>0?"balance-due":"balance-clear"}">Saldo: ${money(saldo)}</span></div>
+  ${o.obsEquipo?`<div class="sub order-equipment-note"><b>Estado del equipo:</b> ${escapeHtml(o.obsEquipo)}</div>`:""}
+  <div class="actions order-primary-actions"><button class="btn secondary" type="button" onclick="orderWhatsAppMessage(${o.n})">WhatsApp</button><button class="btn secondary" type="button" onclick="openPaymentModal(${o.n})">+ Pago</button><button class="btn" type="button" onclick="showClientReceiptModal(${o.n})">Comprobante</button></div>
+  <div class="order-more-wrap"><button class="btn secondary order-more-button" type="button" aria-expanded="false" onclick="toggleOrderMenu(${o.n},this)">⋯ <span>Más acciones</span></button><div id="order-menu-${o.n}" class="order-more-menu" hidden><button class="btn secondary" type="button" onclick="editOrder(${o.n})">Editar</button><button class="btn secondary admin-cost-btn" type="button" onclick="adminManageCosts(${o.n})" style="display:${adminAuthed?"inline-flex":"none"}">Costos</button><button class="btn secondary" type="button" onclick="printTechnician(${o.n})">Orden técnico</button>${o.estado==="Entregado"?`<button class="btn secondary" type="button" onclick="showDeliveryModal(${o.n})">Orden de entrega</button>`:""}<button class="btn danger" type="button" onclick="deleteOrder(${o.n})">Eliminar orden…</button></div></div>
+ </div>`;
+}
+function toggleOrderPrivate(n,button){
+ const o=orders.find(x=>x.n===n),wrap=document.getElementById("private-data-"+n);if(!o||!wrap)return;
+ const opening=wrap.hidden;
+ if(opening){
+  const unlock=document.getElementById("unlock-"+n),obs=document.getElementById("techobs-"+n);
+  if(unlock)unlock.textContent=o.unlockType==="patron"&&o.patron?"Patrón: "+o.patron.split("-").map(x=>Number(x)+1).join(" → "):(o.desbloqueo||"No informado");
+  if(obs)obs.textContent=o.obsTecnico||"Sin observaciones";
+ }
+ wrap.hidden=!opening;button.setAttribute("aria-expanded",String(opening));button.innerHTML=opening?"Datos privados <span>⌃</span>":"Datos privados <span>⌄</span>";
+}
 function showClientReceiptModal(n){const o=orders.find(x=>x.n===n);if(!o)return;const m=document.getElementById("clientReceiptModal");const t=document.getElementById("clientReceiptText");if(!m||!t){openClientPDF("order",n);return;}m.dataset.order=String(n);t.textContent=`Elegí el formato del comprobante para ${o.cliente||"el cliente"} · Orden #${String(n).padStart(4,"0")}.`;m.style.display="flex";}
 function closeClientReceiptModal(){const m=document.getElementById("clientReceiptModal");if(m)m.style.display="none";}
 function clientReceiptPrint(){const m=document.getElementById("clientReceiptModal");const n=Number(m?.dataset.order||0);closeClientReceiptModal();if(n)printTicket(n);}

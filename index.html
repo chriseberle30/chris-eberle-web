@@ -513,6 +513,31 @@ body{background:linear-gradient(145deg,#F6F7FB 0%,#EEF0F7 100%);background-attac
   box-shadow:0 7px 22px rgba(20,16,76,.075)!important;
 }
 
+
+/* E30: tarjetas de órdenes del inicio, coherentes con la vista Órdenes */
+#appRoot .dashboard-orders{background:transparent!important;padding:0!important}
+#appRoot .dashboard-order-row,
+#appRoot .dashboard-order-row.status-pendiente,
+#appRoot .dashboard-order-row.status-recibido,
+#appRoot .dashboard-order-row.status-esperando,
+#appRoot .dashboard-order-row.status-reparacion,
+#appRoot .dashboard-order-row.status-listo,
+#appRoot .dashboard-order-row.status-entregado,
+#appRoot .dashboard-order-row.status-cancelado{
+  background:#fff!important;
+  border:1px solid #E5E7EF!important;
+  border-left:1px solid #E5E7EF!important;
+  border-radius:15px!important;
+  box-shadow:0 4px 16px rgba(20,16,76,.045)!important;
+}
+#appRoot .dashboard-order-row:hover{
+  background:#fff!important;
+  box-shadow:0 7px 22px rgba(20,16,76,.075)!important;
+}
+#appRoot .dashboard-order-row .dash-wrench{background:#F0F2F8!important;color:#14104C!important;border-radius:10px}
+#appRoot .dashboard-order-row .dash-order-id{color:#14104C!important;font-weight:800}
+#appRoot .dashboard-order-row .dash-order-meta{color:#737B91!important}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.3.0/qz-tray.js"></script>
 <script>
@@ -1979,7 +2004,7 @@ function renderDashboard(){
     const status=escapeHtml(o.estado||"Pendiente");
     return `<div class="dashboard-order-row ${statusClass(o.estado)}" role="button" tabindex="0" onclick="openOrderFromDashboard(${o.n})" onkeydown="if(event.key==="Enter"||event.key===" "){openOrderFromDashboard(${o.n})}">
       <div class="dash-wrench" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="7" y="2.8" width="10" height="18.4" rx="2"/><path d="M10 5.5h4M11 18.3h2"/></svg></div>
-      <div class="dash-order-main"><div class="order-device"><span class="dash-order-id">#${String(o.n).padStart(4,"0")}</span> · ${device}</div><div class="dash-order-meta">${client}${o.fecha?" · "+escapeHtml(o.fecha):""}</div></div>
+      <div class="dash-order-main"><div class="order-device"><span class="dash-order-id">#${String(o.n).padStart(4,"0")}</span> · ${device}</div><div class="dash-order-meta">${client}${o.fecha?" · "+escapeHtml(orderAge(o.fecha)):""}</div></div>
       <div class="dash-order-side"><span class="status-dot"></span><span class="status-text ${statusClass(o.estado)}">${status}</span></div>
     </div>`;
   }).join("")||'<div class="empty-state"><strong>No hay órdenes en curso</strong><span>Las reparaciones activas aparecerán acá.</span></div>';

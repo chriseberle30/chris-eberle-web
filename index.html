@@ -1123,7 +1123,7 @@ if(editingId){
   try{await saveOrders();}catch(err){Object.assign(o,previous);alert("No se pudieron guardar los cambios de la orden. No se confirmó el guardado en la base de datos. Revisá la conexión e intentá nuevamente.");return;}
   window.editingOrderId=null;resetOrder();renderOrders();renderDashboard();show("ordenes");return;
 }
-const n=(orders.length?Math.max(...orders.map(o=>o.n)):0)+1;
+const n=Math.max(1522,...orders.map(o=>Number(o.n)||0))+1;
 const o={n,cliente:cliente.value,telefono:telefono.value,clientId:resolveClientForOrder(),marca:marca.value.trim(),modelo:normalizeIPhoneModel(modelo.value),imei:imei.value,tipoOrden:tipoOrden.value,gremio:gremio.value,local:local.value,desbloqueo:desbloqueo.value,unlockType:unlockMode,patron:pattern.join("-"),estado:estado.value,garantiaDias:Number(document.getElementById("garantiaDias").value)||30,falla:falla.value,trabajo:trabajo.value,total:+total.value||0,sena:+sena.value||0,pago:pago.value,entrega:entrega.value,obsTecnico:obsTecnico.value,obsEquipo:obsEquipo.value,costos:[],pagos:[],fecha:new Date().toLocaleDateString("es-AR"),createdAt:new Date().toISOString()};
 orders.unshift(o);
 try{await saveOrders();}catch(err){orders=orders.filter(x=>x!==o);renderOrders();renderDashboard();alert("No se pudo confirmar el guardado de la orden en la base de datos. No se imprimió el ticket. Revisá la conexión y volvé a intentar; no vuelvas a crearla sin comprobar antes si ya existe.");return;}

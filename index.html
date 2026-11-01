@@ -1702,7 +1702,7 @@ async function enqueuePrint(data,jobName){
 async function getPrintJobs(){
   // Leemos las filas directamente y filtramos en el navegador.
   // Así evitamos depender del operador LIKE del endpoint REST.
-  const url=`${SUPABASE_URL}/rest/v1/e30_kv?select=key,value&limit=500`;
+  const url=`${SUPABASE_URL}/rest/v1/e30_kv?select=key,value&key=like.e30-print-job-*&limit=500`;
   const res=await fetch(url,{headers:sbHeaders({"Cache-Control":"no-cache","Pragma":"no-cache","Accept":"application/json"}),cache:"no-store"});
   if(!res.ok){const t=await res.text().catch(()=>"");throw new Error("queue read failed "+res.status+(t?" — "+t.slice(0,180):""));}
   const rows=await res.json();
@@ -1770,7 +1770,7 @@ async function sendTestPrintJob(){
 }
 async function diagnosePrintQueue(){
   try{
-    const url=`${SUPABASE_URL}/rest/v1/e30_kv?select=key,value&limit=500`;
+    const url=`${SUPABASE_URL}/rest/v1/e30_kv?select=key,value&key=like.e30-print-job-*&limit=500`;
     const res=await fetch(url,{headers:sbHeaders({"Cache-Control":"no-cache","Pragma":"no-cache","Accept":"application/json"}),cache:"no-store"});
     const text=await res.text();
     if(!res.ok){
@@ -1835,7 +1835,7 @@ async function togglePrinterReceiver(){
     setPrinterStatus("conectada · buscando trabajos...");
     await processPrintQueue();
     if(printerTimer)clearInterval(printerTimer);
-    printerTimer=setInterval(processPrintQueue,1000);
+    printerTimer=setInterval(processPrintQueue,5000);
     alert("🟢 Modo impresora activado.\n\nEsta PC queda escuchando trabajos enviados desde celulares u otras PCs.");
   }catch(err){
     alert("No se pudo activar la impresora:\n\n"+(err?.message||err));
@@ -1859,7 +1859,7 @@ async function restorePrinterReceiver(){
       setPrinterStatus("conectada · buscando trabajos...");
       await processPrintQueue();
       if(printerTimer)clearInterval(printerTimer);
-      printerTimer=setInterval(processPrintQueue,1000);
+      printerTimer=setInterval(processPrintQueue,5000);
       return;
     }catch(err){
       console.warn("E30: intento de reconexión automática "+attempt+"/"+maxAttempts,err);

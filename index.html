@@ -1700,8 +1700,7 @@ async function enqueuePrint(data,jobName){
   return id;
 }
 async function getPrintJobs(){
-  // Leemos las filas directamente y filtramos en el navegador.
-  // Así evitamos depender del operador LIKE del endpoint REST.
+  // Supabase devuelve únicamente trabajos pendientes; no descargamos logo ni datos generales.
   const url=`${SUPABASE_URL}/rest/v1/e30_kv?select=key,value&key=like.e30-print-job-*&value->>status=eq.pending&limit=50`;
   const res=await fetch(url,{headers:sbHeaders({"Cache-Control":"no-cache","Pragma":"no-cache","Accept":"application/json"}),cache:"no-store"});
   if(!res.ok){const t=await res.text().catch(()=>"");throw new Error("queue read failed "+res.status+(t?" — "+t.slice(0,180):""));}
@@ -1770,7 +1769,7 @@ async function sendTestPrintJob(){
 }
 async function diagnosePrintQueue(){
   try{
-    const url=`${SUPABASE_URL}/rest/v1/e30_kv?select=key,value&key=like.e30-print-job-*&limit=500`;
+    const url=`${SUPABASE_URL}/rest/v1/e30_kv?select=key,value&limit=500`;
     const res=await fetch(url,{headers:sbHeaders({"Cache-Control":"no-cache","Pragma":"no-cache","Accept":"application/json"}),cache:"no-store"});
     const text=await res.text();
     if(!res.ok){

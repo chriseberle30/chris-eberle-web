@@ -861,6 +861,12 @@ qz.security.setSignaturePromise(function(toSign){
 <div class="full"><button class="btn" type="button" onclick="saveBusinessConfig()">Guardar datos</button><span id="cfgSaved" class="sub" style="margin-left:10px"></span></div>
 </div></div>
 <div class="card">
+<h3 style="margin-top:0">Copia de seguridad</h3>
+<div class="sub" style="margin-bottom:12px">Descargá todos tus datos en un archivo y guardalo en Drive. Hacelo una vez por semana.</div>
+<div class="actions"><button class="btn" type="button" onclick="exportBackup()">Exportar copia</button><button class="btn secondary" type="button" onclick="document.getElementById('backupFile').click()">Restaurar copia…</button><input id="backupFile" type="file" accept="application/json,.json" style="display:none" onchange="importBackup(this)"></div>
+<div id="backupInfo" class="sub" style="margin-top:8px"></div>
+</div>
+<div class="card">
 <h3 style="margin-top:0">Identidad visual</h3>
 <div class="sub" style="margin-bottom:10px">Subí el logo que querés usar en la cabecera y los comprobantes.</div>
 <div class="actions" style="align-items:center"><input id="logoUpload" type="file" accept="image/png,image/jpeg,image/webp" onchange="handleLogoUpload(this)"><button class="btn secondary" type="button" onclick="removeLogo()">Quitar logo</button></div>
@@ -1225,7 +1231,7 @@ async function saveBusinessConfig(){
 
 async function handleLogoUpload(input){const file=input?.files?.[0];if(!file)return;if(!/^image\/(png|jpeg|webp)$/.test(file.type)){alert("Subí un JPG, PNG o WEBP.");return;}if(file.size>2*1024*1024){alert("El logo pesa más de 2 MB. Elegí una imagen más chica.");return;}const r=new FileReader();r.onload=async()=>{const src=String(r.result||"");try{localStorage.setItem("e30-logo",src);await kvSet("e30-logo",src);applyLogo(src);alert("Logo guardado para todos los dispositivos.");}catch(err){applyLogo(src);alert("El logo quedó guardado solo en este dispositivo porque no se pudo sincronizar. Revisá la conexión e intentá de nuevo.");}};r.readAsDataURL(file);}
 function applyLogo(src){["headerLogo","sideLogo","logoPreview"].forEach(id=>{const el=document.getElementById(id);if(el)el.src=src;});const h=document.getElementById("headerLogo"),s=document.getElementById("sideLogo"),e=document.getElementById("sideE30"),w=document.getElementById("logoPreviewWrap");if(h)h.style.display="block";if(s)s.style.display="block";if(e)e.style.display="none";if(w)w.style.display="block";}
-async function loadSavedLogo(){try{const shared=await kvGet("e30-logo");if(typeof shared==="string"&&shared.startsWith("data:image/")){localStorage.setItem("e30-logo",shared);applyLogo(shared);return;}}catch(err){}const src=localStorage.getItem("e30-logo");if(src)applyLogo(src);}
+async function loadSavedLogo(){const cached=localStorage.getItem("e30-logo");if(cached){applyLogo(cached);return;}try{const shared=await kvGet("e30-logo");if(typeof shared==="string"&&shared.startsWith("data:image/")){localStorage.setItem("e30-logo",shared);applyLogo(shared);return;}}catch(err){}const src=localStorage.getItem("e30-logo");if(src)applyLogo(src);}
 async function removeLogo(){try{await kvSet("e30-logo","");}catch(err){alert("No se pudo sincronizar el cambio. Intentá de nuevo con conexión.");return;}localStorage.removeItem("e30-logo");const h=document.getElementById("headerLogo"),s=document.getElementById("sideLogo"),e=document.getElementById("sideE30"),w=document.getElementById("logoPreviewWrap");if(h)h.style.display="none";if(s)s.style.display="none";if(e)e.style.display="block";if(w)w.style.display="none";const i=document.getElementById("logoUpload");if(i)i.value="";alert("Logo quitado de todos los dispositivos.");}
 function updatePrinterPill(){const pill=document.getElementById("printerPill"),txt=document.getElementById("printerPillText");if(!pill||!txt)return;const on=!!printerReceiver;pill.classList.toggle("off",!on);txt.textContent=on?"Impresora conectada":"Impresora desconectada";}
 
@@ -1702,7 +1708,8 @@ async function enqueuePrint(data,jobName){
 async function getPrintJobs(){
   // Supabase devuelve únicamente trabajos pendientes; no descargamos logo ni datos generales.
   const url=`${SUPABASE_URL}/rest/v1/e30_kv?select=key,value&key=like.e30-print-job-*&value->>status=eq.pending&limit=50`;
-  const res=await fetch(url,{headers:sbHeaders({"Cache-Control":"no-cache","Pragma":"no-cache","Accept":"application/json"}),cache:"no-store"});
+  const token=await e30AccessToken();
+  const res=await fetch(url,{headers:Object.assign(sbHeaders({"Cache-Control":"no-cache","Pragma":"no-cache","Accept":"application/json"}),{Authorization:"Bearer "+token}),cache:"no-store"});
   if(!res.ok){const t=await res.text().catch(()=>"");throw new Error("queue read failed "+res.status+(t?" — "+t.slice(0,180):""));}
   const rows=await res.json();
   return Array.isArray(rows)?rows.filter(r=>String(r.key||"").startsWith("e30-print-job-")).map(r=>({key:r.key,...(r.value||{})})).filter(x=>x.id):[];
@@ -1788,7 +1795,7 @@ async function diagnosePrintQueue(){
   }
 }
 async function processPrintQueue(){
-  if(!printerReceiver||printerBusy)return;
+  if(!printerReceiver||printerBusy||document.hidden)return;
   printerBusy=true;
   try{
     const jobs=await getPrintJobs();
@@ -2036,6 +2043,12 @@ function statusClass(s){
   if(s==="Entregado")return"status-entregado";
   return"status-cancelado";
 }
+function backupReminderHtml(){
+  let last=null;try{last=localStorage.getItem("e30-last-backup");}catch(e){}
+  const days=last?Math.floor((Date.now()-new Date(last).getTime())/86400000):null;
+  if(days!==null&&days<7)return"";
+  return `<div class="card" style="border-left:4px solid #d97706"><b>Copia de seguridad pendiente</b><div class="sub" style="margin:4px 0 10px">${days===null?"Todavía no hiciste ninguna copia en este dispositivo.":"Hace "+days+" días que no hacés una copia."}</div><button class="btn" type="button" onclick="exportBackup();renderDashboard()">Exportar copia ahora</button></div>`;
+}
 function renderDashboard(){
   const active=orders.filter(o=>!['Entregado','Cancelado'].includes(o.estado)).sort((a,b)=>(b.n||0)-(a.n||0));
   const el=document.getElementById("dashOrders");
@@ -2051,6 +2064,7 @@ function renderDashboard(){
       <div class="dash-order-side"><span class="status-dot"></span><span class="status-text ${statusClass(o.estado)}">${status}</span></div>
     </div>`;
   }).join("")||'<div class="empty-state"><strong>No hay órdenes en curso</strong><span>Las reparaciones activas aparecerán acá.</span></div>';
+  el.insertAdjacentHTML("afterbegin",backupReminderHtml());
   renderActivity();
 }
 
@@ -2069,9 +2083,6 @@ function openOrderFromDashboard(n){
     setTimeout(()=>el.classList.remove("order-focus"),1800);
   },80);
 }
-function escapeHtml(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","":"&quot;","'":"&#39;"}[c]));}
-
-function setStatus(n,val){const o=orders.find(x=>x.n===n);if(!o)return;o.estado=val;saveOrders();renderOrders();renderDashboard();}
 
 function normalizeClient(v){return String(v||"").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");}
 function ensureClients(){
@@ -2201,6 +2212,27 @@ async function deleteOrderCost(i){
 }
 function closeCostModal(){document.getElementById("costModal").style.display="none";}
 
+function backupSnapshot(){return {app:"E30",version:1,exportedAt:new Date().toISOString(),prices,orders,budgets,stock,sales,movements,activity,clients,config:businessConfig};}
+function exportBackup(){
+  const data=backupSnapshot(),blob=new Blob([JSON.stringify(data,null,1)],{type:"application/json"});
+  const d=new Date(),stamp=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="E30-copia-"+stamp+".json";document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(a.href);
+  try{localStorage.setItem("e30-last-backup",d.toISOString());}catch(e){}
+  const i=document.getElementById("backupInfo");if(i)i.textContent="Copia descargada: "+orders.length+" órdenes, "+prices.length+" precios, "+clients.length+" clientes.";
+}
+async function importBackup(input){
+  const file=input?.files?.[0];if(!file)return;
+  try{
+    const d=JSON.parse(await file.text());
+    if(!d||d.app!=="E30"||!Array.isArray(d.prices)||!Array.isArray(d.orders))throw new Error("El archivo no parece una copia de E30.");
+    if(!confirm("Esto reemplaza los datos actuales por los de la copia ("+d.orders.length+" órdenes, "+d.prices.length+" precios). ¿Continuar?"))return;
+    prices=d.prices;orders=d.orders;budgets=d.budgets||[];stock=d.stock||[];sales=d.sales||[];movements=d.movements||[];activity=d.activity||[];clients=d.clients||[];
+    if(d.config)businessConfig=Object.assign({},DEFAULT_BUSINESS_CONFIG,d.config);
+    await Promise.all([savePrices(),saveOrders(),saveBudgets(),saveStock(),saveSales(),saveMovements(),saveActivity(),saveClients(),kvSet("e30-config",businessConfig)]);
+    alert("Copia restaurada.");location.reload();
+  }catch(e){alert("No se pudo restaurar: "+(e.message||e));}
+  finally{input.value="";}
+}
 function monthKeyFromDateString(s){
   const parts=(s||"").split("/");
   if(parts.length===3)return `${parts[2]}-${String(parts[1]).padStart(2,"0")}`;

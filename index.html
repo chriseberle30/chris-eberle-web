@@ -1795,7 +1795,7 @@ async function diagnosePrintQueue(){
   }
 }
 async function processPrintQueue(){
-  if(!printerReceiver||printerBusy||document.hidden)return;
+  if(!printerReceiver||printerBusy)return;
   printerBusy=true;
   try{
     const jobs=await getPrintJobs();

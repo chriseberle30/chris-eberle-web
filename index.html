@@ -1120,14 +1120,121 @@ async function loadAll(attempt){
     throw e;
   }
 }
-function saveOrders(){return kvSet("e30-orders",orders);}
-function saveBudgets(){return kvSet("e30-budgets",budgets);}
+function saveOrders(){return _saveOrders();}
+function saveBudgets(){return _saveBudgets();}
 function savePrices(){return kvSet("e30-prices",prices);}
 function saveStock(){return kvSet("e30-stock",stock);}
-function saveSales(){return kvSet("e30-sales",sales);}
-function saveMovements(){return kvSet("e30-movements",movements);}
-function saveActivity(){return kvSet("e30-activity",activity);}
-function saveClients(){return kvSet("e30-clients",clients);}
+function saveSales(){return _saveSales();}
+function saveMovements(){return _saveMovements();}
+function saveActivity(){return _saveActivity();}
+function saveClients(){return _saveClients();}
+
+/* ===== Sincronización segura entre equipos =====
+   Antes, cada equipo guardaba su lista COMPLETA y pisaba lo que otro equipo había cargado
+   (si el celu cargaba una orden y la compu tenía la lista vieja abierta, la orden se perdía).
+   Ahora, antes de guardar se lee lo que hay en la nube y se combinan los cambios (merge de 3 vías). */
+const SYNC_BASE={};
+const _syncQ={};
+function syncSerial(key,fn){const p=(_syncQ[key]||Promise.resolve()).catch(()=>{}).then(fn);_syncQ[key]=p;return p;}
+function mergeCollection(key,idk,local,remote){
+  const baseKnown=!!SYNC_BASE[key],base=new Map(SYNC_BASE[key]||[]);
+  const L=new Map(),R=new Map(),noId=[];
+  (local||[]).forEach(x=>{if(x&&x[idk]!=null)L.set(String(x[idk]),x);else if(x)noId.push(x);});
+  (remote||[]).forEach(x=>{if(x&&x[idk]!=null)R.set(String(x[idk]),x);});
+  const remoteEmpty=R.size===0,list=[],fromRemote=new Set(),collide=[];
+  for(const [id,l] of L){
+    const r=R.get(id),b=base.get(id),changed=JSON.stringify(l)!==b;
+    if(r){
+      if(baseKnown&&b===undefined&&typeof l[idk]==="number"&&JSON.stringify(l)!==JSON.stringify(r)){collide.push(l);continue;}
+      if(changed)list.push(l);else{list.push(r);fromRemote.add(id);}
+    }else{
+      if(b===undefined||changed||remoteEmpty)list.push(l);
+      else base.delete(id);
+    }
+  }
+  for(const [id,r] of R){
+    if(L.has(id))continue;
+    if(base.get(id)===undefined){list.push(r);fromRemote.add(id);}
+    else base.delete(id);
+  }
+  if(collide.length){
+    let max=0;[...L.keys(),...R.keys()].forEach(k=>{const v=Number(k);if(v>max)max=v;});
+    collide.forEach(l=>{l[idk]=++max;list.push(l);});
+  }
+  noId.forEach(x=>list.push(x));
+  return {list,base,fromRemote};
+}
+function makeSaver(key,idk,get,set,opts){
+  opts=opts||{};
+  return function(){return syncSerial(key,async()=>{
+    let list=get();
+    if(!window.__e30ForceWrite){
+      const remote=await kvGet(key);
+      if(Array.isArray(remote)){
+        const m=mergeCollection(key,idk,get(),remote),biggest=Math.max(get().length,remote.length);
+        if(biggest>=10&&m.list.length<biggest*0.8)throw new Error("Protección de datos: el guardado iba a borrar demasiados registros ("+key+"). No se guardó nada.");
+        list=m.list;
+      }
+    }
+    if(opts.sort)list.sort(opts.sort);
+    if(opts.limit)list=list.slice(0,opts.limit);
+    set(list);list=get();
+    const strs=list.map(x=>[x&&x[idk]!=null?String(x[idk]):null,JSON.stringify(x)]);
+    await kvSet(key,list);
+    const base=new Map();strs.forEach(([k,t])=>{if(k!==null)base.set(k,t);});SYNC_BASE[key]=base;
+    return true;
+  });};
+}
+function makePuller(key,idk,get,set,opts){
+  opts=opts||{};
+  return function(){return syncSerial(key,async()=>{
+    const remote=await kvGet(key);if(!Array.isArray(remote))return false;
+    const m=mergeCollection(key,idk,get(),remote);
+    let list=m.list;if(opts.sort)list.sort(opts.sort);if(opts.limit)list=list.slice(0,opts.limit);
+    set(list);list=get();
+    list.forEach(x=>{if(x&&x[idk]!=null&&m.fromRemote.has(String(x[idk])))m.base.set(String(x[idk]),JSON.stringify(x));});
+    SYNC_BASE[key]=m.base;return true;
+  });};
+}
+const byNDesc=(a,b)=>(Number(b.n)||0)-(Number(a.n)||0);
+const byCreatedDesc=(a,b)=>String(b.createdAt||"").localeCompare(String(a.createdAt||""));
+const normOrders=v=>{orders=v;orders.forEach(o=>{if(!o.costos)o.costos=[];});};
+const _saveOrders=makeSaver("e30-orders","n",()=>orders,normOrders,{sort:byNDesc});
+const _saveBudgets=makeSaver("e30-budgets","n",()=>budgets,v=>{budgets=v;},{sort:byNDesc});
+const _saveSales=makeSaver("e30-sales","n",()=>sales,v=>{sales=v;},{sort:byNDesc});
+const _saveMovements=makeSaver("e30-movements","n",()=>movements,v=>{movements=v;},{sort:byNDesc});
+const _saveActivity=makeSaver("e30-activity","id",()=>activity,v=>{activity=v;},{sort:byCreatedDesc,limit:300});
+const _saveClients=makeSaver("e30-clients","id",()=>clients,v=>{clients=v;});
+const pullOrders=makePuller("e30-orders","n",()=>orders,normOrders,{sort:byNDesc});
+const pullBudgets=makePuller("e30-budgets","n",()=>budgets,v=>{budgets=v;},{sort:byNDesc});
+const pullSales=makePuller("e30-sales","n",()=>sales,v=>{sales=v;},{sort:byNDesc});
+const pullMovements=makePuller("e30-movements","n",()=>movements,v=>{movements=v;},{sort:byNDesc});
+const pullActivity=makePuller("e30-activity","id",()=>activity,v=>{activity=v;},{sort:byCreatedDesc,limit:300});
+const pullClients=makePuller("e30-clients","id",()=>clients,v=>{clients=v;});
+function snapAll(){
+  const S=(k,i,a)=>{const m=new Map();(a||[]).forEach(x=>{if(x&&x[i]!=null)m.set(String(x[i]),JSON.stringify(x));});SYNC_BASE[k]=m;};
+  S("e30-orders","n",orders);S("e30-budgets","n",budgets);S("e30-sales","n",sales);S("e30-movements","n",movements);S("e30-clients","id",clients);S("e30-activity","id",activity);
+}
+/* Trae lo último de la nube (sin pisar lo que está sin guardar) y refresca las pantallas solo si hubo cambios. */
+let _leftAt=0,_refreshing=false;
+async function refreshFromCloud(){
+  if(!authed||_refreshing)return;_refreshing=true;
+  try{
+    const sig=()=>[orders,budgets,sales,movements,clients].map(a=>a.length+":"+JSON.stringify(a).length).join("|");
+    const before=sig();
+    await Promise.all([pullOrders(),pullBudgets(),pullSales(),pullMovements(),pullClients(),pullActivity()]);
+    if(sig()!==before){
+      const ae=document.activeElement,typing=ae&&/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName);
+      if(!typing)["renderOrders","renderDashboard","renderBudgets","renderSales","renderMovements","refreshClientOptions"].forEach(fn=>{try{if(typeof window[fn]==="function")window[fn]();}catch(e){}});
+    }
+  }catch(e){console.warn("No se pudo actualizar desde la nube",e);}
+  finally{_refreshing=false;}
+}
+function _markLeft(){if(!_leftAt)_leftAt=Date.now();}
+function _markBack(){if(_leftAt&&Date.now()-_leftAt>15000)refreshFromCloud();_leftAt=0;}
+document.addEventListener("visibilitychange",()=>{document.visibilityState==="hidden"?_markLeft():_markBack();});
+window.addEventListener("blur",_markLeft);window.addEventListener("focus",_markBack);
+setInterval(()=>{if(authed&&document.visibilityState==="visible")refreshFromCloud();},120000);
 function localDateTime(){const d=new Date();return {date:d.toLocaleDateString("es-AR"),time:d.toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit",hour12:false}),iso:d.toISOString()};}
 function recordActivity(type,title,detail,ref){
   const dt=localDateTime();
@@ -1179,7 +1286,7 @@ function enterApp(){
   authed=true;
   document.getElementById("loginScreen").style.display="none";
   document.getElementById("appRoot").style.setProperty("display","block","important");
-  orders.forEach(o=>{if(!o.costos)o.costos=[];});ensureClients();document.getElementById("rMes").value=new Date().toISOString().slice(0,7);const priceSearch=document.getElementById("search");if(priceSearch)priceSearch.value="";renderSearch();renderDashboard();renderActivity();toggleGremioField();applyBusinessConfig();loadSavedLogo();updatePrinterPill();refreshAdminUI();setTimeout(restorePrinterReceiver,500);
+  orders.forEach(o=>{if(!o.costos)o.costos=[];});ensureClients();try{snapAll();}catch(e){}document.getElementById("rMes").value=new Date().toISOString().slice(0,7);const priceSearch=document.getElementById("search");if(priceSearch)priceSearch.value="";renderSearch();renderDashboard();renderActivity();toggleGremioField();applyBusinessConfig();loadSavedLogo();updatePrinterPill();refreshAdminUI();setTimeout(restorePrinterReceiver,500);
 }
 (async function init(){
   try{
@@ -1428,6 +1535,7 @@ if(editingId){
   try{await saveOrders();}catch(err){Object.assign(o,previous);alert("No se pudieron guardar los cambios de la orden. No se confirmó el guardado en la base de datos. Revisá la conexión e intentá nuevamente.");return;}
   window.editingOrderId=null;resetOrder();renderOrders();renderDashboard();show("ordenes");if(previous.estado!=="Entregado"&&o.estado==="Entregado")setTimeout(()=>showDeliveryPaymentPrompt(o.n),150);return;
 }
+try{await pullOrders();}catch(e){}
 const n=Math.max(1522,...orders.map(o=>Number(o.n)||0))+1;
 const o={n,cliente:cliente.value,telefono:telefono.value,clientId:resolveClientForOrder(),marca:marca.value.trim(),modelo:normalizeIPhoneModel(modelo.value),imei:imei.value,tipoOrden:tipoOrden.value,gremio:gremio.value,negocio:negocio.value==="i30"?"i30":"E30",local:local.value,desbloqueo:desbloqueo.value,unlockType:unlockMode,patron:pattern.join("-"),estado:estado.value,garantiaDias:Number(document.getElementById("garantiaDias").value)||30,falla:falla.value,trabajo:trabajo.value,total:+total.value||0,sena:+sena.value||0,pago:pago.value,entrega:entrega.value,obsTecnico:obsTecnico.value,obsEquipo:obsEquipo.value,costos:[],pagos:[],fecha:new Date().toLocaleDateString("es-AR"),createdAt:new Date().toISOString()};
 orders.unshift(o);
@@ -2104,6 +2212,7 @@ document.getElementById("saleForm").onsubmit=async e=>{
  const x=stock.find(p=>p.id===+saleProduct.value),qty=+saleQty.value||0,unit=+salePrice.value||0;
  if(!x){alert("Seleccioná un producto.");return;} if(qty<1){alert("La cantidad debe ser mayor a 0.");return;} if(x.cantidad<qty){alert(`No hay stock suficiente. Disponible: ${x.cantidad}.`);return;}
  const now=new Date(),warranty=new Date(now);warranty.setDate(warranty.getDate()+7);
+ try{await pullSales();}catch(e){}
  const sale={n:sales.length?Math.max(...sales.map(s=>s.n))+1:1,productoId:x.id,producto:x.producto,cantidad:qty,unit,costoUnitario:+x.costo||0,total:unit*qty,cliente:saleClient.value.trim(),telefono:salePhone.value.trim(),negocio:saleNegocio.value==="i30"?"i30":"E30",local:saleLocal.value,pago:salePayment.value,fecha:now.toLocaleDateString("es-AR"),warranty:warranty.toLocaleDateString("es-AR"),createdAt:now.toISOString()};
  x.cantidad-=qty;sales.unshift(sale);
  const saves=await Promise.allSettled([saveStock(),saveSales()]);
@@ -2343,7 +2452,7 @@ async function importBackup(input){
     if(!confirm("Esto reemplaza los datos actuales por los de la copia ("+d.orders.length+" órdenes, "+d.prices.length+" precios). ¿Continuar?"))return;
     prices=d.prices;orders=d.orders;budgets=d.budgets||[];stock=d.stock||[];sales=d.sales||[];movements=d.movements||[];activity=d.activity||[];clients=d.clients||[];
     if(d.config)businessConfig=Object.assign({},DEFAULT_BUSINESS_CONFIG,d.config);
-    await Promise.all([savePrices(),saveOrders(),saveBudgets(),saveStock(),saveSales(),saveMovements(),saveActivity(),saveClients(),kvSet("e30-config",businessConfig)]);
+    window.__e30ForceWrite=true;try{await Promise.all([savePrices(),saveOrders(),saveBudgets(),saveStock(),saveSales(),saveMovements(),saveActivity(),saveClients(),kvSet("e30-config",businessConfig)]);}finally{window.__e30ForceWrite=false;}
     alert("Copia restaurada.");location.reload();
   }catch(e){alert("No se pudo restaurar: "+(e.message||e));}
   finally{input.value="";}

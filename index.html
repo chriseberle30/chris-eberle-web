@@ -866,8 +866,8 @@ qz.security.setSignaturePromise(function(toSign){
 </div></div>
 <div class="card">
 <h3 style="margin-top:0">Copia de seguridad</h3>
-<div class="sub" style="margin-bottom:12px">Descargá todos tus datos en un archivo y guardalo en Drive. Hacelo una vez por semana.</div>
-<div class="actions"><button class="btn" type="button" onclick="exportBackup()">Exportar copia</button><button class="btn secondary" type="button" onclick="document.getElementById('backupFile').click()">Restaurar copia…</button><input id="backupFile" type="file" accept="application/json,.json" style="display:none" onchange="importBackup(this)"></div>
+<div class="sub" style="margin-bottom:12px">La copia habitual permite restaurar los módulos de la app. El respaldo integral descarga además todas las filas actuales de Supabase.</div>
+<div class="actions"><button class="btn" type="button" onclick="exportBackup()">Copia de módulos</button><button class="btn secondary" type="button" onclick="exportFullDatabaseBackup()">Respaldo integral de Supabase</button><button class="btn secondary" type="button" onclick="document.getElementById('backupFile').click()">Restaurar copia…</button><input id="backupFile" type="file" accept="application/json,.json" style="display:none" onchange="importBackup(this)"></div>
 <div id="backupInfo" class="sub" style="margin-top:8px"></div>
 </div>
 <div class="card">
@@ -2437,6 +2437,30 @@ async function deleteOrderCost(i){
 function closeCostModal(){document.getElementById("costModal").style.display="none";}
 
 function backupSnapshot(){return {app:"E30",version:1,exportedAt:new Date().toISOString(),prices,orders,budgets,stock,sales,movements,activity,clients,config:businessConfig};}
+async function exportFullDatabaseBackup(){
+  if(!adminAuthed){alert('Primero ingresá a Administración.');return;}
+  const info=document.getElementById('backupInfo');
+  try{
+    if(info)info.textContent='Preparando respaldo integral de Supabase…';
+    const token=await e30AccessToken(),allRows=[];let offset=0,keepGoing=true;
+    while(keepGoing){
+      const url=SUPABASE_URL+'/rest/v1/e30_kv?select=key,value&order=key.asc';
+      const headers=Object.assign(sbHeaders({'Cache-Control':'no-cache','Pragma':'no-cache','Range':offset+'-'+(offset+999)}),{Authorization:'Bearer '+token});
+      const res=await fetch(url,{headers,cache:'no-store'});
+      if(!res.ok)throw new Error('Supabase respondió '+res.status+' al leer los datos.');
+      const batch=await res.json();
+      if(!Array.isArray(batch))throw new Error('La respuesta de Supabase no tiene el formato esperado.');
+      allRows.push(...batch);keepGoing=batch.length===1000;offset+=batch.length;if(!batch.length)keepGoing=false;
+    }
+    if(!allRows.length)throw new Error('El respaldo llegó vacío. No se descargó ningún archivo.');
+    const d=new Date(),stamp=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    const payload={app:'E30',type:'full-supabase-kv-backup',version:1,exportedAt:d.toISOString(),project:SUPABASE_URL,table:'public.e30_kv',rowCount:allRows.length,rows:allRows};
+    const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}');
+    const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='E30-respaldo-integral-'+stamp+'.json';document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1500);
+    if(info)info.textContent='Respaldo integral descargado: '+allRows.length+' registros de Supabase. Guardalo fuera del dispositivo.';
+  }catch(e){if(info)info.textContent='No se pudo completar el respaldo integral: '+(e.message||e);alert('No se pudo completar el respaldo integral. No se modificó ningún dato. '+(e.message||e));}
+}
 function exportBackup(){
   const data=backupSnapshot(),blob=new Blob([JSON.stringify(data,null,1)],{type:"application/json"});
   const d=new Date(),stamp=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");

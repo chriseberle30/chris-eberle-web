@@ -2455,7 +2455,7 @@ async function exportFullDatabaseBackup(){
     if(!allRows.length)throw new Error('El respaldo llegó vacío. No se descargó ningún archivo.');
     const d=new Date(),stamp=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
     const payload={app:'E30',type:'full-supabase-kv-backup',version:1,exportedAt:d.toISOString(),project:SUPABASE_URL,table:'public.e30_kv',rowCount:allRows.length,rows:allRows};
-    const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}');
+    const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
     const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='E30-respaldo-integral-'+stamp+'.json';document.body.appendChild(a);a.click();a.remove();
     setTimeout(()=>URL.revokeObjectURL(url),1500);
     if(info)info.textContent='Respaldo integral descargado: '+allRows.length+' registros de Supabase. Guardalo fuera del dispositivo.';

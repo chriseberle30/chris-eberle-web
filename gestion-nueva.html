@@ -105,7 +105,7 @@
     .price-value { color: var(--green); font-size: 14px; font-weight: 800; white-space: nowrap; font-variant-numeric: tabular-nums; }
     .sample-note { margin: 14px 0; color: #888da0; font-size: 10px; line-height: 1.45; }
     .orders-search { margin-bottom: 13px; }
-    .bottom-nav { position: fixed; z-index: 5; right: 0; bottom: 0; left: 0; display: grid; grid-template-columns: repeat(3,1fr); padding: 8px 10px calc(8px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); background: rgba(255,255,255,.96); backdrop-filter: blur(16px); }
+    .bottom-nav { position: fixed; z-index: 5; right: 0; bottom: 0; left: 0; display: grid; grid-template-columns: repeat(4,1fr); padding: 8px 10px calc(8px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); background: rgba(255,255,255,.96); backdrop-filter: blur(16px); }
     .nav-button { display: grid; justify-items: center; gap: 4px; padding: 5px 4px; border: 0; border-radius: 12px; background: transparent; color: #858a9a; font-size: 9px; font-weight: 680; cursor: pointer; }
     .nav-button.active { color: var(--brand); }
     .nav-icon { display: grid; width: 26px; height: 24px; place-items: center; }
@@ -139,6 +139,35 @@
     .primary-button:disabled { opacity: .55; cursor: wait; }
     .toast { position: fixed; z-index: 20; right: 16px; bottom: 82px; left: 16px; display: none; width: fit-content; max-width: calc(100% - 32px); margin: auto; padding: 11px 15px; border-radius: 12px; background: var(--ink); color: #fff; font-size: 12px; box-shadow: var(--shadow); }
     .toast.show { display: block; animation: enter .16s ease-out; }
+    .more-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+    .module-card { display: flex; min-height: 102px; flex-direction: column; align-items: flex-start; justify-content: space-between; padding: 14px; border: 1px solid var(--line); border-radius: 16px; background: #fff; text-align: left; cursor: pointer; }
+    .module-card:hover { border-color: #b9b8ff; box-shadow: 0 6px 18px rgba(31,35,69,.05); }
+    .module-card .action-icon { width: 32px; height: 32px; }
+    .module-card strong { font-size: 12px; }
+    .module-card small { display: block; margin-top: 3px; color: var(--muted); font-size: 10px; }
+    .form-card { margin: 14px 0; padding: 14px; border: 1px solid var(--line); border-radius: 16px; background: #fff; }
+    .form-card h2 { margin: 0 0 12px; font-size: 14px; }
+    .form-card input,.form-card select { width: 100%; min-height: 42px; padding: 10px 11px; border: 1px solid #dfe2eb; border-radius: 11px; background: #fff; font-size: 12px; }
+    .form-card .primary-button { min-height: 43px; margin-top: 11px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+    .form-card .field { margin: 9px 0; }
+    .list-stack { display: grid; gap: 8px; }
+    .list-card { display: flex; align-items: center; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
+    .list-card-main { min-width: 0; flex: 1; }
+    .list-card-title { overflow: hidden; font-size: 12px; font-weight: 750; text-overflow: ellipsis; white-space: nowrap; }
+    .list-card-meta { margin-top: 4px; color: var(--muted); font-size: 10px; }
+    .list-card-value { flex: 0 0 auto; font-size: 12px; font-weight: 780; font-variant-numeric: tabular-nums; }
+    .qty-controls { display: flex; align-items: center; gap: 6px; }
+    .qty-controls button { display: grid; width: 29px; height: 29px; place-items: center; border: 1px solid var(--line); border-radius: 9px; background: #fff; color: var(--brand); font-size: 15px; font-weight: 750; cursor: pointer; }
+    .qty-controls b { min-width: 20px; text-align: center; font-size: 12px; }
+    .badge-soft { padding: 5px 8px; border-radius: 999px; background: var(--brand-soft); color: var(--brand); font-size: 9px; font-weight: 750; white-space: nowrap; }
+    .badge-soft.low { background: var(--amber-soft); color: var(--amber); }
+    .money-kpis { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 9px; margin: 12px 0; }
+    .money-kpi { padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
+    .money-kpi span { display: block; color: var(--muted); font-size: 10px; }
+    .money-kpi strong { display: block; margin-top: 6px; font-size: 17px; font-variant-numeric: tabular-nums; }
+    .section-divider { margin: 20px 0 10px; color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+    .prototype-persist-note { margin: 10px 0 14px; padding: 10px 12px; border-radius: 12px; background: #f0f1f8; color: #6e7386; font-size: 10px; line-height: 1.45; }
     @media (min-width: 760px) {
       .app-shell { display: grid; grid-template-columns: 220px minmax(0,1fr); }
       .sidebar { position: sticky; top: 0; display: flex; height: 100vh; flex-direction: column; padding: 23px 15px; border-right: 1px solid var(--line); background: #fff; }
@@ -158,6 +187,9 @@
       .order-row { padding: 15px 17px; }
       .order-title { font-size: 13px; }
       .order-meta { font-size: 11px; }
+      .more-grid { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; }
+      .form-card { max-width: 660px; padding: 17px; }
+      .list-stack { gap: 9px; }
       .modal-backdrop { align-items: center; padding: 20px; }
       .sheet { max-height: min(90dvh, 800px); padding: 13px 24px 25px; border-radius: 23px; }
       .sheet-grabber { margin-bottom: 20px; }
@@ -181,7 +213,8 @@
       <button class="side-button" data-action="new-order"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>Nueva orden</button>
       <div class="side-label">Herramientas</div>
       <button class="side-button" data-page="prices"><span class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg></span>Buscar precios</button>
-      <div class="side-bottom"><strong>Prototipo independiente</strong><br>Los cambios viven solo en esta pestaña y se pierden al recargar.</div>
+      <button class="side-button" data-page="more"><span class="nav-icon">•••</span>Más módulos</button>
+      <div class="side-bottom"><strong>Prototipo independiente</strong><br>Datos ficticios en memoria; no se guardan ni se conectan a producción.</div>
     </aside>
 
     <main class="main">
@@ -236,6 +269,23 @@
         <div class="price-list" id="price-results"></div>
         <p class="sample-note">Precios inventados para mostrar el diseño. No uses estos importes para presupuestar.</p>
       </section>
+
+      <section class="page" id="page-more" aria-labelledby="more-title">
+        <div class="page-title-row"><div class="eyebrow">Gestión</div><h1 id="more-title">Más módulos</h1><p class="welcome-note">Recorridos de muestra para el resto de la operación.</p></div>
+        <div class="more-grid">
+          <button class="module-card" data-page="clients"><span class="action-icon">♙</span><span><strong>Clientes</strong><small>Ficha e historial</small></span></button>
+          <button class="module-card" data-page="stock"><span class="action-icon">▣</span><span><strong>Stock</strong><small>Accesorios y alertas</small></span></button>
+          <button class="module-card" data-page="sales"><span class="action-icon">$</span><span><strong>Ventas</strong><small>Registrar una venta</small></span></button>
+          <button class="module-card" data-page="budgets"><span class="action-icon">≋</span><span><strong>Presupuestos</strong><small>Estimaciones abiertas</small></span></button>
+          <button class="module-card" data-page="cash"><span class="action-icon">◷</span><span><strong>Caja</strong><small>Ingresos y egresos</small></span></button>
+        </div>
+      </section>
+
+      <section class="page" id="page-clients"><div class="page-title-row"><div class="eyebrow">Personas</div><h1>Clientes</h1><p class="welcome-note">Ficha e historial de reparaciones de ejemplo.</p></div><label class="search-box"><input id="client-search" type="search" placeholder="Buscar nombre o teléfono"></label><div class="list-stack" id="client-list"></div></section>
+      <section class="page" id="page-stock"><div class="page-title-row"><div class="eyebrow">Inventario</div><h1>Stock</h1><p class="welcome-note">Ajustes temporales para revisar el flujo visual.</p></div><div class="money-kpis" id="stock-kpis"></div><div class="list-stack" id="stock-list"></div></section>
+      <section class="page" id="page-sales"><div class="page-title-row"><div class="eyebrow">Mostrador</div><h1>Ventas</h1><p class="welcome-note">Ventas ficticias; el total se refleja en la caja de muestra.</p></div><form class="form-card" id="sale-form"><h2>Registrar venta</h2><div class="field"><label for="sale-product">Producto</label><select id="sale-product" required></select></div><div class="form-grid"><div class="field"><label for="sale-qty">Cantidad</label><input id="sale-qty" type="number" min="1" value="1" required></div><div class="field"><label for="sale-method">Medio de pago</label><select id="sale-method"><option>Efectivo</option><option>Transferencia</option><option>Tarjeta</option></select></div></div><button class="primary-button" type="submit">Registrar venta de muestra</button></form><div class="section-divider">Movimientos recientes</div><div class="list-stack" id="sales-list"></div></section>
+      <section class="page" id="page-budgets"><div class="page-title-row"><div class="eyebrow">Reparaciones</div><h1>Presupuestos</h1><p class="welcome-note">Crear estimaciones de ejemplo sin abrir una orden.</p></div><form class="form-card" id="budget-form"><h2>Nuevo presupuesto</h2><div class="field"><label for="budget-client">Cliente</label><input id="budget-client" required placeholder="Nombre del cliente"></div><div class="form-grid"><div class="field"><label for="budget-device">Equipo</label><input id="budget-device" required placeholder="Modelo"></div><div class="field"><label for="budget-amount">Importe</label><input id="budget-amount" type="number" min="0" required placeholder="$ 0"></div></div><div class="field"><label for="budget-work">Trabajo</label><input id="budget-work" required placeholder="Reparación estimada"></div><button class="primary-button" type="submit">Guardar presupuesto de muestra</button></form><div class="list-stack" id="budget-list"></div></section>
+      <section class="page" id="page-cash"><div class="page-title-row"><div class="eyebrow">Finanzas</div><h1>Caja</h1><p class="welcome-note">Resumen de los movimientos ficticios de esta sesión.</p></div><div class="money-kpis" id="cash-kpis"></div><form class="form-card" id="cash-form"><h2>Nuevo movimiento</h2><div class="form-grid"><div class="field"><label for="cash-kind">Tipo</label><select id="cash-kind"><option value="ingreso">Ingreso</option><option value="egreso">Egreso</option></select></div><div class="field"><label for="cash-amount">Importe</label><input id="cash-amount" type="number" min="1" required placeholder="$ 0"></div></div><div class="field"><label for="cash-note">Concepto</label><input id="cash-note" required placeholder="Descripción"></div><button class="primary-button" type="submit">Agregar movimiento de muestra</button></form><div class="list-stack" id="cash-list"></div></section>
     </main>
   </div>
 
@@ -243,6 +293,7 @@
     <button class="nav-button active" type="button" data-page="home"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg></span>Inicio</button>
     <button class="nav-button primary" type="button" data-action="new-order"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>Nueva orden</button>
     <button class="nav-button" type="button" data-page="prices"><span class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg></span>Precios</button>
+    <button class="nav-button" type="button" data-page="more"><span class="nav-icon">•••</span>Más</button>
   </nav>
 
   <div class="modal-backdrop" id="order-modal" aria-hidden="true">
@@ -269,7 +320,7 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script>
-    // Prototipo visual aislado. Datos ficticios en memoria; no usa Supabase ni localStorage.
+    // Prototipo visual aislado. Datos ficticios solo en memoria; no usa Supabase ni almacenamiento persistente.
     const sampleOrders = [
       { n: 1538, cliente: "Cliente de muestra", modelo: "iPhone 13", falla: "Cambio de pantalla", estado: "En reparación", total: 245000, fecha: "Hoy · 09:18" },
       { n: 1537, cliente: "Técnico de muestra", gremio: "Gremio de muestra", modelo: "iPhone 11", falla: "Cambio de batería", estado: "Esperando repuesto", total: 98000, fecha: "Hoy · 08:42" },
@@ -291,6 +342,20 @@
       { marca: "Samsung", modelo: "A54", servicio: "Pin de carga", precio: 132000 },
       { marca: "Samsung", modelo: "A34", servicio: "Pantalla", precio: 198000 }
     ];
+    const sampleClients = [
+      { nombre: "Cliente de muestra", telefono: "11 0000-0001", ordenes: ["#1538 · iPhone 13 · En reparación", "#1532 · iPhone 13 Pro · En reparación"] },
+      { nombre: "Persona de prueba", telefono: "11 0000-0002", ordenes: ["#1536 · Samsung A54 · Listo", "#1533 · Motorola G84 · Listo"] },
+      { nombre: "Cliente de ejemplo", telefono: "11 0000-0003", ordenes: ["#1535 · iPhone 12 · En reparación"] }
+    ];
+    const sampleStock = [
+      { id: 1, nombre: "Cable USB-C reforzado", categoria: "Accesorios", cantidad: 12, costo: 4200, precio: 8500 },
+      { id: 2, nombre: "Cargador 20 W", categoria: "Accesorios", cantidad: 5, costo: 9800, precio: 17500 },
+      { id: 3, nombre: "Vidrio templado universal", categoria: "Protección", cantidad: 2, costo: 1200, precio: 4500 },
+      { id: 4, nombre: "Auricular Bluetooth", categoria: "Audio", cantidad: 0, costo: 14500, precio: 24900 }
+    ];
+    const sampleSales = [{ nombre: "Vidrio templado universal", cantidad: 1, total: 4500, medio: "Efectivo", fecha: "Hoy · muestra" }];
+    const sampleBudgets = [{ cliente: "Persona de prueba", equipo: "Samsung A54", trabajo: "Pin de carga", importe: 132000, estado: "Pendiente" }];
+    const sampleCash = [{ tipo: "ingreso", concepto: "Seña orden #1538", importe: 50000, medio: "Efectivo" }, { tipo: "egreso", concepto: "Compra de insumos", importe: 12000, medio: "Efectivo" }, { tipo: "ingreso", concepto: "Venta de accesorio", importe: 4500, medio: "Efectivo" }];
     let visibleOrders = sampleOrders.slice();
     let activeFilter = "Todas";
     let activeBrand = "Todos";
@@ -330,11 +395,35 @@
       const matches = samplePrices.filter(item => (activeBrand === "Todos" || item.marca === activeBrand) && words.every(word => `${item.marca} ${item.modelo} ${item.servicio}`.toLocaleLowerCase("es-AR").includes(word)));
       $("#price-results").innerHTML = matches.map(item => `<button class="price-item" type="button" data-price-model="${escapeHtml(item.modelo)}" data-price-brand="${escapeHtml(item.marca)}" data-price-service="${escapeHtml(item.servicio)}" data-price-value="${item.precio}"><span class="price-item-main"><span class="price-model">${escapeHtml(item.marca)} ${escapeHtml(item.modelo)}</span><span class="price-repair">${escapeHtml(item.servicio)}</span></span><span class="price-value">${money(item.precio)}</span></button>`).join("") || '<div class="empty-state">No encontré ese precio.</div>';
     }
+    function renderClients() {
+      const query = $("#client-search").value.trim().toLocaleLowerCase("es-AR");
+      const matches = sampleClients.filter(client => `${client.nombre} ${client.telefono}`.toLocaleLowerCase("es-AR").includes(query));
+      $("#client-list").innerHTML = matches.map(client => `<article class="list-card"><div class="list-card-main"><div class="list-card-title">${escapeHtml(client.nombre)}</div><div class="list-card-meta">${escapeHtml(client.telefono)} · ${client.ordenes.length} órdenes<br>${client.ordenes.map(escapeHtml).join("<br>")}</div></div></article>`).join("") || '<div class="empty-state">No encontré clientes.</div>';
+    }
+    function renderStock() {
+      const low = sampleStock.filter(item => item.cantidad <= 3).length;
+      $("#stock-kpis").innerHTML = `<div class="money-kpi"><span>Productos</span><strong>${sampleStock.length}</strong></div><div class="money-kpi"><span>Stock bajo</span><strong>${low}</strong></div>`;
+      $("#stock-list").innerHTML = sampleStock.map(item => `<article class="list-card"><div class="list-card-main"><div class="list-card-title">${escapeHtml(item.nombre)}</div><div class="list-card-meta">${escapeHtml(item.categoria)} · Venta ${money(item.precio)} · Costo ${money(item.costo)}</div></div><span class="badge-soft ${item.cantidad <= 3 ? "low" : ""}">${item.cantidad <= 3 ? "Reponer" : "Disponible"}</span><div class="qty-controls"><button type="button" data-stock="${item.id}" data-delta="-1" aria-label="Restar stock">−</button><b>${item.cantidad}</b><button type="button" data-stock="${item.id}" data-delta="1" aria-label="Sumar stock">+</button></div></article>`).join("");
+      $("#sale-product").innerHTML = sampleStock.filter(item => item.cantidad > 0).map(item => `<option value="${item.id}">${escapeHtml(item.nombre)} · ${money(item.precio)} · stock ${item.cantidad}</option>`).join("");
+    }
+    function renderSales() { $("#sales-list").innerHTML = sampleSales.map(sale => `<article class="list-card"><div class="list-card-main"><div class="list-card-title">${escapeHtml(sale.nombre)} × ${sale.cantidad}</div><div class="list-card-meta">${escapeHtml(sale.fecha)} · ${escapeHtml(sale.medio)}</div></div><strong class="list-card-value">${money(sale.total)}</strong></article>`).join("") || '<div class="empty-state">Todavía no hay ventas en esta sesión.</div>'; }
+    function renderBudgets() { $("#budget-list").innerHTML = sampleBudgets.map(budget => `<article class="list-card"><div class="list-card-main"><div class="list-card-title">${escapeHtml(budget.cliente)} · ${escapeHtml(budget.equipo)}</div><div class="list-card-meta">${escapeHtml(budget.trabajo)} · ${escapeHtml(budget.estado)}</div></div><strong class="list-card-value">${money(budget.importe)}</strong></article>`).join(""); }
+    function renderCash() {
+      const income = sampleCash.filter(move => move.tipo === "ingreso").reduce((sum, move) => sum + move.importe, 0);
+      const expense = sampleCash.filter(move => move.tipo === "egreso").reduce((sum, move) => sum + move.importe, 0);
+      $("#cash-kpis").innerHTML = `<div class="money-kpi"><span>Ingresos</span><strong>${money(income)}</strong></div><div class="money-kpi"><span>Egresos</span><strong>${money(expense)}</strong></div><div class="money-kpi"><span>Saldo de muestra</span><strong>${money(income - expense)}</strong></div>`;
+      $("#cash-list").innerHTML = sampleCash.slice().reverse().map(move => `<article class="list-card"><div class="list-card-main"><div class="list-card-title">${escapeHtml(move.concepto)}</div><div class="list-card-meta">${escapeHtml(move.medio)} · ${move.tipo === "ingreso" ? "Ingreso" : "Egreso"}</div></div><strong class="list-card-value">${move.tipo === "ingreso" ? "+" : "−"}${money(move.importe)}</strong></article>`).join("");
+    }
     function openPage(page) {
       $$(".page").forEach(element => element.classList.toggle("active", element.id === `page-${page}`));
       $$("[data-page]").forEach(button => button.classList.toggle("active", button.dataset.page === page));
       if (page === "orders") renderOrders();
       if (page === "prices") { renderPrices(); setTimeout(() => $("#price-search").focus({ preventScroll: true }), 60); }
+      if (page === "clients") renderClients();
+      if (page === "stock") renderStock();
+      if (page === "sales") { renderStock(); renderSales(); }
+      if (page === "budgets") renderBudgets();
+      if (page === "cash") renderCash();
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
     function showToast(message) {
@@ -392,6 +481,7 @@
       const brandButton = event.target.closest("[data-brand]");
       const faultButton = event.target.closest("[data-fault]");
       const priceButton = event.target.closest("[data-price-value]");
+      const stockButton = event.target.closest("[data-stock]");
       if (pageButton) openPage(pageButton.dataset.page);
       if (actionButton?.dataset.action === "new-order") openOrderModal();
       if (event.target.closest("[data-close]") || event.target === $("#order-modal")) closeOrderModal();
@@ -411,10 +501,15 @@
         closeOrderModal();
         openOrderModal({ marca: priceButton.dataset.priceBrand, modelo: priceButton.dataset.priceModel, falla: priceButton.dataset.priceService, precio: priceButton.dataset.priceValue });
       }
+      if (stockButton) {
+        const item = sampleStock.find(product => product.id === Number(stockButton.dataset.stock));
+        item.cantidad = Math.max(0, item.cantidad + Number(stockButton.dataset.delta)); renderStock(); showToast(`Stock de muestra actualizado: ${item.cantidad}.`);
+      }
     });
     document.addEventListener("keydown", event => { if (event.key === "Escape") closeOrderModal(); });
     $("#order-search").addEventListener("input", renderOrders);
     $("#price-search").addEventListener("input", renderPrices);
+    $("#client-search").addEventListener("input", renderClients);
     $("#device").addEventListener("input", updateSuggestion);
     $("#fault").addEventListener("input", updateSuggestion);
     $$("[data-kind]").forEach(button => button.addEventListener("click", () => setOrderKind(button.dataset.kind)));
@@ -432,6 +527,19 @@
       renderHomeOrders(); renderOrders();
       event.currentTarget.reset(); setOrderKind("Particular"); closeOrderModal(); openPage("orders");
       showToast(`Orden de muestra #${String(order.n).padStart(4, "0")} agregada en esta pestaña.`);
+    });
+    $("#sale-form").addEventListener("submit", event => {
+      event.preventDefault(); const product = sampleStock.find(item => item.id === Number($("#sale-product").value)); const qty = Number($("#sale-qty").value);
+      if (!product || qty < 1 || product.cantidad < qty) { showToast("No hay stock de muestra suficiente."); return; }
+      const total = product.precio * qty; product.cantidad -= qty;
+      const medio = $("#sale-method").value; sampleSales.unshift({ nombre: product.nombre, cantidad: qty, total, medio, fecha: "Ahora · muestra" }); sampleCash.push({ tipo: "ingreso", concepto: `Venta: ${product.nombre}`, importe: total, medio });
+      renderStock(); renderSales(); event.currentTarget.reset(); showToast("Venta de muestra registrada en esta sesión.");
+    });
+    $("#budget-form").addEventListener("submit", event => {
+      event.preventDefault(); sampleBudgets.unshift({ cliente: $("#budget-client").value.trim(), equipo: $("#budget-device").value.trim(), trabajo: $("#budget-work").value.trim(), importe: Number($("#budget-amount").value), estado: "Pendiente" }); renderBudgets(); event.currentTarget.reset(); showToast("Presupuesto de muestra agregado.");
+    });
+    $("#cash-form").addEventListener("submit", event => {
+      event.preventDefault(); sampleCash.push({ tipo: $("#cash-kind").value, concepto: $("#cash-note").value.trim(), importe: Number($("#cash-amount").value), medio: "Manual" }); renderCash(); event.currentTarget.reset(); showToast("Movimiento de muestra agregado.");
     });
     $("#today-label").textContent = new Intl.DateTimeFormat("es-AR", { day: "numeric", month: "short" }).format(new Date());
     renderHomeOrders(); renderOrders(); renderPrices();

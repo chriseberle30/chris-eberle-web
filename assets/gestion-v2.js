@@ -266,6 +266,22 @@
       const { error } = await sb.auth.signInWithPassword({ email: $("#login-email").value.trim(), password: $("#login-password").value });
       if (error) $("#login-error").textContent = `No se pudo iniciar sesión: ${error.message}`;
     });
+    $("#signup-button").addEventListener("click", async () => {
+      const email = $("#login-email").value.trim();
+      const password = $("#login-password").value;
+      $("#login-error").textContent = "";
+      if (!email) { $("#login-error").textContent = "Ingresá tu email."; return; }
+      if (password.length < 8) { $("#login-error").textContent = "Usá una contraseña de al menos 8 caracteres."; return; }
+      const button = $("#signup-button"); button.disabled = true; button.textContent = "Creando cuenta…";
+      try {
+        const { data: result, error } = await sb.auth.signUp({ email, password });
+        if (error) throw error;
+        if (result.session) notice("Cuenta creada. Ya podés empezar a cargar tus datos.");
+        else $("#login-error").textContent = "Cuenta creada. Revisá tu email para confirmar el acceso y después iniciá sesión.";
+      } catch (error) {
+        $("#login-error").textContent = `No se pudo crear la cuenta: ${error.message || error}`;
+      } finally { button.disabled = false; button.textContent = "Crear cuenta de prueba"; }
+    });
     $("#sign-out").addEventListener("click", async () => { await sb.auth.signOut(); });
     $("#new-order").addEventListener("click", () => openOrderForm());
     $("#new-client").addEventListener("click", () => openClientForm());

@@ -2,8 +2,8 @@
   "use strict";
 
   // Esta app de esta rama apunta solo al proyecto aislado de pruebas.
-  const SUPABASE_URL = "https://hcwazybjwgvyplxsowgm.supabase.co";
-  const SUPABASE_KEY = "sb_publishable_PfKcyVhW9hFtx3MKC9pDIw_1meGtnFO";
+  const SUPABASE_URL = "https://zpuwfzdxyvltrtkikvsu.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_F8lLX0s3FyLShFW2ceB9Tw_yyJRRZ5K";
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
     auth: { persistSession: true, autoRefreshToken: true },
   });

@@ -45,6 +45,7 @@
     .user-dot { display: grid; width: 38px; height: 38px; place-items: center; border-radius: 50%; background: #e8e8ff; color: var(--brand-dark); font-size: 12px; font-weight: 800; }
     .prototype-banner { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 20px; padding: 12px 14px; border: 1px solid #eeddb7; border-radius: 14px; background: #fff9e9; color: #77521b; font-size: 12px; line-height: 1.45; }
     .prototype-banner strong { display: block; margin-bottom: 1px; font-size: 12px; }
+    .prototype-banner-content { flex: 1; min-width: 0; }
     .prototype-banner svg { flex: 0 0 17px; width: 17px; height: 17px; margin-top: 1px; fill: none; stroke: currentColor; stroke-width: 1.8; }
     .welcome { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; margin: 5px 0 18px; }
     .eyebrow { color: var(--muted); font-size: 11px; font-weight: 750; letter-spacing: .09em; text-transform: uppercase; }
@@ -214,7 +215,7 @@
       <div class="side-label">Herramientas</div>
       <button class="side-button" data-page="prices"><span class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg></span>Buscar precios</button>
       <button class="side-button" data-page="more"><span class="nav-icon">•••</span>Más módulos</button>
-      <div class="side-bottom"><strong>Prototipo independiente</strong><br>Datos ficticios en memoria; no se guardan ni se conectan a producción.</div>
+      <div class="side-bottom"><strong>Vista previa aislada</strong><br>Solo datos ficticios. Se guardan localmente en este navegador y no se conectan a producción.</div>
     </aside>
 
     <main class="main">
@@ -225,7 +226,7 @@
 
       <div class="prototype-banner" role="note">
         <svg viewBox="0 0 24 24"><path d="M12 3 2.8 19a1.3 1.3 0 0 0 1.1 2h16.2a1.3 1.3 0 0 0 1.1-2L12 3Z"/><path d="M12 9v5M12 17.5v.1"/></svg>
-        <div><strong>Prototipo de diseño · datos de muestra</strong>Esta pantalla no está conectada a producción ni guarda datos. Las órdenes de ejemplo son ficticias.</div>
+        <div class="prototype-banner-content"><strong>Vista previa aislada · datos de prueba</strong>No está conectada a producción. Los cambios se guardan solo en este navegador; no cargues información real. <span id="demo-save-status" aria-live="polite">Sin cambios locales</span></div><button class="text-button" id="reset-demo" type="button">Restablecer demo</button>
       </div>
 
       <section class="page active" id="page-home" aria-labelledby="home-title">
@@ -319,7 +320,7 @@
         <div class="suggestion" id="price-suggestion"><span id="suggestion-copy"></span><button type="button" id="use-suggestion">Usar precio</button></div>
         <div class="two-col"><div class="field"><label for="total">Total estimado</label><input id="total" name="total" type="number" min="0" inputmode="numeric" placeholder="$ 0"></div><div class="field"><label for="deposit">Seña <span style="font-weight:500;color:#9297a6">· opcional</span></label><input id="deposit" name="sena" type="number" min="0" inputmode="numeric" placeholder="$ 0"></div></div>
         <div class="two-col"><div class="field"><label for="imei">IMEI <span style="font-weight:500;color:#9297a6">· opcional</span></label><input id="imei" name="imei" inputmode="numeric" autocomplete="off" placeholder="Identificación del equipo"></div><div class="field"><label for="unlock-code">Patrón / código <span style="font-weight:500;color:#9297a6">· opcional</span></label><input id="unlock-code" name="codigo" autocomplete="off" placeholder="Solo con autorización del cliente"></div></div>
-        <div class="field"><label for="note">Nota de recepción <span style="font-weight:500;color:#9297a6">· opcional</span></label><textarea id="note" name="nota" placeholder="Estado físico, accesorios recibidos o detalle importante"></textarea><div class="field-help">En esta demostración, los datos se mantienen solo en memoria y desaparecen al recargar.</div></div>
+        <div class="field"><label for="note">Nota de recepción <span style="font-weight:500;color:#9297a6">· opcional</span></label><textarea id="note" name="nota" placeholder="Estado físico, accesorios recibidos o detalle importante"></textarea><div class="field-help">Solo para probar el recorrido: guardado local en este navegador, sin sincronización.</div></div>
         <button class="primary-button" type="submit"><span>＋</span> Crear orden de muestra</button>
       </form>
     </section>
@@ -346,7 +347,7 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script>
-    // Prototipo visual aislado. Datos ficticios solo en memoria; no usa Supabase ni almacenamiento persistente.
+    // Vista previa aislada. Solo datos ficticios; persiste en localStorage de este navegador y no usa Supabase.
     const sampleOrders = [
       { n: 1538, cliente: "Cliente de muestra", telefono: "11 0000-0001", modelo: "iPhone 13", falla: "Cambio de pantalla", estado: "En reparación", total: 245000, costo: 112000, pagos: [{ importe: 50000, medio: "Efectivo", fecha: "Hoy · 09:18" }], notas: ["Equipo recibido sin golpes visibles"], fecha: "Hoy · 09:18" },
       { n: 1537, cliente: "Técnico de muestra", gremio: "Gremio de muestra", modelo: "iPhone 11", falla: "Cambio de batería", estado: "Esperando repuesto", total: 98000, costo: 42000, pagos: [], notas: ["Repuesto pedido"], fecha: "Hoy · 08:42" },
@@ -357,7 +358,6 @@
       { n: 1532, cliente: "Cliente de muestra", telefono: "11 0000-0001", modelo: "iPhone 13 Pro", falla: "Cámara trasera", estado: "En reparación", total: 175000, costo: 72000, pagos: [], notas: [], fecha: "Ayer · 10:21" },
       { n: 1531, cliente: "Cliente de prueba", telefono: "11 0000-0004", modelo: "Samsung S21 FE", falla: "Cambio de módulo", estado: "Entregado", total: 215000, costo: 0, costos: [], pagos: [{ importe: 215000, medio: "Transferencia", fecha: "Ayer · 09:10" }], notas: [], fecha: "Ayer · 09:10", entregada: "2026-11-07T12:10:00.000Z", garantiaDias: 30 }
     ];
-    sampleOrders.forEach(order => { order.costos = Number(order.costo) > 0 ? [{ concepto: "Costo cargado", importe: Number(order.costo) }] : []; order.costo = 0; });
     const samplePrices = [
       { marca: "iPhone", modelo: "13", servicio: "Pantalla", precio: 245000 },
       { marca: "iPhone", modelo: "13", servicio: "Batería", precio: 118000 },
@@ -384,6 +384,31 @@
     const sampleSales = [{ nombre: "Vidrio templado universal", cantidad: 1, total: 4500, medio: "Efectivo", fecha: "Hoy · muestra" }];
     const sampleBudgets = [{ cliente: "Persona de prueba", equipo: "Samsung A54", trabajo: "Pin de carga", importe: 132000, estado: "Pendiente" }];
     const sampleCash = [{ tipo: "ingreso", concepto: "Seña orden #1538", importe: 50000, medio: "Efectivo" }, { tipo: "egreso", concepto: "Compra de insumos", importe: 12000, medio: "Efectivo" }, { tipo: "ingreso", concepto: "Venta de accesorio", importe: 4500, medio: "Efectivo" }];
+    const demoStorageKey = "e30-gestion-preview-v1";
+    function validDemoState(state) {
+      const keys = ["orders", "clients", "stock", "sales", "budgets", "cash"];
+      if (!state || state.version !== 1 || !keys.every(key => Array.isArray(state[key]))) return false;
+      return state.orders.every(order => order && Number.isSafeInteger(Number(order.n)) && typeof order.modelo === "string" && typeof order.estado === "string")
+        && state.clients.every(client => client && typeof client.nombre === "string")
+        && state.stock.every(item => item && Number.isSafeInteger(Number(item.id)) && typeof item.nombre === "string")
+        && state.sales.every(sale => sale && typeof sale.nombre === "string")
+        && state.budgets.every(budget => budget && typeof budget.cliente === "string")
+        && state.cash.every(move => move && typeof move.concepto === "string");
+    }
+    function loadDemoState() {
+      try { const raw = localStorage.getItem(demoStorageKey); if (!raw) return null; const state = JSON.parse(raw); return validDemoState(state) ? state : null; }
+      catch { return null; }
+    }
+    const savedDemoState = loadDemoState();
+    if (savedDemoState) {
+      sampleOrders.splice(0, sampleOrders.length, ...savedDemoState.orders);
+      sampleClients.splice(0, sampleClients.length, ...savedDemoState.clients);
+      sampleStock.splice(0, sampleStock.length, ...savedDemoState.stock);
+      sampleSales.splice(0, sampleSales.length, ...savedDemoState.sales);
+      sampleBudgets.splice(0, sampleBudgets.length, ...savedDemoState.budgets);
+      sampleCash.splice(0, sampleCash.length, ...savedDemoState.cash);
+    }
+    sampleOrders.forEach(order => { if (!Array.isArray(order.costos)) order.costos = Number(order.costo) > 0 ? [{ concepto: "Costo cargado", importe: Number(order.costo) }] : []; order.costo = 0; if (!Array.isArray(order.pagos)) order.pagos = []; });
     let visibleOrders = sampleOrders.slice();
     let activeFilter = "Todas";
     let activeBrand = "Todos";
@@ -399,6 +424,14 @@
     const paidAmount = order => (order.pagos || []).reduce((sum, payment) => sum + Number(payment.importe || 0), 0);
     const orderCostTotal = order => (order.costos || []).reduce((sum, cost) => sum + Number(cost.importe || 0), 0) || Number(order.costo || 0);
     const phoneIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.3"/><path d="M10 18.2h4"/></svg>';
+    function saveDemoState() {
+      try {
+        localStorage.setItem(demoStorageKey, JSON.stringify({ version: 1, orders: visibleOrders, clients: sampleClients, stock: sampleStock, sales: sampleSales, budgets: sampleBudgets, cash: sampleCash }));
+        $("#demo-save-status").textContent = " · Guardado en este dispositivo";
+        return true;
+      } catch { $("#demo-save-status").textContent = " · No se pudo guardar en este dispositivo"; return false; }
+    }
+    if (savedDemoState) $("#demo-save-status").textContent = " · Cambios recuperados de este navegador";
 
     function renderOrderRow(order) {
       const person = order.gremio || order.cliente || "Cliente sin nombre";
@@ -604,14 +637,15 @@
       }
       if (stockButton) {
         const item = sampleStock.find(product => product.id === Number(stockButton.dataset.stock));
-        item.cantidad = Math.max(0, item.cantidad + Number(stockButton.dataset.delta)); renderStock(); showToast(`Stock de muestra actualizado: ${item.cantidad}.`);
+        item.cantidad = Math.max(0, item.cantidad + Number(stockButton.dataset.delta)); saveDemoState(); renderStock(); showToast(`Stock de muestra actualizado: ${item.cantidad}.`);
       }
       if (orderOpenButton) openOrderDetail(orderOpenButton.dataset.orderOpen);
-      if (deleteCostButton) { const order = visibleOrders.find(item => item.n === selectedOrderNumber); if (order) { order.costos.splice(Number(deleteCostButton.dataset.deleteCost), 1); renderOrderPayments(order); renderReports(); showToast("Costo quitado de la muestra."); } }
+      if (deleteCostButton) { const order = visibleOrders.find(item => item.n === selectedOrderNumber); if (order) { order.costos.splice(Number(deleteCostButton.dataset.deleteCost), 1); saveDemoState(); renderOrderPayments(order); renderReports(); renderPendingCosts(); showToast("Costo quitado de la muestra."); } }
       if (event.target.closest("#detail-print")) { const order = visibleOrders.find(item => item.n === selectedOrderNumber); if (order) printOrder(order); }
       if (event.target.closest("[data-close-detail]") || event.target === $("#order-detail-modal")) closeOrderDetail();
     });
     document.addEventListener("keydown", event => { if (event.key === "Escape") { closeOrderModal(); closeOrderDetail(); } });
+    $("#reset-demo").addEventListener("click", () => { if (window.confirm("¿Restablecer los datos ficticios de esta demostración en este navegador?")) { localStorage.removeItem(demoStorageKey); window.location.reload(); } });
     $("#order-search").addEventListener("input", renderOrders);
     $("#price-search").addEventListener("input", renderPrices);
     $("#client-search").addEventListener("input", renderClients);
@@ -633,15 +667,16 @@
       const note = $("#detail-note").value.trim(); if (note) { if (!order.notas) order.notas = []; order.notas.unshift(note); }
       if (order.estado === "Entregado" && previousStatus !== "Entregado") { order.entregada = new Date().toISOString(); showToast(`Entrega registrada. Garantía de ${order.garantiaDias} días.`); }
       $("#detail-warranty-info").textContent = order.entregada ? warrantyLabel(order) : "Se calcula al marcar la orden como entregada.";
+      saveDemoState();
       renderOrderPayments(order); renderHomeOrders(); renderOrders(); renderClients(); renderCash();
       renderReceivables(); renderReports(); renderPendingCosts();
-      if (order.estado !== "Entregado") showToast(`Orden #${order.n} actualizada en esta sesión.`);
+      if (order.estado !== "Entregado") showToast(`Orden #${order.n} actualizada en esta demostración.`);
     });
     $("#add-cost").addEventListener("click", () => {
       const order = visibleOrders.find(item => item.n === selectedOrderNumber); const concepto = $("#cost-concept").value.trim(); const importe = Number($("#cost-amount").value);
       if (!order || !concepto || importe <= 0) { showToast("Ingresá el concepto y un importe mayor a cero."); return; }
       if (!order.costos) order.costos = Number(order.costo) > 0 ? [{ concepto: "Costo heredado de muestra", importe: Number(order.costo) }] : [];
-      order.costos.push({ concepto, importe }); order.costo = 0; $("#cost-concept").value = ""; $("#cost-amount").value = ""; renderOrderPayments(order); renderReports(); renderPendingCosts(); showToast("Costo agregado a la orden de muestra.");
+      order.costos.push({ concepto, importe }); order.costo = 0; $("#cost-concept").value = ""; $("#cost-amount").value = ""; saveDemoState(); renderOrderPayments(order); renderReports(); renderPendingCosts(); showToast("Costo agregado a la orden de muestra.");
     });
     $("#new-order-form").addEventListener("submit", event => {
       event.preventDefault();
@@ -660,22 +695,24 @@
       if (order.cliente && !sampleClients.some(client => client.nombre.toLocaleLowerCase("es-AR") === order.cliente.toLocaleLowerCase("es-AR"))) sampleClients.unshift({ nombre: order.cliente, telefono: order.telefono, ordenes: [] });
       if (deposit > 0) { order.pagos.push({ importe: deposit, medio: "Efectivo", fecha: "Ahora · muestra" }); sampleCash.push({ tipo: "ingreso", concepto: `Seña orden #${order.n}`, importe: deposit, medio: "Efectivo" }); }
       visibleOrders.unshift(order);
+      saveDemoState();
       renderHomeOrders(); renderOrders(); renderClients();
       event.currentTarget.reset(); setOrderKind("Particular"); closeOrderModal(); openPage("orders");
-      showToast(`Orden de muestra #${String(order.n).padStart(4, "0")} agregada en esta pestaña.`);
+      showToast(`Orden ficticia #${String(order.n).padStart(4, "0")} guardada en esta demostración.`);
     });
     $("#sale-form").addEventListener("submit", event => {
       event.preventDefault(); const product = sampleStock.find(item => item.id === Number($("#sale-product").value)); const qty = Number($("#sale-qty").value);
       if (!product || qty < 1 || product.cantidad < qty) { showToast("No hay stock de muestra suficiente."); return; }
       const total = product.precio * qty; product.cantidad -= qty;
       const medio = $("#sale-method").value; sampleSales.unshift({ nombre: product.nombre, cantidad: qty, total, medio, fecha: "Ahora · muestra" }); sampleCash.push({ tipo: "ingreso", concepto: `Venta: ${product.nombre}`, importe: total, medio });
+      saveDemoState();
       renderStock(); renderSales(); event.currentTarget.reset(); showToast("Venta de muestra registrada en esta sesión.");
     });
     $("#budget-form").addEventListener("submit", event => {
-      event.preventDefault(); sampleBudgets.unshift({ cliente: $("#budget-client").value.trim(), equipo: $("#budget-device").value.trim(), trabajo: $("#budget-work").value.trim(), importe: Number($("#budget-amount").value), estado: "Pendiente" }); renderBudgets(); event.currentTarget.reset(); showToast("Presupuesto de muestra agregado.");
+      event.preventDefault(); sampleBudgets.unshift({ cliente: $("#budget-client").value.trim(), equipo: $("#budget-device").value.trim(), trabajo: $("#budget-work").value.trim(), importe: Number($("#budget-amount").value), estado: "Pendiente" }); saveDemoState(); renderBudgets(); event.currentTarget.reset(); showToast("Presupuesto de muestra agregado.");
     });
     $("#cash-form").addEventListener("submit", event => {
-      event.preventDefault(); sampleCash.push({ tipo: $("#cash-kind").value, concepto: $("#cash-note").value.trim(), importe: Number($("#cash-amount").value), medio: "Manual" }); renderCash(); event.currentTarget.reset(); showToast("Movimiento de muestra agregado.");
+      event.preventDefault(); sampleCash.push({ tipo: $("#cash-kind").value, concepto: $("#cash-note").value.trim(), importe: Number($("#cash-amount").value), medio: "Manual" }); saveDemoState(); renderCash(); event.currentTarget.reset(); showToast("Movimiento de muestra agregado.");
     });
     $("#today-label").textContent = new Intl.DateTimeFormat("es-AR", { day: "numeric", month: "short" }).format(new Date());
     renderHomeOrders(); renderOrders(); renderPrices();

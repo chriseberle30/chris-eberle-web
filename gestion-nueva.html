@@ -353,6 +353,7 @@
   </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+  <script src="assets/e30-demo-repository.js"></script>
   <script>
     // Vista previa aislada. Solo datos ficticios; persiste en localStorage de este navegador y no usa Supabase.
     const sampleOrders = [
@@ -391,22 +392,8 @@
     const sampleSales = [{ nombre: "Vidrio templado universal", cantidad: 1, total: 4500, medio: "Efectivo", fecha: "Hoy · muestra" }];
     const sampleBudgets = [{ cliente: "Persona de prueba", equipo: "Samsung A54", trabajo: "Pin de carga", importe: 132000, estado: "Pendiente" }];
     const sampleCash = [{ tipo: "ingreso", concepto: "Seña orden #1538", importe: 50000, medio: "Efectivo" }, { tipo: "egreso", concepto: "Compra de insumos", importe: 12000, medio: "Efectivo" }, { tipo: "ingreso", concepto: "Venta de accesorio", importe: 4500, medio: "Efectivo" }];
-    const demoStorageKey = "e30-gestion-preview-v1";
-    function validDemoState(state) {
-      const keys = ["orders", "clients", "stock", "sales", "budgets", "cash"];
-      if (!state || state.version !== 1 || !keys.every(key => Array.isArray(state[key]))) return false;
-      return state.orders.every(order => order && Number.isSafeInteger(Number(order.n)) && typeof order.modelo === "string" && typeof order.estado === "string")
-        && state.clients.every(client => client && typeof client.nombre === "string")
-        && state.stock.every(item => item && Number.isSafeInteger(Number(item.id)) && typeof item.nombre === "string")
-        && state.sales.every(sale => sale && typeof sale.nombre === "string")
-        && state.budgets.every(budget => budget && typeof budget.cliente === "string")
-        && state.cash.every(move => move && typeof move.concepto === "string");
-    }
-    function loadDemoState() {
-      try { const raw = localStorage.getItem(demoStorageKey); if (!raw) return null; const state = JSON.parse(raw); return validDemoState(state) ? state : null; }
-      catch { return null; }
-    }
-    const savedDemoState = loadDemoState();
+    const demoRepository = window.E30DemoRepository.createBrowserDemoRepository(window.localStorage, "e30-gestion-preview-v1");
+    const savedDemoState = demoRepository.loadSnapshot();
     if (savedDemoState) {
       sampleOrders.splice(0, sampleOrders.length, ...savedDemoState.orders);
       sampleClients.splice(0, sampleClients.length, ...savedDemoState.clients);
@@ -432,11 +419,13 @@
     const orderCostTotal = order => (order.costos || []).reduce((sum, cost) => sum + Number(cost.importe || 0), 0) || Number(order.costo || 0);
     const phoneIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.3"/><path d="M10 18.2h4"/></svg>';
     function saveDemoState() {
-      try {
-        localStorage.setItem(demoStorageKey, JSON.stringify({ version: 1, orders: visibleOrders, clients: sampleClients, stock: sampleStock, sales: sampleSales, budgets: sampleBudgets, cash: sampleCash }));
+      const result = demoRepository.saveSnapshot({ orders: visibleOrders, clients: sampleClients, stock: sampleStock, sales: sampleSales, budgets: sampleBudgets, cash: sampleCash });
+      if (result.ok) {
         $("#demo-save-status").textContent = " · Guardado en este dispositivo";
-        return true;
-      } catch { $("#demo-save-status").textContent = " · No se pudo guardar en este dispositivo"; return false; }
+      } else {
+        $("#demo-save-status").textContent = result.reason === "invalid-snapshot" ? " · No se guardó: datos de demo inválidos" : " · No se pudo guardar en este dispositivo";
+      }
+      return result.ok;
     }
     if (savedDemoState) $("#demo-save-status").textContent = " · Cambios recuperados de este navegador";
 
@@ -656,7 +645,7 @@
     $("#reset-demo").addEventListener("click", () => { $("#reset-demo-modal").classList.add("open"); $("#reset-demo-modal").setAttribute("aria-hidden", "false"); $("#cancel-reset").focus(); });
     $("#cancel-reset").addEventListener("click", closeResetDemo);
     $("#cancel-reset-close").addEventListener("click", closeResetDemo);
-    $("#confirm-reset").addEventListener("click", () => { try { localStorage.removeItem(demoStorageKey); window.location.reload(); } catch { closeResetDemo(); showToast("No se pudo restablecer el almacenamiento local."); } });
+    $("#confirm-reset").addEventListener("click", () => { const result = demoRepository.reset(); if (result.ok) window.location.reload(); else { closeResetDemo(); showToast("No se pudo restablecer el almacenamiento local."); } });
     $("#order-search").addEventListener("input", renderOrders);
     $("#price-search").addEventListener("input", renderPrices);
     $("#client-search").addEventListener("input", renderClients);

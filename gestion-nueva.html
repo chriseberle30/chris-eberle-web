@@ -280,6 +280,7 @@
           <button class="module-card" data-page="cash"><span class="action-icon">◷</span><span><strong>Caja</strong><small>Ingresos y egresos</small></span></button>
           <button class="module-card" data-page="receivables"><span class="action-icon">◉</span><span><strong>Cuentas por cobrar</strong><small>Saldos de órdenes</small></span></button>
           <button class="module-card" data-page="reports"><span class="action-icon">▤</span><span><strong>Informes</strong><small>Ventas, costos y margen</small></span></button>
+          <button class="module-card" data-page="pending-costs"><span class="action-icon">⌁</span><span><strong>Costos pendientes</strong><small>Órdenes entregadas sin cierre</small></span></button>
         </div>
       </section>
 
@@ -290,6 +291,7 @@
       <section class="page" id="page-cash"><div class="page-title-row"><div class="eyebrow">Finanzas</div><h1>Caja</h1><p class="welcome-note">Resumen de los movimientos ficticios de esta sesión.</p></div><div class="money-kpis" id="cash-kpis"></div><form class="form-card" id="cash-form"><h2>Nuevo movimiento</h2><div class="form-grid"><div class="field"><label for="cash-kind">Tipo</label><select id="cash-kind"><option value="ingreso">Ingreso</option><option value="egreso">Egreso</option></select></div><div class="field"><label for="cash-amount">Importe</label><input id="cash-amount" type="number" min="1" required placeholder="$ 0"></div></div><div class="field"><label for="cash-note">Concepto</label><input id="cash-note" required placeholder="Descripción"></div><button class="primary-button" type="submit">Agregar movimiento de muestra</button></form><div class="list-stack" id="cash-list"></div></section>
       <section class="page" id="page-receivables"><div class="page-title-row"><div class="eyebrow">Finanzas</div><h1>Cuentas por cobrar</h1><p class="welcome-note">Órdenes con saldo pendiente y acceso rápido a su seguimiento.</p></div><div class="money-kpis" id="receivable-kpis"></div><div class="list-stack" id="receivable-list"></div></section>
       <section class="page" id="page-reports"><div class="page-title-row"><div class="eyebrow">Análisis</div><h1>Informes</h1><p class="welcome-note">Resumen de ventas, costos y margen de los datos de muestra.</p></div><div class="money-kpis" id="report-kpis"></div><div class="section-divider">Resultado por actividad</div><div class="list-stack" id="report-breakdown"></div><p class="sample-note">El saldo de caja refleja cobros y movimientos registrados; la ganancia estimada compara ventas con costos cargados. No son el mismo indicador.</p></section>
+      <section class="page" id="page-pending-costs"><div class="page-title-row"><div class="eyebrow">Cierre de órdenes</div><h1>Costos pendientes</h1><p class="welcome-note">Reparaciones entregadas que todavía necesitan registrar sus costos.</p></div><div class="money-kpis" id="pending-cost-kpis"></div><div class="list-stack" id="pending-cost-list"></div></section>
     </main>
   </div>
 
@@ -327,9 +329,11 @@
       <div class="sheet-grabber" aria-hidden="true"></div>
       <div class="sheet-head"><div><h2 id="detail-title">Detalle de orden</h2><p id="detail-subtitle">Seguimiento y pagos de muestra</p></div><button class="close-button" type="button" data-close-detail aria-label="Cerrar">×</button></div>
       <p class="prototype-persist-note" id="detail-device-info"></p>
+      <div class="form-grid" style="margin:10px 0 14px"><a class="filter-chip" id="detail-whatsapp" href="#" target="_blank" rel="noopener noreferrer" hidden>Enviar actualización por WhatsApp</a><button class="filter-chip" id="detail-print" type="button">Imprimir comprobante</button></div>
       <div class="money-kpis" id="order-payment-summary"></div>
       <form id="order-detail-form">
         <div class="two-col"><div class="field"><label for="detail-status">Estado</label><select id="detail-status"><option>Recibido</option><option>Diagnosticando</option><option>Esperando repuesto</option><option>En reparación</option><option>Listo</option><option>Entregado</option><option>Sin reparación</option></select></div><div class="field"><label for="detail-total">Precio acordado</label><input id="detail-total" type="number" min="0" required></div></div>
+        <div class="two-col"><div class="field"><label for="detail-warranty-days">Garantía al entregar (días)</label><input id="detail-warranty-days" type="number" min="0" max="365" value="30"></div><div class="field"><label>Entrega / garantía</label><div class="prototype-persist-note" id="detail-warranty-info">Se calcula al marcar la orden como entregada.</div></div></div>
         <div class="field"><label>Costos de reparación</label><div class="form-grid"><input id="cost-concept" placeholder="Repuesto o insumo" aria-label="Concepto del costo"><input id="cost-amount" type="number" min="1" placeholder="Importe" aria-label="Importe del costo"></div><button class="text-button" id="add-cost" type="button">＋ Agregar costo</button><div class="list-stack" id="order-cost-list"></div></div>
         <div class="field"><label for="detail-payment">Registrar pago</label><input id="detail-payment" type="number" min="0" placeholder="$ 0"></div>
         <div class="field"><label for="detail-method">Medio del pago</label><select id="detail-method"><option>Efectivo</option><option>Transferencia</option><option>Tarjeta</option><option>Otro</option></select></div>
@@ -350,7 +354,8 @@
       { n: 1535, cliente: "Cliente de ejemplo", telefono: "11 0000-0003", modelo: "iPhone 12", falla: "Diagnóstico", estado: "Diagnosticando", total: 0, costo: 0, pagos: [], notas: [], fecha: "Ayer · 15:04" },
       { n: 1534, cliente: "Gremio de muestra", gremio: "Gremio de muestra", modelo: "iPhone 14", falla: "Módulo", estado: "En reparación", total: 310000, costo: 146000, pagos: [], notas: [], fecha: "Ayer · 12:46" },
       { n: 1533, cliente: "Persona de prueba", telefono: "11 0000-0002", modelo: "Motorola G84", falla: "Centro de carga", estado: "Listo", total: 87000, costo: 37000, pagos: [], notas: [], fecha: "Ayer · 11:03" },
-      { n: 1532, cliente: "Cliente de muestra", telefono: "11 0000-0001", modelo: "iPhone 13 Pro", falla: "Cámara trasera", estado: "En reparación", total: 175000, costo: 72000, pagos: [], notas: [], fecha: "Ayer · 10:21" }
+      { n: 1532, cliente: "Cliente de muestra", telefono: "11 0000-0001", modelo: "iPhone 13 Pro", falla: "Cámara trasera", estado: "En reparación", total: 175000, costo: 72000, pagos: [], notas: [], fecha: "Ayer · 10:21" },
+      { n: 1531, cliente: "Cliente de prueba", telefono: "11 0000-0004", modelo: "Samsung S21 FE", falla: "Cambio de módulo", estado: "Entregado", total: 215000, costo: 0, costos: [], pagos: [{ importe: 215000, medio: "Transferencia", fecha: "Ayer · 09:10" }], notas: [], fecha: "Ayer · 09:10", entregada: "2026-11-07T12:10:00.000Z", garantiaDias: 30 }
     ];
     sampleOrders.forEach(order => { order.costos = Number(order.costo) > 0 ? [{ concepto: "Costo cargado", importe: Number(order.costo) }] : []; order.costo = 0; });
     const samplePrices = [
@@ -432,8 +437,12 @@
       $("#detail-title").textContent = `Orden #${String(order.n).padStart(4, "0")}`;
       $("#detail-subtitle").textContent = `${order.cliente || order.gremio} · ${order.modelo} · ${order.falla}`;
       $("#detail-device-info").textContent = `Tel.: ${order.telefono || "sin teléfono"} · IMEI: ${order.imei || "sin cargar"} · Patrón/código: ${order.codigo || "sin cargar"}${order.notas?.length ? ` · Notas: ${order.notas.join(" / ")}` : ""}`;
+      const wa = $("#detail-whatsapp"); const digits = String(order.telefono || "").replace(/\D/g, "");
+      wa.hidden = !digits; wa.href = digits ? `https://wa.me/${digits}?text=${encodeURIComponent(whatsappMessage(order))}` : "#";
       $("#detail-status").value = order.estado;
       $("#detail-total").value = Number(order.total) || 0;
+      $("#detail-warranty-days").value = Number(order.garantiaDias ?? 30);
+      $("#detail-warranty-info").textContent = order.entregada ? warrantyLabel(order) : "Se calcula al marcar la orden como entregada.";
       $("#cost-concept").value = ""; $("#cost-amount").value = "";
       $("#detail-payment").value = "";
       $("#detail-note").value = "";
@@ -479,6 +488,28 @@
       $("#report-kpis").innerHTML = `<div class="money-kpi"><span>Facturación cargada</span><strong>${money(repairSales + accessorySales)}</strong></div><div class="money-kpi"><span>Costos cargados</span><strong>${money(repairCosts + accessoryCost)}</strong></div><div class="money-kpi"><span>Margen bruto estimado</span><strong>${money(gross)}</strong></div><div class="money-kpi"><span>Por cobrar</span><strong>${money(receivables)}</strong></div>`;
       $("#report-breakdown").innerHTML = `<article class="list-card"><div class="list-card-main"><div class="list-card-title">Reparaciones</div><div class="list-card-meta">Facturación ${money(repairSales)} · costos ${money(repairCosts)}</div></div><strong class="list-card-value">${money(repairSales-repairCosts)}</strong></article><article class="list-card"><div class="list-card-main"><div class="list-card-title">Accesorios vendidos</div><div class="list-card-meta">Ventas ${money(accessorySales)} · costo estimado ${money(accessoryCost)}</div></div><strong class="list-card-value">${money(accessorySales-accessoryCost)}</strong></article><article class="list-card"><div class="list-card-main"><div class="list-card-title">Inventario a costo</div><div class="list-card-meta">Valuación del stock actual</div></div><strong class="list-card-value">${money(inventoryValue)}</strong></article>`;
     }
+    function warrantyLabel(order) {
+      const date = new Date(order.entregada); const days = Number(order.garantiaDias ?? 30); const expiry = new Date(date.getTime() + days * 86400000);
+      return `Entregada ${new Intl.DateTimeFormat("es-AR").format(date)} · garantía hasta ${new Intl.DateTimeFormat("es-AR").format(expiry)} (${days} días)`;
+    }
+    function whatsappMessage(order) {
+      const due = Math.max(0, Number(order.total || 0) - paidAmount(order));
+      const statusText = order.estado === "Listo" ? "Tu equipo ya está listo para retirar." : order.estado === "Esperando repuesto" ? "Estamos esperando el repuesto para continuar." : order.estado === "Entregado" ? "La orden figura como entregada." : `El estado actual es: ${order.estado}.`;
+      return `Hola ${order.cliente || ""}, te escribimos de E30.\n\n${statusText}\n\nOrden #${order.n} · ${order.modelo}\nTotal: ${money(order.total)} · Pagado: ${money(paidAmount(order))} · Saldo: ${money(due)}\n\nEste mensaje es una vista previa.`;
+    }
+    function printOrder(order) {
+      const popup = window.open("", "_blank", "width=720,height=760");
+      if (!popup) { showToast("El navegador bloqueó la ventana de impresión."); return; }
+      popup.opener = null;
+      const notes = (order.notas || []).map(note => `<li>${escapeHtml(note)}</li>`).join("");
+      popup.document.write(`<!doctype html><html lang="es"><meta charset="utf-8"><title>Orden #${order.n}</title><style>body{font:15px Arial,sans-serif;max-width:700px;margin:35px auto;padding:0 24px;color:#20233a}header{border-bottom:2px solid #20233a;padding-bottom:14px;margin-bottom:22px}h1{font-size:22px}.row{display:flex;justify-content:space-between;gap:20px;padding:10px 0;border-bottom:1px solid #ddd}.muted{color:#666}footer{margin-top:28px;font-size:12px;color:#666}@media print{button{display:none}}</style><header><strong>E30 · Técnico de celulares</strong><h1>Comprobante de reparación · Orden #${String(order.n).padStart(4,"0")}</h1><div class="muted">Fecha: ${escapeHtml(order.fecha || "")}</div></header><div class="row"><b>Cliente</b><span>${escapeHtml(order.cliente || order.gremio || "")}</span></div><div class="row"><b>Contacto</b><span>${escapeHtml(order.telefono || "—")}</span></div><div class="row"><b>Equipo</b><span>${escapeHtml(order.modelo || "")}</span></div><div class="row"><b>Falla / trabajo</b><span>${escapeHtml(order.falla || "")}</span></div><div class="row"><b>Estado</b><span>${escapeHtml(order.estado || "")}</span></div><div class="row"><b>Total</b><span>${money(order.total)}</span></div><div class="row"><b>Pagado</b><span>${money(paidAmount(order))}</span></div><div class="row"><b>Saldo</b><span>${money(Math.max(0, Number(order.total||0)-paidAmount(order)))}</span></div>${order.entregada?`<div class="row"><b>Garantía</b><span>${escapeHtml(warrantyLabel(order))}</span></div>`:""}<h3>Notas</h3><ul>${notes || "<li>Sin notas</li>"}</ul><footer>Conservá este comprobante. Los datos pertenecen a una vista previa de muestra.</footer><script>window.onload=()=>window.print()<\/script></html>`);
+      popup.document.close();
+    }
+    function renderPendingCosts() {
+      const rows = visibleOrders.filter(order => order.estado === "Entregado" && orderCostTotal(order) === 0);
+      $("#pending-cost-kpis").innerHTML = `<div class="money-kpi"><span>Órdenes por cerrar</span><strong>${rows.length}</strong></div>`;
+      $("#pending-cost-list").innerHTML = rows.map(order => `<article class="list-card"><div class="list-card-main"><div class="list-card-title">#${order.n} · ${escapeHtml(order.cliente || order.gremio)}</div><div class="list-card-meta">${escapeHtml(order.modelo)} · Entregada · Total ${money(order.total)}</div></div><button class="text-button" type="button" data-order-open="${order.n}">Cargar costos</button></article>`).join("") || '<div class="empty-state">No hay costos pendientes en esta muestra.</div>';
+    }
     function openPage(page) {
       $$(".page").forEach(element => element.classList.toggle("active", element.id === `page-${page}`));
       $$("[data-page]").forEach(button => button.classList.toggle("active", button.dataset.page === page));
@@ -491,6 +522,7 @@
       if (page === "cash") renderCash();
       if (page === "receivables") renderReceivables();
       if (page === "reports") renderReports();
+      if (page === "pending-costs") renderPendingCosts();
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
     function showToast(message) {
@@ -576,6 +608,7 @@
       }
       if (orderOpenButton) openOrderDetail(orderOpenButton.dataset.orderOpen);
       if (deleteCostButton) { const order = visibleOrders.find(item => item.n === selectedOrderNumber); if (order) { order.costos.splice(Number(deleteCostButton.dataset.deleteCost), 1); renderOrderPayments(order); renderReports(); showToast("Costo quitado de la muestra."); } }
+      if (event.target.closest("#detail-print")) { const order = visibleOrders.find(item => item.n === selectedOrderNumber); if (order) printOrder(order); }
       if (event.target.closest("[data-close-detail]") || event.target === $("#order-detail-modal")) closeOrderDetail();
     });
     document.addEventListener("keydown", event => { if (event.key === "Escape") { closeOrderModal(); closeOrderDetail(); } });
@@ -590,23 +623,25 @@
       const previousPaid = paidAmount(order); const paymentAmount = Number($("#detail-payment").value) || 0; const newTotal = Number($("#detail-total").value) || 0;
       if (newTotal < previousPaid) { showToast("El precio no puede quedar por debajo de los pagos ya registrados."); return; }
       if (paymentAmount > 0 && previousPaid + paymentAmount > newTotal) { showToast("El pago supera el saldo pendiente de la orden."); return; }
-      order.estado = $("#detail-status").value; order.total = newTotal;
+      const previousStatus = order.estado;
+      order.estado = $("#detail-status").value; order.total = newTotal; order.garantiaDias = Math.max(0, Math.min(365, Number($("#detail-warranty-days").value) || 0));
       if (!order.pagos) order.pagos = [];
       if (paymentAmount > 0) {
         const medio = $("#detail-method").value; order.pagos.push({ importe: paymentAmount, medio, fecha: "Ahora · muestra" });
         sampleCash.push({ tipo: "ingreso", concepto: `Pago orden #${order.n}`, importe: paymentAmount, medio });
       }
       const note = $("#detail-note").value.trim(); if (note) { if (!order.notas) order.notas = []; order.notas.unshift(note); }
-      if (order.estado === "Entregado" && !order.entregada) order.entregada = new Date().toISOString();
+      if (order.estado === "Entregado" && !order.entregada) { order.entregada = new Date().toISOString(); showToast(`Entrega registrada. Garantía de ${order.garantiaDias} días.`); }
+      if (previousStatus === "Entregado" && order.estado !== "Entregado") order.entregada = null;
       renderOrderPayments(order); renderHomeOrders(); renderOrders(); renderClients(); renderCash();
-      renderReceivables(); renderReports();
-      showToast(`Orden #${order.n} actualizada en esta sesión.`);
+      renderReceivables(); renderReports(); renderPendingCosts();
+      if (order.estado !== "Entregado") showToast(`Orden #${order.n} actualizada en esta sesión.`);
     });
     $("#add-cost").addEventListener("click", () => {
       const order = visibleOrders.find(item => item.n === selectedOrderNumber); const concepto = $("#cost-concept").value.trim(); const importe = Number($("#cost-amount").value);
       if (!order || !concepto || importe <= 0) { showToast("Ingresá el concepto y un importe mayor a cero."); return; }
       if (!order.costos) order.costos = Number(order.costo) > 0 ? [{ concepto: "Costo heredado de muestra", importe: Number(order.costo) }] : [];
-      order.costos.push({ concepto, importe }); order.costo = 0; $("#cost-concept").value = ""; $("#cost-amount").value = ""; renderOrderPayments(order); renderReports(); showToast("Costo agregado a la orden de muestra.");
+      order.costos.push({ concepto, importe }); order.costo = 0; $("#cost-concept").value = ""; $("#cost-amount").value = ""; renderOrderPayments(order); renderReports(); renderPendingCosts(); showToast("Costo agregado a la orden de muestra.");
     });
     $("#new-order-form").addEventListener("submit", event => {
       event.preventDefault();

@@ -22,3 +22,7 @@
 .modal{overflow:hidden}.modal-body{scrollbar-gutter:stable}.field{padding-bottom:5px}.field label{color:#344054;font-size:12px;margin:12px 0 7px}.field input,.field select,.field textarea{border-color:#d6dde8;background:#fbfcfe;min-height:44px;transition:border-color .15s,box-shadow .15s}.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px #376df61a;outline:0}.field textarea{min-height:92px}.modal-actions{position:sticky;bottom:0;background:#fff}.modal-actions .button{min-height:42px}.form-grid{column-gap:16px}
 @media(max-width:700px){.modal-body{max-height:calc(92vh - 132px)}.field label{margin-top:10px}.modal-actions{padding-bottom:calc(12px + env(safe-area-inset-bottom))}}
 @media print{.ticket-tracking{page-break-inside:avoid}.ticket-tracking img{width:28mm!important;height:28mm!important}}
+
+.mobile-nav{grid-template-columns:repeat(7,minmax(0,1fr));overflow-x:auto}.mobile-nav button{min-width:48px;font-size:15px}.mobile-nav button span{font-size:9px}@media(max-width:760px){.mobile-nav button span{font-size:9px}.mobile-nav{gap:0}.toolbar{flex-wrap:wrap}.toolbar select{max-width:100%}}
+
+@media(max-width:760px){.mobile-nav{grid-template-columns:repeat(9,minmax(0,1fr))}}

@@ -1,189 +1,63 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Gestión</title>
-<style>
-:root{--ink:#14104c;--blue:#3d5a80;--bg:#f4f5f8;--line:#dfe2ea;--mut:#6b7185;--red:#c62f3a;--ok:#1f8a4c}
-*{box-sizing:border-box}html,body{margin:0}
-body{font:16px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:#1b1e2b;padding-bottom:84px}
-main{max-width:640px;margin:0 auto;padding:12px}
-h1{font-size:20px;margin:6px 0 10px;color:var(--ink)}h2{margin:0 0 4px;font-size:19px}
-input,select,textarea,button{font:inherit;width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff;color:inherit}
-textarea{min-height:64px}label{display:block;font-size:13px;color:var(--mut);margin:12px 0 4px}
-button{width:auto;cursor:pointer;font-weight:600}button.b{background:var(--ink);color:#fff;border-color:var(--ink)}button.r{color:var(--red)}
-.c{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;margin:8px 0}
-.s{color:var(--mut);font-size:14px}.t{background:#e7ebf5;color:var(--ink);border-radius:8px;padding:1px 7px;font-size:12px;font-weight:700;margin-left:6px}
-.row{display:flex;gap:8px;margin:10px 0}.row>*{flex:1}.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.chips button{padding:7px 12px;font-weight:500}
-.f button{padding:8px 13px;font-weight:500;white-space:nowrap}.f{display:flex;gap:6px;overflow-x:auto;margin:8px 0}.f .on,nav .on{background:var(--ink);color:#fff}
-nav{position:fixed;left:0;right:0;bottom:0;display:flex;gap:6px;padding:8px 10px calc(8px + env(safe-area-inset-bottom));background:#fff;border-top:1px solid var(--line)}
-nav button{flex:1;border:0;padding:12px 4px;background:none}nav .on{border-radius:12px}
-#sheet{position:fixed;inset:0;background:rgba(20,16,76,.35);z-index:5;display:flex;align-items:flex-end}#sheet[hidden]{display:none}
-.sh{background:#fff;width:100%;max-width:640px;margin:auto auto 0;border-radius:20px 20px 0 0;padding:16px;max-height:88vh;overflow:auto}
-.x{float:right;border:0;background:none;width:auto}.tot{display:flex;justify-content:space-between;gap:8px;margin:12px 0;font-size:15px}
-#toast{position:fixed;left:12px;right:12px;top:12px;z-index:9;background:var(--ink);color:#fff;padding:12px 14px;border-radius:12px}#toast.bad{background:var(--red)}
-#sug{margin-top:6px;background:#eaf6ee;color:var(--ok);border-color:#bfe3cb}[hidden]{display:none!important}
-#login{max-width:360px;margin:18vh auto;padding:16px}#ticket{display:none}
-@media print{body>*:not(#ticket){display:none!important}#ticket{display:block!important;width:72mm;font:13px/1.35 monospace;color:#000}#ticket h3{margin:0}}
-</style></head><body>
-<div id="toast" hidden></div>
-<form id="login" hidden><h1>Gestión</h1>
-<input id="l-e" type="email" autocomplete="username" placeholder="Email" required>
-<label></label><input id="l-p" type="password" autocomplete="current-password" placeholder="Contraseña" required>
-<div class="row"><button class="b">Entrar</button></div></form>
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#101828">
+  <title>Gestión E30</title>
+  <link rel="stylesheet" href="assets/gestion-v2.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js" defer></script>
+  <script src="assets/e30-gestion-domain.js" defer></script>
+  <script src="assets/gestion-v2.js" defer></script>
+</head>
+<body>
+  <div id="notice" class="notice" role="status" hidden></div>
+  <main id="login-screen" class="login-wrap" hidden>
+    <form id="login-form" class="login-card">
+      <div class="brand-mark">E30</div><p class="eyebrow">SISTEMA DE GESTIÓN</p>
+      <h1>Ingresá a tu cuenta</h1><p class="muted">Acceso privado para el equipo.</p>
+      <label for="login-email">Email</label><input id="login-email" type="email" autocomplete="username" required>
+      <label for="login-password">Contraseña</label><input id="login-password" type="password" autocomplete="current-password" required>
+      <button class="button primary full" type="submit">Iniciar sesión</button>
+      <p id="login-error" class="error" aria-live="polite"></p>
+    </form>
+  </main>
+  <main id="loading-screen" class="loading-wrap"><div class="spinner"></div><p>Conectando con Gestión…</p></main>
+  <div id="app" class="app-shell" hidden>
+    <aside class="sidebar">
+      <a class="brand" href="#ordenes"><span class="brand-mark">E30</span><span><b>Gestión</b><small>Servicio técnico</small></span></a>
+      <div class="env-badge">ENTORNO DE PRUEBAS</div>
+      <nav class="side-nav" aria-label="Navegación principal">
+        <button data-view="ordenes" class="nav-item active"><span>▦</span>Órdenes</button>
+        <button data-view="clientes" class="nav-item"><span>♙</span>Clientes</button>
+        <button data-view="precios" class="nav-item"><span>＄</span>Precios</button>
+        <button data-view="papelera" class="nav-item"><span>⌫</span>Papelera</button>
+      </nav>
+      <div class="sidebar-bottom"><span class="connection-dot"></span><span id="connection-label">Conectando</span><button id="sign-out" class="button ghost full">Cerrar sesión</button></div>
+    </aside>
+    <div class="main-column">
+      <header class="topbar"><button id="menu-toggle" class="icon-button mobile-only" aria-label="Abrir menú">☰</button><div><p class="eyebrow">E30 · i30</p><h1 id="page-title">Órdenes de reparación</h1></div><div class="top-actions"><span id="user-label" class="user-chip"></span><button id="new-order" class="button primary">＋ Nueva orden</button></div></header>
+      <main class="content">
+        <section id="view-ordenes" class="view">
+          <div class="stats-row"><article class="stat-card"><span>Órdenes activas</span><b id="stat-active">—</b></article><article class="stat-card"><span>Listas para entregar</span><b id="stat-ready">—</b></article><article class="stat-card"><span>Saldos pendientes</span><b id="stat-balance">—</b></article></div>
+          <div class="toolbar"><div class="search-wrap"><span>⌕</span><input id="order-search" type="search" placeholder="Buscar por número, cliente, teléfono, equipo…" autocomplete="off"></div><select id="branch-filter" aria-label="Filtrar sucursal"><option value="">Todas las sucursales</option><option>E30</option><option>i30</option></select><select id="state-filter" aria-label="Filtrar estado"><option value="">Todos los estados</option></select></div>
+          <div class="panel table-panel"><div class="panel-heading"><div><h2>Reparaciones</h2><p class="muted">Órdenes actuales y su saldo</p></div><span id="order-count" class="count-label"></span></div><div id="orders-list" class="orders-list"></div></div>
+        </section>
+        <section id="view-clientes" class="view" hidden>
+          <div class="toolbar"><div class="search-wrap"><span>⌕</span><input id="client-search" type="search" placeholder="Buscar por nombre o teléfono…"></div><button id="new-client" class="button primary">＋ Nuevo cliente</button></div>
+          <div id="clients-list" class="client-grid"></div>
+        </section>
+        <section id="view-precios" class="view" hidden>
+          <div class="toolbar"><div class="search-wrap"><span>⌕</span><input id="price-search" type="search" placeholder="Buscar modelo, marca o reparación…"></div><button id="new-price" class="button primary">＋ Agregar precio</button></div>
+          <div class="panel table-panel"><div class="panel-heading"><div><h2>Lista de precios</h2><p class="muted">Tarifas activas para presupuestar reparaciones</p></div><span id="price-count" class="count-label"></span></div><div id="prices-list" class="orders-list"></div></div>
+        </section>
+        <section id="view-papelera" class="view" hidden><div class="panel table-panel"><div class="panel-heading"><div><h2>Órdenes eliminadas</h2><p class="muted">Se conservan y pueden restaurarse</p></div></div><div id="trash-list" class="orders-list"></div></div></section>
+      </main>
+      <nav class="mobile-nav" aria-label="Navegación móvil"><button data-view="ordenes" class="active">▦<span>Órdenes</span></button><button data-view="clientes">♙<span>Clientes</span></button><button data-view="precios">＄<span>Precios</span></button><button data-view="papelera">⌫<span>Papelera</span></button></nav>
+    </div>
+  </div>
+  <dialog id="modal" class="modal"><form id="modal-form" method="dialog"><div class="modal-heading"><div><p class="eyebrow" id="modal-eyebrow"></p><h2 id="modal-title"></h2></div><button type="button" class="icon-button" data-close aria-label="Cerrar">×</button></div><div id="modal-body" class="modal-body"></div><div id="modal-actions" class="modal-actions"></div></form></dialog>
+  <div id="print-area" class="print-area"></div>
+</body>
+</html>
 
-<main id="app" hidden>
-<section id="v-ord"><h1>Órdenes</h1>
-<input id="q" type="search" placeholder="Buscar: número, cliente, gremio, modelo…" oninput="Q=this.value;render()">
-<div class="f" id="fl"></div><div id="list"></div></section>
-
-<section id="v-new" hidden><h1>Nueva orden</h1>
-<form id="nf" onsubmit="crear(event)">
-<div class="row"><div><label>Negocio</label><select id="n-neg"><option>E30</option><option>i30</option></select></div>
-<div><label>Tipo</label><select id="n-tipo" onchange="tg()"><option>Particular</option><option>Gremio</option></select></div></div>
-<div id="gf"><label>Gremio</label><input id="n-gremio" list="dl-g" autocomplete="off" placeholder="Nombre del gremio"></div>
-<label id="cl">Cliente</label><input id="n-cli" autocomplete="off">
-<div id="pf"><label>Teléfono</label><input id="n-tel" type="tel" inputmode="tel"></div>
-<label>Equipo</label><input id="n-mod" list="dl-m" autocomplete="off" placeholder="iPhone 13" oninput="sug()">
-<label>Falla</label><textarea id="n-falla" oninput="sug()"></textarea>
-<div class="chips" id="chips"></div><button type="button" id="sug" hidden></button>
-<div class="row"><div><label>Total</label><input id="n-total" type="number" inputmode="numeric" value="0"></div>
-<div><label>Seña</label><input id="n-sena" type="number" inputmode="numeric" value="0"></div></div>
-<label>Medio de la seña</label><select id="n-medio"><option>Efectivo</option><option>Transferencia</option><option>Mercado Pago</option><option>Tarjeta</option></select>
-<div class="row"><button class="b" id="n-ok">Crear orden</button></div></form>
-<datalist id="dl-g"></datalist><datalist id="dl-m"></datalist></section>
-
-<section id="v-pre" hidden><h1>Precios</h1>
-<input id="pq" type="search" placeholder="Ej.: 13 pantalla" oninput="pre()"><div id="pl"></div></section>
-
-<section id="v-cfg" hidden><h1>Más</h1>
-<div class="c"><b>Importar copia de E30</b><p class="s">Se hace una sola vez, con el archivo que exporta el sistema viejo (Administración → Exportar copia).</p>
-<input type="file" accept=".json" onchange="imp(this.files[0])"><p class="s" id="imp-s"></p></div>
-<div class="row"><button onclick="sb.auth.signOut().then(()=>location.reload())">Salir</button></div></section>
-</main>
-
-<nav id="nv" hidden>
-<button data-v="ord" onclick="go('ord')">Órdenes</button><button data-v="new" onclick="go('new')">＋ Nueva</button>
-<button data-v="pre" onclick="go('pre')">Precios</button><button data-v="cfg" onclick="go('cfg')">Más</button></nav>
-<div id="sheet" hidden onclick="if(event.target===this)cerrar()"></div><div id="ticket"></div>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script>
-const U='https://tovjxgfxuzoobzpumpbv.supabase.co',K='sb_publishable_dX68Bi-XGEP43k2ydf_8Gw_LoRFOjk7';
-const sb=supabase.createClient(U,K,{auth:{persistSession:true,autoRefreshToken:true,lock:async(n,t,f)=>await f()}});
-const $=s=>document.querySelector(s),fmt=n=>'$'+Math.round(+n||0).toLocaleString('es-AR');
-const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const norm=s=>String(s||'').toLowerCase().replace(/iphone|\s+/g,'');
-const ESTADOS=['Recibido','Pendiente','Esperando repuesto','En reparación','Listo','Entregado','Cancelado'];
-const FALLAS=['Pantalla','Batería','Cámara','Pin de carga','Software'];
-let O=JSON.parse(localStorage.o2||'[]'),P=JSON.parse(localStorage.p2||'[]'),F='activas',Q='',busy=0,tm;
-const paid=o=>(o.pagos||[]).reduce((a,p)=>a+ +p.importe,0),saldo=o=>(+o.total||0)-paid(o);
-function toast(m,bad){const t=$('#toast');t.textContent=m;t.className=bad?'bad':'';t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>t.hidden=true,bad?7000:2500)}
-function go(v){document.querySelectorAll('section').forEach(s=>s.hidden=s.id!=='v-'+v);
- document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));if(v==='new')prep();if(v==='pre')pre();scrollTo(0,0)}
-function cerrar(){$('#sheet').hidden=true}
-
-/* ---- arranque: se muestra al instante lo último guardado, y se valida la sesión por detrás ---- */
-const hadSession=Object.keys(localStorage).some(k=>/^sb-.*-auth-token$/.test(k));
-function showApp(){$('#login').hidden=true;$('#app').hidden=false;$('#nv').hidden=false;if(!$('nv .on,#nv .on'))go('ord');render()}
-if(hadSession)showApp();
-sb.auth.getSession().then(({data})=>{
- if(!data.session){$('#app').hidden=true;$('#nv').hidden=true;$('#login').hidden=false;return}
- showApp();load();
- sb.channel('rt').on('postgres_changes',{event:'*',schema:'public',table:'ordenes'},later)
-  .on('postgres_changes',{event:'*',schema:'public',table:'pagos'},later).subscribe();
-});
-$('#login').onsubmit=async e=>{e.preventDefault();
- const {error}=await sb.auth.signInWithPassword({email:$('#l-e').value.trim(),password:$('#l-p').value});
- if(error)return toast('No se pudo entrar: '+error.message,1);location.reload()};
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')load()});
-function later(){clearTimeout(tm);tm=setTimeout(load,400)}
-
-async function load(){
- const [o,p]=await Promise.all([
-  sb.from('ordenes').select('*,pagos(importe,medio,creado)').is('borrada',null).order('id',{ascending:false}).limit(1000),
-  sb.from('precios').select('*').eq('activo',true).order('modelo').limit(3000)]);
- if(o.error||p.error)return toast('Sin conexión: se muestra lo último guardado');
- O=o.data;P=p.data;localStorage.o2=JSON.stringify(O.slice(0,200));localStorage.p2=JSON.stringify(P);render();
-}
-
-/* ---- órdenes ---- */
-function render(){
- $('#fl').innerHTML=['activas',...ESTADOS,'todas'].map(f=>`<button class="${f===F?'on':''}" onclick="F='${f}';render()">${f}</button>`).join('');
- const q=Q.toLowerCase(),fin=['Entregado','Cancelado'];
- const l=O.filter(o=>(F==='todas'||(F==='activas'?!fin.includes(o.estado):o.estado===F))&&
-  (!q||[o.id,o.cliente,o.gremio,o.modelo,o.telefono].join(' ').toLowerCase().includes(q)));
- $('#list').innerHTML=l.slice(0,120).map(o=>`<div class="c" onclick="det(${o.id})"><b>#${o.id}</b>${o.negocio==='i30'?'<span class="t">i30</span>':''}${o.tipo==='Gremio'?`<span class="t">${esc(o.gremio)}</span>`:''}
- <div>${esc(o.modelo)} · ${esc(o.cliente||'')}</div><div class="s">${o.estado} · ${fmt(o.total)}${o.total>0&&saldo(o)>0?' · debe '+fmt(saldo(o)):''}</div></div>`).join('')||'<p class="s">No hay órdenes.</p>';
-}
-function det(id){const o=O.find(x=>x.id===id);if(!o)return;const s=saldo(o),d=String(o.telefono||'').replace(/\D/g,'').replace(/^(0|54|9)+/,'');
- $('#sheet').innerHTML=`<div class="sh"><button class="x" onclick="cerrar()">✕</button><h2>#${o.id} · ${esc(o.cliente||o.gremio||'')}</h2>
- <p class="s">${o.negocio} · ${esc(o.modelo)} · ${esc(o.falla)}</p>${o.tipo==='Gremio'?`<p>Gremio: <b>${esc(o.gremio)}</b></p>`:''}
- ${d?`<p><a href="https://wa.me/549${d}">WhatsApp ${esc(o.telefono)}</a></p>`:''}
- <label>Estado</label><select onchange="est(${o.id},this.value)">${ESTADOS.map(e=>`<option ${e===o.estado?'selected':''}>${e}</option>`).join('')}</select>
- <div class="tot"><span>Total ${fmt(o.total)}</span><span>Pagado ${fmt(paid(o))}</span><b>Saldo ${fmt(s)}</b></div>
- ${s>0?`<div class="row"><input id="d-m" type="number" inputmode="numeric" value="${s}"><select id="d-med"><option>Efectivo</option><option>Transferencia</option><option>Mercado Pago</option><option>Tarjeta</option></select><button class="b" onclick="cobrar(${o.id})">Cobrar</button></div>`:''}
- <div class="row"><button onclick="ticket(${o.id})">Imprimir ticket</button><button class="r" onclick="papelera(${o.id})">Papelera</button></div></div>`;
- $('#sheet').hidden=false}
-async function est(id,v){const o=O.find(x=>x.id===id),s=saldo(o);
- const {error}=await sb.from('ordenes').update(v==='Entregado'?{estado:v,entregada:new Date().toISOString()}:{estado:v}).eq('id',id);
- if(error)return toast('No se guardó: '+error.message,1);
- if(v==='Entregado'&&o.total>0&&s>0&&confirm('¿Te pagaron los '+fmt(s)+' que quedaban?'))await cobrar(id,s);
- await load();det(id)}
-async function cobrar(id,m){const o=O.find(x=>x.id===id),monto=m||+$('#d-m').value;if(!(monto>0))return toast('Poné un monto',1);
- const {error}=await sb.from('pagos').insert({orden_id:id,importe:monto,medio:$('#d-med')?.value||'Efectivo'});
- if(error)return toast('No se guardó el cobro: '+error.message,1);toast('Cobro registrado');if(!m){await load();det(id)}}
-async function papelera(id){if(!confirm('¿Mandar la orden #'+id+' a la papelera?'))return;
- const {error}=await sb.from('ordenes').update({borrada:new Date().toISOString()}).eq('id',id);
- if(error)return toast('No se pudo: '+error.message,1);cerrar();load()}
-
-/* ---- nueva orden ---- */
-function tg(){const g=$('#n-tipo').value==='Gremio';$('#gf').hidden=!g;$('#pf').hidden=g;$('#cl').textContent=g?'Cliente (opcional)':'Cliente'}
-function prep(){$('#n-neg').value=localStorage.neg||'E30';tg();
- $('#dl-g').innerHTML=[...new Set(O.filter(o=>o.gremio).map(o=>o.gremio.trim()))].sort().map(g=>`<option value="${esc(g)}">`).join('');
- $('#dl-m').innerHTML=[...new Set(P.map(p=>p.modelo))].map(m=>`<option value="${esc(m)}">`).join('');
- $('#chips').innerHTML=FALLAS.map(f=>`<button type="button" onclick="chip('${f}')">${f}</button>`).join('')}
-function chip(f){const t=$('#n-falla');if(!t.value.toLowerCase().includes(f.toLowerCase()))t.value=(t.value?t.value+', ':'')+f;sug()}
-function sug(){const h=$('#sug'),m=norm($('#n-mod').value),f=$('#n-falla').value.toLowerCase();h.hidden=true;if(!m)return;
- const k=FALLAS.find(x=>f.includes(x.toLowerCase()));if(!k)return;
- const r=P.find(p=>norm(p.modelo)===m&&norm(p.servicio).includes(norm(k)));
- if(r){h.textContent='Precio sugerido '+fmt(r.precio)+' — tocá para usarlo';h.onclick=()=>{$('#n-total').value=r.precio;h.hidden=true};h.hidden=false}}
-async function crear(e){e.preventDefault();if(busy)return;const v=i=>$(i).value.trim(),gr=v('#n-tipo')==='Gremio';
- const row={negocio:v('#n-neg'),tipo:v('#n-tipo'),gremio:gr?v('#n-gremio'):null,cliente:v('#n-cli')||null,telefono:gr?null:(v('#n-tel')||null),
-  marca:'iPhone',modelo:v('#n-mod'),falla:v('#n-falla'),total:+v('#n-total')||0};
- if(gr&&!row.gremio)return toast('Falta el gremio',1);if(!gr&&!row.cliente)return toast('Falta el cliente',1);if(!row.modelo)return toast('Falta el equipo',1);
- busy=1;$('#n-ok').textContent='Guardando…';
- const {data,error}=await sb.from('ordenes').insert(row).select().single();
- busy=0;$('#n-ok').textContent='Crear orden';
- if(error)return toast('NO se guardó la orden: '+error.message,1);
- const sena=+v('#n-sena')||0;if(sena>0)await sb.from('pagos').insert({orden_id:data.id,importe:sena,medio:v('#n-medio')});
- localStorage.neg=row.negocio;$('#nf').reset();$('#sug').hidden=true;await load();go('ord');toast('Orden #'+data.id+' creada');ticket(data.id)}
-
-/* ---- ticket (impresión del sistema; la térmica por QZ queda para el siguiente paso) ---- */
-function ticket(id){const o=O.find(x=>x.id===id);if(!o)return;
- const B=o.negocio==='i30'?['i30 | iPhone Service','Piovano 2960 — Moreno','@i30.moreno']:['E30 | Técnico de celulares','Demóstenes 3101 — Las Flores','@eberle30'];
- $('#ticket').innerHTML=`<h3>${B[0]}</h3>${B[1]}<br>${B[2]}<hr><b>ORDEN #${o.id}</b><br>${new Date(o.creada).toLocaleDateString('es-AR')}<br>${esc(o.cliente||o.gremio||'')} ${esc(o.telefono||'')}<br>${esc(o.modelo)}<br>${esc(o.falla)}<hr>Total ${fmt(o.total)}<br>Pagado ${fmt(paid(o))}<br><b>Saldo ${fmt(saldo(o))}</b>`;
- setTimeout(()=>print(),150)}
-
-/* ---- precios ---- */
-function pre(){const t=$('#pq').value.toLowerCase().split(/\s+/).filter(Boolean);
- const l=P.filter(p=>t.every(w=>(p.modelo+' '+p.servicio).toLowerCase().includes(w))).slice(0,40);
- $('#pl').innerHTML=l.map(p=>`<div class="c"><b>${fmt(p.precio)}</b> · ${esc(p.marca)} ${esc(p.modelo)} — ${esc(p.servicio)}</div>`).join('')||'<p class="s">Sin resultados.</p>'}
-
-/* ---- importar la copia del sistema viejo (una sola vez) ---- */
-async function imp(f){if(!f)return;const s=$('#imp-s'),say=m=>s.textContent=m;
- try{const d=JSON.parse(await f.text());if(d.app!=='E30'||!Array.isArray(d.orders))throw Error('No parece una copia de E30');
- if(!confirm('Importar '+d.orders.length+' órdenes y '+(d.prices||[]).length+' precios?'))return;
- const ord=d.orders.map(o=>({id:o.n,creada:o.createdAt||undefined,negocio:o.negocio==='i30'?'i30':'E30',tipo:o.tipoOrden==='Gremio'?'Gremio':'Particular',
-  gremio:o.gremio||null,cliente:o.cliente||null,telefono:o.telefono||null,marca:o.marca||'iPhone',modelo:o.modelo||null,falla:o.falla||null,
-  imei:o.imei||null,codigo:o.desbloqueo||null,notas:[o.trabajo,o.obsTecnico,o.obsEquipo].filter(Boolean).join(' | ')||null,
-  estado:o.estado||'Recibido',total:+o.total||0,costo:(o.costos||[]).reduce((a,c)=>a+(+c.importe||0),0),entregada:o.entregadoAt||null}));
- for(let i=0;i<ord.length;i+=200){say('Órdenes '+i+'/'+ord.length);const {error}=await sb.from('ordenes').upsert(ord.slice(i,i+200),{onConflict:'id'});if(error)throw error}
- const pg=[];d.orders.forEach(o=>{if(+o.sena>0)pg.push({orden_id:o.n,importe:+o.sena,medio:o.pago||'Efectivo'});
-  (o.pagos||[]).forEach(p=>{if(+p.importe>0)pg.push({orden_id:o.n,importe:+p.importe,medio:p.medio||'Efectivo',creado:p.createdAt||undefined})})});
- const ids=ord.map(o=>o.id);for(let i=0;i<ids.length;i+=200){const {error}=await sb.from('pagos').delete().in('orden_id',ids.slice(i,i+200));if(error)throw error}
- for(let i=0;i<pg.length;i+=200){say('Pagos '+i+'/'+pg.length);const {error}=await sb.from('pagos').insert(pg.slice(i,i+200));if(error)throw error}
- const pr=(d.prices||[]).map(p=>({marca:p.marca||'iPhone',modelo:p.modelo,servicio:p.reparacion,precio:+p.precio||0,activo:p.activo!==false}));
- await sb.from('precios').delete().gte('id',0);
- for(let i=0;i<pr.length;i+=200){const {error}=await sb.from('precios').insert(pr.slice(i,i+200));if(error)throw error}
- say('Listo: '+ord.length+' órdenes, '+pg.length+' pagos, '+pr.length+' precios. Ahora corré la última línea del SQL (setval).');await load();
- }catch(e){say('Error: '+(e.message||e));toast('La importación falló: '+(e.message||e),1)}}
-</script></body></html>

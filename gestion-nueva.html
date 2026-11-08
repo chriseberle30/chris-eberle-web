@@ -443,6 +443,9 @@
     const BRANCH_I30 = "Piovano 2960 — Moreno";
     function normalizedSearch(value) { return String(value ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("es-AR").replace(/\s+/g, " ").trim(); }
     function priceBrandKey(value) { const key = normalizedSearch(value); return key === "apple" || key === "iphone" ? "iphone" : key; }
+    function priceSearchText(value) { return normalizedSearch(value).replace(/\bapple\b/g, "iphone").replace(/\bdisplay\b/g, "pantalla").replace(/\bbattery\b/g, "bateria").replace(/\bcamera\b/g, "camara").replace(/([a-z])([0-9])/g, "$1 $2").replace(/([0-9])([a-z])/g, "$1 $2").replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ").trim(); }
+    function priceBrandTokens() { const tokens = new Set(samplePrices.flatMap(item => priceSearchText(item.marca).split(" "))); tokens.add("apple"); tokens.add("iphone"); return tokens; }
+    function priceModelTokens(value, brands) { return priceSearchText(value).split(" ").filter(token => token && !brands.has(token)); }
     function branchKey(record) {
       const local = String(record?.local || "").toLocaleLowerCase("es-AR");
       if (local.includes("moreno") || local.includes("piovano")) return "i30";
@@ -514,15 +517,15 @@
       $("#all-orders").innerHTML = matches.map(renderOrderRow).join("") || '<div class="empty-state">No encontré órdenes con esa búsqueda.</div>';
     }
     function renderPrices() {
-      const query = normalizedSearch($("#price-search").value).replace(/\bapple\b/g, "iphone");
+      const query = priceSearchText($("#price-search").value);
       const words = query.split(" ").filter(Boolean);
       const brand = priceBrandKey(activeBrand);
-      const matches = samplePrices.filter(item => item.activo !== false && (activeBrand === "Todos" || priceBrandKey(item.marca) === brand) && words.every(word => normalizedSearch(`${item.marca} ${item.modelo} ${item.servicio}`).replace(/\bapple\b/g, "iphone").includes(word)));
-      matches.sort((a, b) => {
-        const queryModelWords = words.filter(word => !["pantalla", "bateria", "camara", "trasera", "frontal", "pin", "carga", "modulo", "diagnostico", "centro", "reparacion"].includes(word));
-        const modelPenalty = item => normalizedSearch(item.modelo).split(" ").filter(word => !queryModelWords.includes(word)).length;
-        return modelPenalty(a) - modelPenalty(b) || a.modelo.localeCompare(b.modelo, "es", { numeric: true }) || a.servicio.localeCompare(b.servicio, "es");
-      });
+      const brands = priceBrandTokens();
+      const services = new Set(samplePrices.flatMap(item => priceSearchText(item.servicio).split(" ")));
+      const queryModelWords = words.filter(word => !brands.has(word) && !services.has(word));
+      const matches = samplePrices.filter(item => item.activo !== false && (activeBrand === "Todos" || priceBrandKey(item.marca) === brand) && words.every(word => priceSearchText(`${item.marca} ${item.modelo} ${item.servicio}`).includes(word)));
+      const modelScore = item => { const model = priceModelTokens(item.modelo, brands); const missing = queryModelWords.filter(word => !model.includes(word)).length; const extra = model.filter(word => !queryModelWords.includes(word)).length; return missing * 100 + extra; };
+      matches.sort((a, b) => modelScore(a) - modelScore(b) || a.modelo.localeCompare(b.modelo, "es", { numeric: true }) || a.servicio.localeCompare(b.servicio, "es"));
       $("#price-results").innerHTML = matches.map(item => `<div class="price-item-wrap"><button class="price-item" type="button" data-price-model="${escapeHtml(item.modelo)}" data-price-brand="${escapeHtml(item.marca)}" data-price-service="${escapeHtml(item.servicio)}" data-price-value="${item.precio}"><span class="price-item-main"><span class="price-model">${escapeHtml(item.marca)} ${escapeHtml(item.modelo)}</span><span class="price-repair">${escapeHtml(item.servicio)}</span></span><span class="price-value">${money(item.precio)}</span></button><button class="text-button" type="button" data-price-disable="${samplePrices.indexOf(item)}">Desactivar</button></div>`).join("") || '<div class="empty-state">No encontré ese precio.</div>';
     }
     function renderClients() {
@@ -709,12 +712,12 @@
       updateSuggestion();
     }
     function updateSuggestion() {
-      const model = $("#device").value.toLocaleLowerCase("es-AR").replace(/^iphone\s*/i, "").trim();
-      const brand = $("#order-brand").value.trim().toLocaleLowerCase("es-AR");
-      const fault = $("#fault").value.toLocaleLowerCase("es-AR");
-      const brandKey = value => /^(apple|iphone)$/.test(value) ? "iphone" : value;
-      const candidates = samplePrices.filter(item => item.modelo.toLocaleLowerCase("es-AR") === model && fault.includes(item.servicio.toLocaleLowerCase("es-AR")));
-      const match = brand ? candidates.find(item => brandKey(item.marca.toLocaleLowerCase("es-AR")) === brandKey(brand)) : candidates.length === 1 ? candidates[0] : null;
+      const brands = priceBrandTokens();
+      const model = priceModelTokens($("#device").value, brands).join(" ");
+      const brand = priceBrandKey($("#order-brand").value);
+      const fault = priceSearchText($("#fault").value);
+      const candidates = samplePrices.filter(item => priceModelTokens(item.modelo, brands).join(" ") === model && fault.includes(priceSearchText(item.servicio)));
+      const match = $("#order-brand").value ? candidates.find(item => priceBrandKey(item.marca) === brand) : candidates.length === 1 ? candidates[0] : null;
       const suggestion = $("#price-suggestion");
       suggestion.classList.toggle("show", Boolean(match));
       if (match) {

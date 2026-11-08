@@ -197,6 +197,8 @@
       .order-meta { font-size: 11px; }
       .more-grid { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; }
       .form-card { max-width: 660px; padding: 17px; }
+      .stock-edit { grid-column: 1 / -1; align-items: end; gap: 8px; }
+      .price-item-wrap { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 8px; }
       .list-stack { gap: 9px; }
       .modal-backdrop { align-items: center; padding: 20px; }
       .sheet { max-height: min(90dvh, 800px); padding: 13px 24px 25px; border-radius: 23px; }
@@ -274,6 +276,7 @@
         <div class="page-title-row"><div class="eyebrow">Consulta rápida</div><h1 id="prices-title">Buscar precio</h1><p class="welcome-note">Modelo y reparación; el resultado aparece al instante.</p></div>
         <label class="search-box"><svg viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg><input id="price-search" type="search" placeholder="Ej.: iPhone 13 pantalla" autocomplete="off"></label>
         <div class="filter-row" id="price-filters" aria-label="Filtrar precios"><button class="filter-chip active" type="button" data-brand="Todos">Todos</button><button class="filter-chip" type="button" data-brand="iPhone">iPhone</button><button class="filter-chip" type="button" data-brand="Motorola">Motorola</button><button class="filter-chip" type="button" data-brand="Samsung">Samsung</button></div>
+        <form class="form-card" id="price-form"><h2>Agregar o actualizar precio</h2><div class="form-grid"><div class="field"><label for="price-brand">Marca</label><input id="price-brand" required placeholder="Ej.: Samsung"></div><div class="field"><label for="price-model">Modelo</label><input id="price-model" required placeholder="Ej.: A55"></div></div><div class="form-grid"><div class="field"><label for="price-service">Reparación</label><input id="price-service" required placeholder="Ej.: Pantalla"></div><div class="field"><label for="price-amount">Precio</label><input id="price-amount" type="number" min="1" required placeholder="$ 0"></div></div><button class="primary-button" type="submit">Guardar precio de muestra</button></form>
         <div class="price-list" id="price-results"></div>
         <p class="sample-note">Precios inventados para mostrar el diseño. No uses estos importes para presupuestar.</p>
       </section>
@@ -292,11 +295,11 @@
         </div>
       </section>
 
-      <section class="page" id="page-clients"><div class="page-title-row"><div class="eyebrow">Personas</div><h1>Clientes</h1><p class="welcome-note">Ficha e historial de reparaciones de ejemplo.</p></div><label class="search-box"><input id="client-search" type="search" placeholder="Buscar nombre o teléfono"></label><div class="list-stack" id="client-list"></div></section>
-      <section class="page" id="page-stock"><div class="page-title-row"><div class="eyebrow">Inventario</div><h1>Stock</h1><p class="welcome-note">Ajustes temporales para revisar el flujo visual.</p></div><div class="money-kpis" id="stock-kpis"></div><div class="list-stack" id="stock-list"></div></section>
+      <section class="page" id="page-clients"><div class="page-title-row"><div class="eyebrow">Personas</div><h1>Clientes</h1><p class="welcome-note">Fichas con contacto, saldo e historial de reparaciones.</p></div><form class="form-card" id="client-form"><h2>Agregar cliente</h2><div class="form-grid"><div class="field"><label for="client-new-name">Nombre</label><input id="client-new-name" required placeholder="Nombre y apellido"></div><div class="field"><label for="client-new-phone">Teléfono</label><input id="client-new-phone" type="tel" placeholder="11 1234-5678"></div></div><button class="primary-button" type="submit">Guardar cliente de muestra</button></form><label class="search-box"><input id="client-search" type="search" placeholder="Buscar nombre o teléfono"></label><div class="list-stack" id="client-list"></div></section>
+      <section class="page" id="page-stock"><div class="page-title-row"><div class="eyebrow">Inventario</div><h1>Stock</h1><p class="welcome-note">Catálogo, existencias, costo y precio de venta.</p></div><form class="form-card" id="stock-form"><h2>Agregar producto</h2><div class="form-grid"><div class="field"><label for="stock-name">Producto</label><input id="stock-name" required placeholder="Ej.: Funda iPhone 13"></div><div class="field"><label for="stock-category">Categoría</label><input id="stock-category" required placeholder="Accesorios"></div></div><div class="form-grid"><div class="field"><label for="stock-qty">Cantidad inicial</label><input id="stock-qty" type="number" min="0" required value="0"></div><div class="field"><label for="stock-cost">Costo unitario</label><input id="stock-cost" type="number" min="0" required placeholder="$ 0"></div></div><div class="field"><label for="stock-price">Precio de venta</label><input id="stock-price" type="number" min="1" required placeholder="$ 0"></div><button class="primary-button" type="submit">Guardar producto de muestra</button></form><div class="money-kpis" id="stock-kpis"></div><div class="list-stack" id="stock-list"></div></section>
       <section class="page" id="page-sales"><div class="page-title-row"><div class="eyebrow">Mostrador</div><h1>Ventas</h1><p class="welcome-note">Ventas ficticias; el total se refleja en la caja de muestra.</p></div><form class="form-card" id="sale-form"><h2>Registrar venta</h2><div class="field"><label for="sale-product">Producto</label><select id="sale-product" required></select></div><div class="form-grid"><div class="field"><label for="sale-qty">Cantidad</label><input id="sale-qty" type="number" min="1" value="1" required></div><div class="field"><label for="sale-method">Medio de pago</label><select id="sale-method"><option>Efectivo</option><option>Transferencia</option><option>Tarjeta</option></select></div></div><button class="primary-button" type="submit">Registrar venta de muestra</button></form><div class="section-divider">Movimientos recientes</div><div class="list-stack" id="sales-list"></div></section>
       <section class="page" id="page-budgets"><div class="page-title-row"><div class="eyebrow">Reparaciones</div><h1>Presupuestos</h1><p class="welcome-note">Crear estimaciones de ejemplo sin abrir una orden.</p></div><form class="form-card" id="budget-form"><h2>Nuevo presupuesto</h2><div class="field"><label for="budget-client">Cliente</label><input id="budget-client" required placeholder="Nombre del cliente"></div><div class="form-grid"><div class="field"><label for="budget-device">Equipo</label><input id="budget-device" required placeholder="Modelo"></div><div class="field"><label for="budget-amount">Importe</label><input id="budget-amount" type="number" min="0" required placeholder="$ 0"></div></div><div class="field"><label for="budget-work">Trabajo</label><input id="budget-work" required placeholder="Reparación estimada"></div><button class="primary-button" type="submit">Guardar presupuesto de muestra</button></form><div class="list-stack" id="budget-list"></div></section>
-      <section class="page" id="page-cash"><div class="page-title-row"><div class="eyebrow">Finanzas</div><h1>Caja</h1><p class="welcome-note">Resumen de los movimientos ficticios de esta sesión.</p></div><div class="money-kpis" id="cash-kpis"></div><form class="form-card" id="cash-form"><h2>Nuevo movimiento</h2><div class="form-grid"><div class="field"><label for="cash-kind">Tipo</label><select id="cash-kind"><option value="ingreso">Ingreso</option><option value="egreso">Egreso</option></select></div><div class="field"><label for="cash-amount">Importe</label><input id="cash-amount" type="number" min="1" required placeholder="$ 0"></div></div><div class="field"><label for="cash-note">Concepto</label><input id="cash-note" required placeholder="Descripción"></div><button class="primary-button" type="submit">Agregar movimiento de muestra</button></form><div class="list-stack" id="cash-list"></div></section>
+      <section class="page" id="page-cash"><div class="page-title-row"><div class="eyebrow">Finanzas</div><h1>Caja</h1><p class="welcome-note">Resumen de los movimientos ficticios de esta sesión.</p></div><div class="money-kpis" id="cash-kpis"></div><form class="form-card" id="cash-form"><h2>Nuevo movimiento</h2><div class="form-grid"><div class="field"><label for="cash-kind">Tipo</label><select id="cash-kind"><option value="ingreso">Ingreso</option><option value="egreso">Egreso</option></select></div><div class="field"><label for="cash-amount">Importe</label><input id="cash-amount" type="number" min="1" required placeholder="$ 0"></div></div><div class="form-grid"><div class="field"><label for="cash-note">Concepto</label><input id="cash-note" required placeholder="Descripción"></div><div class="field"><label for="cash-method">Medio</label><select id="cash-method"><option>Efectivo</option><option>Transferencia</option><option>Tarjeta</option><option>Otro</option></select></div></div><button class="primary-button" type="submit">Agregar movimiento de muestra</button></form><div class="list-stack" id="cash-list"></div></section>
       <section class="page" id="page-receivables"><div class="page-title-row"><div class="eyebrow">Finanzas</div><h1>Cuentas por cobrar</h1><p class="welcome-note">Órdenes con saldo pendiente y acceso rápido a su seguimiento.</p></div><div class="money-kpis" id="receivable-kpis"></div><div class="list-stack" id="receivable-list"></div></section>
       <section class="page" id="page-reports"><div class="page-title-row"><div class="eyebrow">Análisis</div><h1>Informes</h1><p class="welcome-note">Resumen de ventas, costos y margen de los datos de muestra.</p></div><div class="money-kpis" id="report-kpis"></div><div class="section-divider">Resultado por actividad</div><div class="list-stack" id="report-breakdown"></div><p class="sample-note">El saldo de caja refleja cobros y movimientos registrados; la ganancia estimada compara ventas con costos cargados. No son el mismo indicador.</p></section>
       <section class="page" id="page-pending-costs"><div class="page-title-row"><div class="eyebrow">Cierre de órdenes</div><h1>Costos pendientes</h1><p class="welcome-note">Reparaciones entregadas que todavía necesitan registrar sus costos.</p></div><div class="money-kpis" id="pending-cost-kpis"></div><div class="list-stack" id="pending-cost-list"></div></section>
@@ -398,7 +401,7 @@
     ];
     const sampleSales = [{ nombre: "Vidrio templado universal", cantidad: 1, total: 4500, medio: "Efectivo", fecha: "Hoy · muestra" }];
     const sampleBudgets = [{ cliente: "Persona de prueba", equipo: "Samsung A54", trabajo: "Pin de carga", importe: 132000, estado: "Pendiente" }];
-    const sampleCash = [{ tipo: "ingreso", concepto: "Seña orden #1538", importe: 50000, medio: "Efectivo" }, { tipo: "egreso", concepto: "Compra de insumos", importe: 12000, medio: "Efectivo" }, { tipo: "ingreso", concepto: "Venta de accesorio", importe: 4500, medio: "Efectivo" }];
+    const sampleCash = [{ tipo: "ingreso", concepto: "Pago posterior orden #1538", importe: 50000, medio: "Efectivo" }, { tipo: "egreso", concepto: "Compra de insumos", importe: 12000, medio: "Efectivo" }, { tipo: "ingreso", concepto: "Venta de accesorio", importe: 4500, medio: "Efectivo" }];
     const demoRepository = window.E30DemoRepository.createBrowserDemoRepository(window.localStorage, "e30-gestion-preview-v1");
     const savedDemoState = demoRepository.loadSnapshot();
     if (savedDemoState) {
@@ -408,6 +411,7 @@
       sampleSales.splice(0, sampleSales.length, ...savedDemoState.sales);
       sampleBudgets.splice(0, sampleBudgets.length, ...savedDemoState.budgets);
       sampleCash.splice(0, sampleCash.length, ...savedDemoState.cash);
+      if (Array.isArray(savedDemoState.prices) && savedDemoState.prices.length) samplePrices.splice(0, samplePrices.length, ...savedDemoState.prices);
     }
     sampleOrders.forEach(order => { if (!Array.isArray(order.costos)) order.costos = Number(order.costo) > 0 ? [{ concepto: "Costo cargado", importe: Number(order.costo) }] : []; order.costo = 0; if (!Array.isArray(order.pagos)) order.pagos = []; });
     let visibleOrders = sampleOrders.slice();
@@ -422,11 +426,11 @@
     const money = value => new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(Number(value) || 0);
     const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
     const statusClass = status => status === "Listo" ? "ready" : status === "Esperando repuesto" ? "waiting" : "repair";
-    const paidAmount = order => (order.pagos || []).reduce((sum, payment) => sum + Number(payment.importe || 0), 0);
+    const paidAmount = order => Number(order.sena || 0) + (order.pagos || []).reduce((sum, payment) => sum + Number(payment.importe || 0), 0);
     const orderCostTotal = order => (order.costos || []).reduce((sum, cost) => sum + Number(cost.importe || 0), 0) || Number(order.costo || 0);
     const phoneIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.3"/><path d="M10 18.2h4"/></svg>';
     function saveDemoState() {
-      const result = demoRepository.saveSnapshot({ orders: visibleOrders, clients: sampleClients, stock: sampleStock, sales: sampleSales, budgets: sampleBudgets, cash: sampleCash });
+      const result = demoRepository.saveSnapshot({ orders: visibleOrders, clients: sampleClients, stock: sampleStock, sales: sampleSales, budgets: sampleBudgets, cash: sampleCash, prices: samplePrices });
       if (result.ok) {
         $("#demo-save-status").textContent = " · Guardado en este dispositivo";
       } else {
@@ -459,8 +463,8 @@
     function renderPrices() {
       const query = $("#price-search").value.trim().toLocaleLowerCase("es-AR");
       const words = query.split(/\s+/).filter(Boolean);
-      const matches = samplePrices.filter(item => (activeBrand === "Todos" || item.marca === activeBrand) && words.every(word => `${item.marca} ${item.modelo} ${item.servicio}`.toLocaleLowerCase("es-AR").includes(word)));
-      $("#price-results").innerHTML = matches.map(item => `<button class="price-item" type="button" data-price-model="${escapeHtml(item.modelo)}" data-price-brand="${escapeHtml(item.marca)}" data-price-service="${escapeHtml(item.servicio)}" data-price-value="${item.precio}"><span class="price-item-main"><span class="price-model">${escapeHtml(item.marca)} ${escapeHtml(item.modelo)}</span><span class="price-repair">${escapeHtml(item.servicio)}</span></span><span class="price-value">${money(item.precio)}</span></button>`).join("") || '<div class="empty-state">No encontré ese precio.</div>';
+      const matches = samplePrices.filter(item => item.activo !== false && (activeBrand === "Todos" || item.marca === activeBrand) && words.every(word => `${item.marca} ${item.modelo} ${item.servicio}`.toLocaleLowerCase("es-AR").includes(word)));
+      $("#price-results").innerHTML = matches.map(item => `<div class="price-item-wrap"><button class="price-item" type="button" data-price-model="${escapeHtml(item.modelo)}" data-price-brand="${escapeHtml(item.marca)}" data-price-service="${escapeHtml(item.servicio)}" data-price-value="${item.precio}"><span class="price-item-main"><span class="price-model">${escapeHtml(item.marca)} ${escapeHtml(item.modelo)}</span><span class="price-repair">${escapeHtml(item.servicio)}</span></span><span class="price-value">${money(item.precio)}</span></button><button class="text-button" type="button" data-price-disable="${samplePrices.indexOf(item)}">Desactivar</button></div>`).join("") || '<div class="empty-state">No encontré ese precio.</div>';
     }
     function renderClients() {
       const query = $("#client-search").value.trim().toLocaleLowerCase("es-AR");
@@ -489,18 +493,19 @@
       const paid = paidAmount(order); const balance = Math.max(0, Number(order.total || 0) - paid);
       const costs = orderCostTotal(order);
       $("#order-payment-summary").innerHTML = `<div class="money-kpi"><span>Total</span><strong>${money(order.total)}</strong></div><div class="money-kpi"><span>Pagado</span><strong>${money(paid)}</strong></div><div class="money-kpi"><span>Saldo</span><strong>${money(balance)}</strong></div><div class="money-kpi"><span>Costos</span><strong>${money(costs)}</strong></div><div class="money-kpi"><span>Margen bruto estimado</span><strong>${money(Number(order.total || 0) - costs)}</strong></div>`;
-      $("#order-payment-list").innerHTML = (order.pagos || []).map(payment => `<article class="list-card"><div class="list-card-main"><div class="list-card-title">${escapeHtml(payment.fecha || "Pago de muestra")}</div><div class="list-card-meta">${escapeHtml(payment.medio || "Efectivo")}</div></div><strong class="list-card-value">${money(payment.importe)}</strong></article>`).join("") || '<div class="empty-state">Esta orden todavía no tiene pagos.</div>';
+      const depositRow = Number(order.sena) > 0 ? `<article class="list-card"><div class="list-card-main"><div class="list-card-title">Seña inicial</div><div class="list-card-meta">Cobro inicial de la orden</div></div><strong class="list-card-value">${money(order.sena)}</strong></article>` : "";
+      $("#order-payment-list").innerHTML = depositRow + (order.pagos || []).map(payment => `<article class="list-card"><div class="list-card-main"><div class="list-card-title">${escapeHtml(payment.fecha || "Pago de muestra")}</div><div class="list-card-meta">${escapeHtml(payment.medio || "Efectivo")}</div></div><strong class="list-card-value">${money(payment.importe)}</strong></article>`).join("") || (depositRow ? "" : '<div class="empty-state">Esta orden todavía no tiene pagos.</div>');
       $("#order-cost-list").innerHTML = (order.costos || []).map((cost, index) => `<article class="list-card"><div class="list-card-main"><div class="list-card-title">${escapeHtml(cost.concepto)}</div><div class="list-card-meta">Costo de reparación</div></div><strong class="list-card-value">${money(cost.importe)}</strong><button type="button" class="text-button" data-delete-cost="${index}" aria-label="Quitar costo">Quitar</button></article>`).join("") || '<div class="empty-state">Todavía no se cargaron costos.</div>';
     }
     function closeOrderDetail() { $("#order-detail-modal").classList.remove("open"); $("#order-detail-modal").setAttribute("aria-hidden", "true"); selectedOrderNumber = null; }
     function renderStock() {
       const low = sampleStock.filter(item => item.cantidad <= 3).length;
       $("#stock-kpis").innerHTML = `<div class="money-kpi"><span>Productos</span><strong>${sampleStock.length}</strong></div><div class="money-kpi"><span>Stock bajo</span><strong>${low}</strong></div>`;
-      $("#stock-list").innerHTML = sampleStock.map(item => `<article class="list-card"><div class="list-card-main"><div class="list-card-title">${escapeHtml(item.nombre)}</div><div class="list-card-meta">${escapeHtml(item.categoria)} · Venta ${money(item.precio)} · Costo ${money(item.costo)}</div></div><span class="badge-soft ${item.cantidad <= 3 ? "low" : ""}">${item.cantidad <= 3 ? "Reponer" : "Disponible"}</span><div class="qty-controls"><button type="button" data-stock="${item.id}" data-delta="-1" aria-label="Restar stock">−</button><b>${item.cantidad}</b><button type="button" data-stock="${item.id}" data-delta="1" aria-label="Sumar stock">+</button></div></article>`).join("");
+      $("#stock-list").innerHTML = sampleStock.map(item => `<article class="list-card"><div class="list-card-main"><div class="list-card-title">${escapeHtml(item.nombre)}</div><div class="list-card-meta">${escapeHtml(item.categoria)} · Venta ${money(item.precio)} · Costo ${money(item.costo)}</div></div><span class="badge-soft ${item.cantidad <= 3 ? "low" : ""}">${item.cantidad <= 3 ? "Reponer" : "Disponible"}</span><div class="qty-controls"><button type="button" data-stock="${item.id}" data-delta="-1" aria-label="Restar stock">−</button><b>${item.cantidad}</b><button type="button" data-stock="${item.id}" data-delta="1" aria-label="Sumar stock">+</button></div><form class="form-grid stock-edit" data-stock-update="${item.id}"><label class="field">Existencias<input name="cantidad" type="number" min="0" value="${item.cantidad}" aria-label="Existencias de ${escapeHtml(item.nombre)}"></label><label class="field">Costo unitario<input name="costo" type="number" min="0" value="${item.costo}" aria-label="Costo de ${escapeHtml(item.nombre)}"></label><label class="field">Precio de venta<input name="precio" type="number" min="1" value="${item.precio}" aria-label="Precio de ${escapeHtml(item.nombre)}"></label><button class="text-button" type="submit">Actualizar</button></form></article>`).join("");
       $("#sale-product").innerHTML = sampleStock.filter(item => item.cantidad > 0).map(item => `<option value="${item.id}">${escapeHtml(item.nombre)} · ${money(item.precio)} · stock ${item.cantidad}</option>`).join("");
     }
     function renderSales() { $("#sales-list").innerHTML = sampleSales.map(sale => `<article class="list-card"><div class="list-card-main"><div class="list-card-title">${escapeHtml(sale.nombre)} × ${sale.cantidad}</div><div class="list-card-meta">${escapeHtml(sale.fecha)} · ${escapeHtml(sale.medio)}</div></div><strong class="list-card-value">${money(sale.total)}</strong></article>`).join("") || '<div class="empty-state">Todavía no hay ventas en esta sesión.</div>'; }
-    function renderBudgets() { $("#budget-list").innerHTML = sampleBudgets.map(budget => `<article class="list-card"><div class="list-card-main"><div class="list-card-title">${escapeHtml(budget.cliente)} · ${escapeHtml(budget.equipo)}</div><div class="list-card-meta">${escapeHtml(budget.trabajo)} · ${escapeHtml(budget.estado)}</div></div><strong class="list-card-value">${money(budget.importe)}</strong></article>`).join(""); }
+    function renderBudgets() { $("#budget-list").innerHTML = sampleBudgets.map((budget, index) => `<article class="list-card"><div class="list-card-main"><div class="list-card-title">${escapeHtml(budget.cliente)} · ${escapeHtml(budget.equipo)}</div><div class="list-card-meta">${escapeHtml(budget.trabajo)} · ${escapeHtml(budget.estado)}</div></div><strong class="list-card-value">${money(budget.importe)}</strong><button class="text-button" type="button" data-budget-status="${index}">${budget.estado === "Aceptado" ? "Marcar pendiente" : "Marcar aceptado"}</button></article>`).join("") || '<div class="empty-state">Todavía no hay presupuestos en la demo.</div>'; }
     function renderCash() {
       const income = sampleCash.filter(move => move.tipo === "ingreso").reduce((sum, move) => sum + move.importe, 0);
       const expense = sampleCash.filter(move => move.tipo === "egreso").reduce((sum, move) => sum + move.importe, 0);
@@ -619,6 +624,8 @@
       const stockButton = event.target.closest("[data-stock]");
       const orderOpenButton = event.target.closest("[data-order-open]");
       const deleteCostButton = event.target.closest("[data-delete-cost]");
+      const priceDisableButton = event.target.closest("[data-price-disable]");
+      const budgetStatusButton = event.target.closest("[data-budget-status]");
       if (pageButton) openPage(pageButton.dataset.page);
       if (actionButton?.dataset.action === "new-order") openOrderModal();
       if (event.target.closest("[data-close]") || event.target === $("#order-modal")) closeOrderModal();
@@ -642,6 +649,8 @@
         const item = sampleStock.find(product => product.id === Number(stockButton.dataset.stock));
         item.cantidad = Math.max(0, item.cantidad + Number(stockButton.dataset.delta)); saveDemoState(); renderStock(); showToast(`Stock de muestra actualizado: ${item.cantidad}.`);
       }
+      if (priceDisableButton) { const item = samplePrices[Number(priceDisableButton.dataset.priceDisable)]; if (item) { item.activo = false; saveDemoState(); renderPrices(); showToast("Precio desactivado en la demo."); } }
+      if (budgetStatusButton) { const budget = sampleBudgets[Number(budgetStatusButton.dataset.budgetStatus)]; if (budget) { budget.estado = budget.estado === "Pendiente" ? "Aceptado" : "Pendiente"; saveDemoState(); renderBudgets(); showToast(`Presupuesto ${budget.estado.toLocaleLowerCase("es-AR")} en la demo.`); } }
       if (orderOpenButton) openOrderDetail(orderOpenButton.dataset.orderOpen);
       if (deleteCostButton) { const order = visibleOrders.find(item => item.n === selectedOrderNumber); if (order) { order.costos.splice(Number(deleteCostButton.dataset.deleteCost), 1); saveDemoState(); renderOrderPayments(order); renderReports(); renderPendingCosts(); showToast("Costo quitado de la muestra."); } }
       if (event.target.closest("#detail-print")) { const order = visibleOrders.find(item => item.n === selectedOrderNumber); if (order) printOrder(order); }
@@ -656,6 +665,29 @@
     $("#order-search").addEventListener("input", renderOrders);
     $("#price-search").addEventListener("input", renderPrices);
     $("#client-search").addEventListener("input", renderClients);
+    $("#client-form").addEventListener("submit", event => {
+      event.preventDefault(); const nombre = $("#client-new-name").value.trim(); const telefono = $("#client-new-phone").value.trim();
+      if (sampleClients.some(client => client.nombre.toLocaleLowerCase("es-AR") === nombre.toLocaleLowerCase("es-AR") && (!telefono || client.telefono === telefono))) { showToast("Ese cliente ya existe en la demo."); return; }
+      sampleClients.unshift({ nombre, telefono, ordenes: [] }); saveDemoState(); renderClients(); event.currentTarget.reset(); showToast("Cliente ficticio guardado.");
+    });
+    $("#stock-form").addEventListener("submit", event => {
+      event.preventDefault(); const nombre = $("#stock-name").value.trim(); const categoria = $("#stock-category").value.trim();
+      if (sampleStock.some(item => item.nombre.toLocaleLowerCase("es-AR") === nombre.toLocaleLowerCase("es-AR"))) { showToast("Ese producto ya existe; ajustá su ficha en la lista."); return; }
+      sampleStock.unshift({ id: Math.max(0, ...sampleStock.map(item => Number(item.id) || 0)) + 1, nombre, categoria, cantidad: Number($("#stock-qty").value), costo: Number($("#stock-cost").value), precio: Number($("#stock-price").value) });
+      saveDemoState(); renderStock(); renderReports(); event.currentTarget.reset(); showToast("Producto de muestra agregado al inventario.");
+    });
+    $("#stock-list").addEventListener("submit", event => {
+      const form = event.target.closest("[data-stock-update]"); if (!form) return; event.preventDefault();
+      const item = sampleStock.find(product => product.id === Number(form.dataset.stockUpdate)); if (!item) return;
+      const fields = new FormData(form); item.cantidad = Number(fields.get("cantidad")); item.costo = Number(fields.get("costo")); item.precio = Number(fields.get("precio"));
+      saveDemoState(); renderStock(); renderReports(); showToast("Ficha y existencias actualizadas en la demo.");
+    });
+    $("#price-form").addEventListener("submit", event => {
+      event.preventDefault(); const marca = $("#price-brand").value.trim(); const modelo = $("#price-model").value.trim(); const servicio = $("#price-service").value.trim(); const precio = Number($("#price-amount").value);
+      const existing = samplePrices.find(item => item.marca.toLocaleLowerCase("es-AR") === marca.toLocaleLowerCase("es-AR") && item.modelo.toLocaleLowerCase("es-AR") === modelo.toLocaleLowerCase("es-AR") && item.servicio.toLocaleLowerCase("es-AR") === servicio.toLocaleLowerCase("es-AR"));
+      if (existing) { existing.precio = precio; existing.activo = true; } else samplePrices.unshift({ marca, modelo, servicio, precio, activo: true });
+      saveDemoState(); renderPrices(); event.currentTarget.reset(); showToast("Lista de precios de muestra actualizada.");
+    });
     $("#device").addEventListener("input", updateSuggestion);
     $("#fault").addEventListener("input", updateSuggestion);
     $$("[data-kind]").forEach(button => button.addEventListener("click", () => setOrderKind(button.dataset.kind)));
@@ -697,10 +729,9 @@
         telefono: orderKind === "Particular" ? String(form.get("telefono") || "").trim() : "",
         modelo: String(form.get("modelo") || "").trim(), falla: String(form.get("falla") || "").trim(),
         imei: String(form.get("imei") || "").trim(), codigo: String(form.get("codigo") || "").trim(), notas: String(form.get("nota") || "").trim() ? [String(form.get("nota")).trim()] : [],
-        estado: "Recibido", total, costo: 0, costos: [], pagos: [], fecha: "Ahora · prototipo"
+        estado: "Recibido", total, sena: deposit, costo: 0, costos: [], pagos: [], fecha: "Ahora · prototipo"
       };
       if (order.cliente && !sampleClients.some(client => client.nombre.toLocaleLowerCase("es-AR") === order.cliente.toLocaleLowerCase("es-AR"))) sampleClients.unshift({ nombre: order.cliente, telefono: order.telefono, ordenes: [] });
-      if (deposit > 0) { order.pagos.push({ importe: deposit, medio: "Efectivo", fecha: "Ahora · muestra" }); sampleCash.push({ tipo: "ingreso", concepto: `Seña orden #${order.n}`, importe: deposit, medio: "Efectivo" }); }
       visibleOrders.unshift(order);
       saveDemoState();
       renderHomeOrders(); renderOrders(); renderClients();
@@ -713,13 +744,13 @@
       const total = product.precio * qty; product.cantidad -= qty;
       const medio = $("#sale-method").value; sampleSales.unshift({ nombre: product.nombre, cantidad: qty, total, medio, fecha: "Ahora · muestra" }); sampleCash.push({ tipo: "ingreso", concepto: `Venta: ${product.nombre}`, importe: total, medio });
       saveDemoState();
-      renderStock(); renderSales(); event.currentTarget.reset(); showToast("Venta de muestra registrada en esta sesión.");
+      renderStock(); renderSales(); renderCash(); renderReports(); event.currentTarget.reset(); showToast("Venta de muestra registrada en esta sesión.");
     });
     $("#budget-form").addEventListener("submit", event => {
       event.preventDefault(); sampleBudgets.unshift({ cliente: $("#budget-client").value.trim(), equipo: $("#budget-device").value.trim(), trabajo: $("#budget-work").value.trim(), importe: Number($("#budget-amount").value), estado: "Pendiente" }); saveDemoState(); renderBudgets(); event.currentTarget.reset(); showToast("Presupuesto de muestra agregado.");
     });
     $("#cash-form").addEventListener("submit", event => {
-      event.preventDefault(); sampleCash.push({ tipo: $("#cash-kind").value, concepto: $("#cash-note").value.trim(), importe: Number($("#cash-amount").value), medio: "Manual" }); saveDemoState(); renderCash(); event.currentTarget.reset(); showToast("Movimiento de muestra agregado.");
+      event.preventDefault(); sampleCash.push({ tipo: $("#cash-kind").value, concepto: $("#cash-note").value.trim(), importe: Number($("#cash-amount").value), medio: $("#cash-method").value }); saveDemoState(); renderCash(); renderReports(); event.currentTarget.reset(); showToast("Movimiento de muestra agregado.");
     });
     $("#today-label").textContent = new Intl.DateTimeFormat("es-AR", { day: "numeric", month: "short" }).format(new Date());
     renderHomeOrders(); renderOrders(); renderPrices();

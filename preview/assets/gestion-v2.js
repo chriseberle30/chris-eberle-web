@@ -1,0 +1,330 @@
+(() => {
+  "use strict";
+
+  // Esta app de esta rama apunta solo al proyecto aislado de pruebas.
+  const SUPABASE_URL = "https://hcwazybjwgvyplxsowgm.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_PfKcyVhW9hFtx3MKC9pDIw_1meGtnFO";
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+    auth: { persistSession: true, autoRefreshToken: true },
+  });
+  const Rules = window.E30Gestion;
+  const $ = (selector, root = document) => root.querySelector(selector);
+  const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
+  const money = (value) => new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(Number(value) || 0);
+  const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
+  const date = (value) => value ? new Date(value).toLocaleString("es-AR", { dateStyle: "short", timeStyle: "short" }) : "—";
+  const stateClass = (state) => state === "Listo" ? "ready" : ["En reparación", "Esperando repuesto"].includes(state) ? "repair" : ["Pendiente", "Recibido"].includes(state) ? "pending" : "";
+  const data = { clients: [], orders: [], prices: [], trash: [], view: "ordenes", busy: false, queryTimer: null };
+
+  function notice(message, error = false) {
+    const box = $("#notice"); box.textContent = message; box.classList.toggle("error", error); box.hidden = false;
+    clearTimeout(notice.timer); notice.timer = setTimeout(() => { box.hidden = true; }, error ? 6500 : 3200);
+  }
+  function setConnected(value, label) {
+    $("#connection-label").textContent = label;
+    $(".connection-dot").className = `connection-dot ${value}`;
+  }
+  function showLogin(error = "") {
+    $("#loading-screen").hidden = true; $("#app").hidden = true; $("#login-screen").hidden = false;
+    $("#login-error").textContent = error;
+  }
+  function showApp(session) {
+    $("#loading-screen").hidden = true; $("#login-screen").hidden = true; $("#app").hidden = false;
+    $("#user-label").textContent = session?.user?.email || "Sesión activa";
+  }
+  function openModal(title, eyebrow, body, actions) {
+    $("#modal-title").textContent = title; $("#modal-eyebrow").textContent = eyebrow;
+    $("#modal-body").innerHTML = body; $("#modal-actions").innerHTML = actions;
+    const modal = $("#modal"); if (!modal.open) modal.showModal();
+  }
+  function closeModal() { const modal = $("#modal"); if (modal.open) modal.close(); }
+  function formField(label, name, value = "", type = "text", extra = "") {
+    return `<div class="field ${extra}"><label for="f-${name}">${label}</label><input id="f-${name}" name="${name}" type="${type}" value="${esc(value)}"></div>`;
+  }
+  function selectField(label, name, options, selected, extra = "") {
+    return `<div class="field ${extra}"><label for="f-${name}">${label}</label><select id="f-${name}" name="${name}">${options.map((value) => `<option ${value === selected ? "selected" : ""}>${esc(value)}</option>`).join("")}</select></div>`;
+  }
+  function actionButtons(cancel = "Cancelar", save = "Guardar") {
+    return `<button class="button" type="button" data-close>${cancel}</button><button class="button primary" type="submit">${save}</button>`;
+  }
+
+  async function loadOrders({ trash = false, search = "" } = {}) {
+    let query = sb.from("ordenes").select("*,pagos(id,importe,medio,creado),clientes(id,nombre,telefono)").order("id", { ascending: false }).limit(500);
+    query = trash ? query.not("borrada", "is", null) : query.is("borrada", null);
+    const idSearch = search.trim();
+    const words = idSearch.split(/\s+/).filter(Boolean).slice(0, 4);
+    for (const word of words) {
+      const safe = word.replace(/[(),.*%_]/g, " ").trim(); if (!safe) continue;
+      const idClause = /^\d+$/.test(safe) ? `id.eq.${Number(safe)},` : "";
+      query = query.or(`${idClause}cliente.ilike.%${safe}%,telefono.ilike.%${safe}%,modelo.ilike.%${safe}%,falla.ilike.%${safe}%,gremio.ilike.%${safe}%`);
+    }
+    const { data: rows, error } = await query;
+    if (error) throw error;
+    return rows || [];
+  }
+  async function refresh() {
+    try {
+      setConnected("", "Actualizando…");
+      const [orders, clients, prices, trash] = await Promise.all([
+        loadOrders(),
+        sb.from("clientes").select("id,nombre,telefono,email,notas,creada,actualizada").order("nombre").limit(1000),
+        sb.from("precios").select("id,marca,modelo,servicio,precio,activo").order("modelo").limit(3000),
+        loadOrders({ trash: true }),
+      ]);
+      if (clients.error) throw clients.error;
+      if (prices.error) throw prices.error;
+      data.orders = orders; data.clients = clients.data || []; data.prices = prices.data || []; data.trash = trash;
+      setConnected("ok", "Conectado a pruebas"); renderCurrent(); renderStats();
+    } catch (error) {
+      setConnected("bad", "Revisar configuración");
+      const message = /clientes|schema cache|relation/i.test(error.message || "")
+        ? "El esquema de pruebas necesita la migración de Gestión v2. No se aplicó automáticamente."
+        : `No se pudieron cargar los datos: ${error.message || error}`;
+      notice(message, true);
+    }
+  }
+  function renderStats() {
+    const active = data.orders.filter((order) => !["Entregado", "Cancelado"].includes(order.estado));
+    $("#stat-active").textContent = active.length;
+    $("#stat-ready").textContent = active.filter((order) => order.estado === "Listo").length;
+    $("#stat-balance").textContent = money(active.reduce((sum, order) => sum + Rules.balance(order), 0));
+  }
+  function renderOrders(rows = data.orders, target = "#orders-list") {
+    const branch = $("#branch-filter")?.value || "";
+    const state = $("#state-filter")?.value || "";
+    const filtered = rows.filter((order) => (!branch || order.negocio === branch) && (!state || order.estado === state));
+    $("#order-count").textContent = `${filtered.length} ${filtered.length === 1 ? "orden" : "órdenes"}`;
+    $(target).innerHTML = filtered.map((order) => {
+      const client = order.clientes?.nombre || order.cliente || order.gremio || "Cliente sin nombre";
+      const due = Rules.balance(order);
+      return `<article class="order-row" data-order="${order.id}"><b class="order-no">#${order.id}</b><div class="row-main"><b>${esc(client)}</b><small>${esc(order.telefono || order.clientes?.telefono || "Sin teléfono")} · ${esc(order.modelo || "Equipo sin modelo")}</small></div><div class="row-main hide-mobile"><b>${esc(order.falla || "Sin descripción")}</b><small>${date(order.creada)}</small></div><div><span class="state-pill ${stateClass(order.estado)}">${esc(order.estado)}</span><span class="branch-pill">${esc(order.negocio)}</span></div><div class="money"><b>${money(order.total)}</b>${due > 0 ? `<small>Debe ${money(due)}</small>` : "<small style=\"color:#17805f\">Saldo cubierto</small>"}</div></article>`;
+    }).join("") || `<div class="empty-state">${rows.length ? "No hay resultados con estos filtros." : "Todavía no hay órdenes para mostrar."}</div>`;
+  }
+  function renderClients(search = "") {
+    const terms = search.toLocaleLowerCase("es-AR").trim().split(/\s+/).filter(Boolean);
+    const rows = data.clients.filter((client) => terms.every((term) => `${client.nombre} ${client.telefono || ""} ${client.email || ""}`.toLocaleLowerCase("es-AR").includes(term)));
+    $("#clients-list").innerHTML = rows.map((client) => {
+      return `<article class="client-card" data-client="${esc(client.id)}"><b>${esc(client.nombre)}</b><span>${esc(client.telefono || "Sin teléfono")}${client.email ? ` · ${esc(client.email)}` : ""}</span><span class="client-orders">Ver historial de reparaciones</span></article>`;
+    }).join("") || `<div class="empty-state">No hay clientes. Creá uno para asociarlo a una orden.</div>`;
+  }
+  function renderPrices(search = "") {
+    const words = search.toLocaleLowerCase("es-AR").split(/\s+/).filter(Boolean);
+    const rows = data.prices.filter((price) => words.every((word) => `${price.marca} ${price.modelo} ${price.servicio}`.toLocaleLowerCase("es-AR").includes(word)));
+    $("#price-count").textContent = `${rows.length} tarifas`;
+    $("#prices-list").innerHTML = rows.map((price) => `<article class="order-row price-row"><div class="row-main"><b>${esc(price.marca || "")}</b><small>${esc(price.modelo)}</small></div><div class="row-main"><b>${esc(price.servicio)}</b><small>${price.activo ? "Tarifa activa" : "En pausa"}</small></div><div class="money"><b>${money(price.precio)}</b></div><div class="price-actions"><button class="button" data-edit-price="${price.id}">Editar</button><button class="button ${price.activo ? "danger" : ""}" data-toggle-price="${price.id}" data-active="${price.activo}">${price.activo ? "Pausar" : "Activar"}</button></div></article>`).join("") || `<div class="empty-state">No hay precios que coincidan.</div>`;
+  }
+  function renderTrash() {
+    $("#trash-list").innerHTML = data.trash.map((order) => `<article class="order-row"><b class="order-no">#${order.id}</b><div class="row-main"><b>${esc(order.cliente || order.gremio || "Cliente")}</b><small>${esc(order.modelo || "")} · Eliminada ${date(order.borrada)}</small></div><div><span class="branch-pill">${esc(order.negocio)}</span></div><button class="button" data-restore="${order.id}">Restaurar</button></article>`).join("") || `<div class="empty-state">La papelera está vacía.</div>`;
+  }
+  function renderCurrent() {
+    renderOrders(); renderClients($("#client-search").value); renderPrices($("#price-search").value); renderTrash();
+  }
+  function setView(view) {
+    data.view = view;
+    $$(".view").forEach((section) => { section.hidden = section.id !== `view-${view}`; });
+    $$('[data-view]').forEach((button) => button.classList.toggle("active", button.dataset.view === view));
+    const titles = { ordenes: "Órdenes de reparación", clientes: "Clientes", precios: "Precios de reparación", papelera: "Papelera de órdenes" };
+    $("#page-title").textContent = titles[view]; $(".sidebar").classList.remove("open");
+    if (view === "ordenes") loadOrders({ search: $("#order-search").value }).then((rows) => { data.orders = rows; renderOrders(rows); renderStats(); }).catch((error) => notice(error.message, true));
+  }
+  function openClientForm(client = null) {
+    const body = `<div class="form-grid">${formField("Nombre completo *", "nombre", client?.nombre || "", "text", "span-2")}${formField("Teléfono", "telefono", client?.telefono || "", "tel")}${formField("Email", "email", client?.email || "", "email")}<div class="field span-2"><label for="f-notas">Notas</label><textarea id="f-notas" name="notas">${esc(client?.notas || "")}</textarea></div></div>`;
+    openModal(client ? "Editar cliente" : "Nuevo cliente", "CLIENTES", body, actionButtons());
+    $("#modal-form").dataset.action = "save-client"; $("#modal-form").dataset.id = client?.id || "";
+  }
+  function openOrderForm(order = null) {
+    const isEditing = Boolean(order?.id);
+    const clientOptions = data.clients.map((client) => `<option value="${esc(client.id)}" ${client.id === order?.cliente_id ? "selected" : ""}>${esc(client.nombre)}${client.telefono ? ` · ${esc(client.telefono)}` : ""}</option>`).join("");
+    const body = `<div class="form-grid">${selectField("Sucursal *", "negocio", Rules.BRANCHES, order?.negocio || "E30")}${selectField("Estado", "estado", Rules.ORDER_STATES, order?.estado || "Recibido")}<div class="field span-2"><label for="f-cliente_id">Cliente *</label><select id="f-cliente_id" name="cliente_id" required><option value="">Elegí un cliente</option>${clientOptions}</select></div>${formField("Modelo del equipo *", "modelo", order?.modelo || "", "text")}${formField("Marca", "marca", order?.marca || "iPhone", "text")}${formField("Total acordado", "total", order?.total ?? 0, "number")}<div class="field"><label for="f-falla">Falla / trabajo solicitado *</label><textarea id="f-falla" name="falla" required>${esc(order?.falla || "")}</textarea></div><div class="field span-2"><label for="f-notas">Notas internas</label><textarea id="f-notas" name="notas">${esc(order?.notas || "")}</textarea></div>${formField("IMEI / serie", "imei", order?.imei || "")}${!isEditing ? `${formField("Seña inicial (opcional)", "sena", "0", "number")}${selectField("Medio de la seña", "medio", Rules.PAYMENT_METHODS, "Efectivo")}` : ""}</div>${data.clients.length ? "" : `<p class=\"error\">Primero agregá un cliente en Clientes.</p>`}`;
+    openModal(isEditing ? `Editar orden #${order.id}` : "Nueva orden de reparación", "ORDEN DE TRABAJO", body, actionButtons("Cancelar", isEditing ? "Guardar cambios" : "Crear orden"));
+    $("#modal-form").dataset.action = isEditing ? "update-order" : "create-order"; $("#modal-form").dataset.id = isEditing ? order.id : "";
+  }
+  function openPriceForm(price = null) {
+    const body = `<div class="form-grid">${formField("Marca", "marca", price?.marca || "iPhone")}${formField("Modelo *", "modelo", price?.modelo || "")} ${formField("Reparación *", "servicio", price?.servicio || "")} ${formField("Precio *", "precio", price?.precio ?? "", "number")}</div>`;
+    openModal(price ? "Editar tarifa" : "Agregar tarifa", "LISTA DE PRECIOS", body, actionButtons());
+    $("#modal-form").dataset.action = "save-price"; $("#modal-form").dataset.id = price?.id || "";
+  }
+  async function openOrder(orderId) {
+    let order = data.orders.find((row) => String(row.id) === String(orderId)) || data.trash.find((row) => String(row.id) === String(orderId));
+    if (!order) {
+      const result = await sb.from("ordenes").select("*,clientes(id,nombre,telefono)").eq("id", orderId).maybeSingle();
+      if (result.error) return notice(result.error.message, true);
+      order = result.data;
+    }
+    if (!order) return;
+    data.currentOrder = order;
+    const [{ data: history, error: historyError }, { data: payments, error: paymentsError }] = await Promise.all([
+      sb.from("orden_historial").select("id,evento,detalle,creado").eq("orden_id", order.id).order("creado", { ascending: false }).limit(100),
+      sb.from("pagos").select("id,importe,medio,creado").eq("orden_id", order.id).order("creado", { ascending: false }),
+    ]);
+    if (historyError || paymentsError) return notice(`No se pudo cargar el historial: ${(historyError || paymentsError).message}`, true);
+    const due = Rules.balance({ ...order, pagos: payments || [] });
+    const stateOptions = Rules.ORDER_STATES.map((state) => `<option value="${esc(state)}" ${state === order.estado ? "selected" : ""}>${esc(state)}</option>`).join("");
+    const body = `<div class="detail-grid"><div class="detail-item"><small>Cliente</small><b>${esc(order.clientes?.nombre || order.cliente || order.gremio || "Sin nombre")}</b></div><div class="detail-item"><small>Equipo · sucursal</small><b>${esc(order.modelo)} · ${esc(order.negocio)}</b></div><div class="detail-item"><small>Estado</small><b>${esc(order.estado)}</b></div><div class="detail-item"><small>Total · saldo</small><b>${money(order.total)} · ${money(due)}</b></div><div class="detail-item"><small>Falla / trabajo</small><b>${esc(order.falla || "—")}</b></div><div class="detail-item"><small>Teléfono</small><b>${esc(order.telefono || order.clientes?.telefono || "—")}</b></div><div class="detail-item"><small>IMEI / serie</small><b>${esc(order.imei || "—")}</b></div><div class="detail-item"><small>Creada</small><b>${date(order.creada)}</b></div></div><div class="quick-actions">${due > 0 ? `<button class="button primary" data-payment="${order.id}" data-balance="${due}">＋ Registrar pago / seña</button>` : ""}<button class="button" data-edit-order="${order.id}">Editar orden</button><button class="button" data-ticket="${order.id}">Imprimir ticket</button>${order.borrada ? `<button class="button" data-restore="${order.id}">Restaurar</button>` : `<button class="button danger" data-trash="${order.id}">Enviar a papelera</button>`}</div><div class="field state-editor"><label for="detail-state">Cambiar estado</label><select id="detail-state">${stateOptions}</select><button class="button primary" type="button" data-update-state="${order.id}">Guardar estado</button></div><h3 class="section-title">Pagos registrados</h3>${(payments || []).map((payment) => `<div class="payment-row"><span>${date(payment.creado)} · ${esc(payment.medio || "Efectivo")}</span><b>${money(payment.importe)}</b></div>`).join("") || `<p class="muted">Todavía no hay pagos registrados.</p>`}<h3 class="section-title">Historial de la reparación</h3>${(history || []).map((entry) => `<div class="history-item"><b>${esc(entry.evento)}</b>${entry.detalle ? ` · ${esc(entry.detalle)}` : ""}<small>${date(entry.creado)}</small></div>`).join("") || `<p class="muted">Sin eventos de historial.</p>`}`;
+    openModal(`Orden #${order.id}`, "DETALLE DE REPARACIÓN", body, `<button class="button" type="button" data-close>Cerrar</button>`);
+    $("#modal-form").dataset.action = "dismiss";
+  }
+  async function openClient(clientId) {
+    const client = data.clients.find((row) => String(row.id) === String(clientId)); if (!client) return;
+    const { data: linked, error } = await sb.from("ordenes").select("id,cliente_id,cliente,modelo,estado,total,negocio,creada,borrada").eq("cliente_id", client.id).order("creada", { ascending: false }).limit(1000);
+    if (error) return notice(`No se pudo cargar el historial del cliente: ${error.message}`, true);
+    const orders = linked || [];
+    const body = `<div class="detail-grid"><div class="detail-item"><small>Teléfono</small><b>${esc(client.telefono || "—")}</b></div><div class="detail-item"><small>Email</small><b>${esc(client.email || "—")}</b></div></div><p>${esc(client.notas || "Sin notas")}</p><h3 class="section-title">Historial de reparaciones · ${orders.length}</h3>${orders.map((order) => `<div class="history-item" data-open-order="${order.id}"><b>#${order.id} · ${esc(order.modelo || "Equipo")}</b> · ${esc(order.borrada ? "En papelera" : order.estado)} · ${money(order.total)}<small>${date(order.creada)} · ${esc(order.negocio)}</small></div>`).join("") || `<p class="muted">Este cliente todavía no tiene órdenes asociadas.</p>`}<div class="quick-actions"><button class="button" data-edit-client="${esc(client.id)}">Editar cliente</button><button class="button primary" data-client-new-order="${esc(client.id)}">＋ Crear orden</button></div>`;
+    openModal(client.nombre, "CLIENTE E HISTORIAL", body, `<button class="button" type="button" data-close>Cerrar</button>`);
+  }
+  function openPayment(orderId, balance) {
+    const body = `<div class="form-grid">${formField("Importe del pago *", "importe", balance, "number")}${selectField("Medio de pago", "medio", Rules.PAYMENT_METHODS, "Efectivo")}<p class="muted span-2">Saldo actual: ${money(balance)}. El registro queda asociado a la orden.</p></div>`;
+    openModal("Registrar pago", `ORDEN #${orderId}`, body, actionButtons("Cancelar", "Registrar pago"));
+    $("#modal-form").dataset.action = "save-payment"; $("#modal-form").dataset.id = orderId;
+  }
+  async function runAction(event) {
+    const form = event.currentTarget; const action = form.dataset.action; if (action === "dismiss") return;
+    event.preventDefault(); if (data.busy) return; data.busy = true;
+    const fd = new FormData(form); const values = Object.fromEntries(fd.entries());
+    try {
+      if (action === "save-client") {
+        const payload = Rules.validateClient(values);
+        const query = form.dataset.id ? sb.from("clientes").update(payload).eq("id", form.dataset.id) : sb.from("clientes").insert(payload);
+        const { error } = await query; if (error) throw error;
+        notice("Cliente guardado.");
+      } else if (action === "create-order" || action === "update-order") {
+        const client = data.clients.find((row) => row.id === values.cliente_id);
+        if (!client) throw new Error("Elegí un cliente de la lista.");
+        const valid = Rules.validateOrder({ ...values, sena: action === "create-order" ? values.sena : 0 });
+        const payload = { cliente_id: client.id, cliente: client.nombre, telefono: client.telefono, negocio: valid.negocio, tipo: "Particular", marca: values.marca || "iPhone", modelo: valid.modelo, falla: valid.falla, estado: values.estado || "Recibido", total: valid.total, notas: values.notas || null, imei: values.imei || null };
+        if (action === "create-order") {
+          const result = await sb.rpc("e30_crear_orden", { p_orden: payload, p_sena: valid.sena, p_medio: values.medio || "Efectivo" });
+          if (result.error) throw result.error;
+          data.lastCreatedOrderId = result.data;
+        } else {
+          const existing = await sb.from("ordenes").select("pagos(importe)").eq("id", form.dataset.id).single();
+          if (existing.error) throw existing.error;
+          const paidAmount = (existing.data.pagos || []).reduce((sum, payment) => sum + Number(payment.importe || 0), 0);
+          if (valid.total < paidAmount) throw new Error(`El total no puede quedar debajo de lo ya pagado (${money(paidAmount)}).`);
+          const result = await sb.from("ordenes").update(payload).eq("id", form.dataset.id);
+          if (result.error) throw result.error;
+        }
+        notice(action === "create-order" ? `Orden #${data.lastCreatedOrderId} creada.` : "Orden actualizada.");
+      } else if (action === "save-price") {
+        const existingPrice = data.prices.find((row) => String(row.id) === String(form.dataset.id));
+        const price = { marca: values.marca || "iPhone", modelo: values.modelo.trim(), servicio: values.servicio.trim(), precio: Number(values.precio), activo: existingPrice ? existingPrice.activo : true };
+        if (!price.modelo || !price.servicio || !Number.isFinite(price.precio) || price.precio < 0) throw new Error("Completá modelo, reparación y un precio válido.");
+        const query = form.dataset.id ? sb.from("precios").update(price).eq("id", form.dataset.id) : sb.from("precios").insert(price);
+        const { error } = await query; if (error) throw error; notice("Precio guardado.");
+      } else if (action === "save-payment") {
+        const order = data.orders.find((row) => String(row.id) === String(form.dataset.id));
+        if (!order) throw new Error("No se encontró la orden.");
+        const { data: payments, error: paymentReadError } = await sb.from("pagos").select("importe").eq("orden_id", order.id);
+        if (paymentReadError) throw paymentReadError;
+        const currentBalance = Math.max(0, Number(order.total) - (payments || []).reduce((sum, item) => sum + Number(item.importe || 0), 0));
+        const payment = Rules.validatePayment(values, currentBalance);
+        const { error } = await sb.rpc("e30_registrar_pago", { p_orden_id: order.id, p_importe: payment.importe, p_medio: payment.medio }); if (error) throw error;
+        notice("Pago registrado.");
+      }
+      closeModal(); await refresh();
+      if (action === "create-order") {
+        if (data.lastCreatedOrderId) printTicket(data.lastCreatedOrderId);
+      }
+    } catch (error) { notice(error.message || "No se pudo guardar el cambio.", true); }
+    finally { data.busy = false; }
+  }
+  async function updateOrderState(orderId) {
+    const state = $("#detail-state").value;
+    if (!Rules.ORDER_STATES.includes(state)) return notice("Elegí un estado válido.", true);
+    const patch = { estado: state, entregada: state === "Entregado" ? new Date().toISOString() : null };
+    const { error } = await sb.from("ordenes").update(patch).eq("id", orderId);
+    if (error) return notice(`No se pudo actualizar el estado: ${error.message}`, true);
+    closeModal(); await refresh(); notice("Estado actualizado.");
+  }
+
+  async function trashOrder(orderId) {
+    if (!confirm(`¿Enviar la orden #${orderId} a la papelera? Se puede restaurar después.`)) return;
+    const { error } = await sb.from("ordenes").update({ borrada: new Date().toISOString() }).eq("id", orderId);
+    if (error) return notice(`No se pudo mover a papelera: ${error.message}`, true);
+    closeModal(); await refresh(); notice("Orden enviada a la papelera.");
+  }
+  async function restoreOrder(orderId) {
+    const { error } = await sb.from("ordenes").update({ borrada: null }).eq("id", orderId);
+    if (error) return notice(`No se pudo restaurar: ${error.message}`, true);
+    closeModal(); await refresh(); notice("Orden restaurada.");
+  }
+  async function togglePrice(priceId, active) {
+    const { error } = await sb.from("precios").update({ activo: !active }).eq("id", priceId);
+    if (error) return notice(error.message, true); await refresh(); notice(active ? "Tarifa pausada." : "Tarifa activada.");
+  }
+  async function printTicket(orderId) {
+    const order = data.orders.find((row) => String(row.id) === String(orderId)); if (!order) return;
+    const payments = order.pagos || []; const client = order.clientes?.nombre || order.cliente || "";
+    const brand = order.negocio === "i30" ? "i30 | iPhone Service" : "E30 | Técnico de celulares";
+    $("#print-area").innerHTML = `<h2>${brand}</h2><p>${order.negocio === "i30" ? "Piovano 2960 — Moreno" : "Demóstenes 3101 — Las Flores"}</p><hr><b>ORDEN #${esc(order.id)}</b><p>${date(order.creada)}<br>${esc(client)}<br>${esc(order.telefono || "")}<br>${esc(order.modelo)}<br>${esc(order.falla)}</p><hr>Total ${money(order.total)}<br>Pagado ${money(payments.reduce((sum, payment) => sum + Number(payment.importe || 0), 0))}<br><b>Saldo ${money(Rules.balance(order))}</b><p>Conserve este comprobante.</p>`;
+    window.print();
+  }
+  function bindEvents() {
+    $$("[data-view]").forEach((button) => button.addEventListener("click", () => setView(button.dataset.view)));
+    $("#login-form").addEventListener("submit", async (event) => {
+      event.preventDefault(); $("#login-error").textContent = "";
+      const { error } = await sb.auth.signInWithPassword({ email: $("#login-email").value.trim(), password: $("#login-password").value });
+      if (error) $("#login-error").textContent = `No se pudo iniciar sesión: ${error.message}`;
+    });
+    $("#signup-button").addEventListener("click", async () => {
+      const email = $("#login-email").value.trim();
+      const password = $("#login-password").value;
+      $("#login-error").textContent = "";
+      if (!email) { $("#login-error").textContent = "Ingresá tu email."; return; }
+      if (password.length < 8) { $("#login-error").textContent = "Usá una contraseña de al menos 8 caracteres."; return; }
+      const button = $("#signup-button"); button.disabled = true; button.textContent = "Creando cuenta…";
+      try {
+        const { data: result, error } = await sb.auth.signUp({ email, password });
+        if (error) throw error;
+        if (result.session) notice("Cuenta creada. Ya podés empezar a cargar tus datos.");
+        else $("#login-error").textContent = "Cuenta creada. Revisá tu email para confirmar el acceso y después iniciá sesión.";
+      } catch (error) {
+        $("#login-error").textContent = `No se pudo crear la cuenta: ${error.message || error}`;
+      } finally { button.disabled = false; button.textContent = "Crear cuenta de prueba"; }
+    });
+    $("#sign-out").addEventListener("click", async () => { await sb.auth.signOut(); });
+    $("#new-order").addEventListener("click", () => openOrderForm());
+    $("#new-client").addEventListener("click", () => openClientForm());
+    $("#new-price").addEventListener("click", () => openPriceForm());
+    $("#menu-toggle").addEventListener("click", () => $(".sidebar").classList.toggle("open"));
+    $("#modal-form").addEventListener("submit", runAction);
+    $("#modal").addEventListener("click", (event) => { if (event.target === $("#modal") || event.target.closest("[data-close]")) closeModal(); });
+    document.addEventListener("click", (event) => {
+      const target = event.target.closest("[data-order],[data-client],[data-edit-client],[data-client-new-order],[data-edit-order],[data-open-order],[data-payment],[data-trash],[data-restore],[data-ticket],[data-edit-price],[data-toggle-price],[data-update-state]");
+      if (!target) return;
+      if (target.dataset.order) openOrder(target.dataset.order);
+      else if (target.dataset.client) openClient(target.dataset.client);
+      else if (target.dataset.editClient) openClientForm(data.clients.find((row) => String(row.id) === target.dataset.editClient));
+      else if (target.dataset.clientNewOrder) { const client = data.clients.find((row) => row.id === target.dataset.clientNewOrder); closeModal(); openOrderForm({ cliente_id: client?.id }); }
+      else if (target.dataset.editOrder) openOrderForm(data.currentOrder || data.orders.find((row) => String(row.id) === target.dataset.editOrder));
+      else if (target.dataset.openOrder) openOrder(target.dataset.openOrder);
+      else if (target.dataset.payment) openPayment(target.dataset.payment, Number(target.dataset.balance));
+      else if (target.dataset.trash) trashOrder(target.dataset.trash);
+      else if (target.dataset.restore) restoreOrder(target.dataset.restore);
+      else if (target.dataset.ticket) printTicket(target.dataset.ticket);
+      else if (target.dataset.updateState) updateOrderState(target.dataset.updateState);
+      else if (target.dataset.editPrice) openPriceForm(data.prices.find((row) => String(row.id) === target.dataset.editPrice));
+      else if (target.dataset.togglePrice) togglePrice(target.dataset.togglePrice, target.dataset.active === "true");
+    });
+    const queryOrders = () => { clearTimeout(data.queryTimer); data.queryTimer = setTimeout(async () => { try { const rows = await loadOrders({ search: $("#order-search").value }); data.orders = rows; renderOrders(rows); renderStats(); } catch (error) { notice(error.message, true); } }, 250); };
+    $("#order-search").addEventListener("input", queryOrders); $("#branch-filter").addEventListener("change", () => renderOrders());
+    $("#state-filter").addEventListener("change", () => renderOrders());
+    $("#client-search").addEventListener("input", (event) => renderClients(event.target.value));
+    $("#price-search").addEventListener("input", (event) => renderPrices(event.target.value));
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && $("#app").hidden === false) refresh(); });
+  }
+  function initialize() {
+    $("#state-filter").insertAdjacentHTML("beforeend", Rules.ORDER_STATES.map((state) => `<option>${esc(state)}</option>`).join(""));
+    bindEvents();
+    sb.auth.onAuthStateChange((_event, session) => {
+      if (session) { showApp(session); setTimeout(() => refresh(), 0); } else showLogin();
+    });
+    sb.auth.getSession().then(({ data: sessionData, error }) => {
+      if (error) return showLogin(error.message);
+      if (!sessionData.session) return showLogin();
+      showApp(sessionData.session); refresh();
+    }).catch((error) => showLogin(error.message));
+  }
+  initialize();
+})();
+

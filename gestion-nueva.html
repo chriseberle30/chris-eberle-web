@@ -257,7 +257,7 @@
         <div class="page-title-row"><div class="eyebrow">Operación</div><h1 id="orders-title">Órdenes</h1><p class="welcome-note">Encontrá una reparación sin recorrer listas largas.</p></div>
         <label class="search-box orders-search"><svg viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg><input id="order-search" type="search" placeholder="N.º, cliente, teléfono o modelo" autocomplete="off"></label>
         <div class="filter-row" id="order-filters" aria-label="Filtrar órdenes">
-          <button class="filter-chip active" type="button" data-filter="Todas">Todas</button><button class="filter-chip" type="button" data-filter="En reparación">En reparación</button><button class="filter-chip" type="button" data-filter="Listo">Listas</button><button class="filter-chip" type="button" data-filter="Esperando repuesto">Esperando repuesto</button>
+          <button class="filter-chip active" type="button" data-filter="Todas">Todas</button><button class="filter-chip" type="button" data-filter="Recibido">Recibidas</button><button class="filter-chip" type="button" data-filter="Diagnosticando">Diagnóstico</button><button class="filter-chip" type="button" data-filter="En reparación">En reparación</button><button class="filter-chip" type="button" data-filter="Listo">Listas</button><button class="filter-chip" type="button" data-filter="Esperando repuesto">Esperando repuesto</button><button class="filter-chip" type="button" data-filter="Entregado">Entregadas</button>
         </div>
         <div class="orders-panel" id="all-orders"></div>
       </section>
@@ -312,9 +312,26 @@
         <div class="field"><label for="fault">Falla principal</label><input id="fault" name="falla" placeholder="¿Qué le pasa al equipo?" required autocomplete="off"><div class="chips"><button class="chip" type="button" data-fault="Pantalla">Pantalla</button><button class="chip" type="button" data-fault="Batería">Batería</button><button class="chip" type="button" data-fault="Pin de carga">Pin de carga</button><button class="chip" type="button" data-fault="Software">Software</button></div></div>
         <div class="suggestion" id="price-suggestion"><span id="suggestion-copy"></span><button type="button" id="use-suggestion">Usar precio</button></div>
         <div class="two-col"><div class="field"><label for="total">Total estimado</label><input id="total" name="total" type="number" min="0" inputmode="numeric" placeholder="$ 0"></div><div class="field"><label for="deposit">Seña <span style="font-weight:500;color:#9297a6">· opcional</span></label><input id="deposit" name="sena" type="number" min="0" inputmode="numeric" placeholder="$ 0"></div></div>
-        <div class="field"><label for="note">Nota de recepción <span style="font-weight:500;color:#9297a6">· opcional</span></label><textarea id="note" name="nota" placeholder="Un detalle importante para recordar"></textarea><div class="field-help">El patrón, IMEI y demás datos pueden agregarse en el siguiente paso del diseño.</div></div>
+        <div class="two-col"><div class="field"><label for="imei">IMEI <span style="font-weight:500;color:#9297a6">· opcional</span></label><input id="imei" name="imei" inputmode="numeric" autocomplete="off" placeholder="Identificación del equipo"></div><div class="field"><label for="unlock-code">Patrón / código <span style="font-weight:500;color:#9297a6">· opcional</span></label><input id="unlock-code" name="codigo" autocomplete="off" placeholder="Solo con autorización del cliente"></div></div>
+        <div class="field"><label for="note">Nota de recepción <span style="font-weight:500;color:#9297a6">· opcional</span></label><textarea id="note" name="nota" placeholder="Estado físico, accesorios recibidos o detalle importante"></textarea><div class="field-help">En esta demostración, los datos se mantienen solo en memoria y desaparecen al recargar.</div></div>
         <button class="primary-button" type="submit"><span>＋</span> Crear orden de muestra</button>
       </form>
+    </section>
+  </div>
+  <div class="modal-backdrop" id="order-detail-modal" aria-hidden="true">
+    <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="detail-title">
+      <div class="sheet-grabber" aria-hidden="true"></div>
+      <div class="sheet-head"><div><h2 id="detail-title">Detalle de orden</h2><p id="detail-subtitle">Seguimiento y pagos de muestra</p></div><button class="close-button" type="button" data-close-detail aria-label="Cerrar">×</button></div>
+      <p class="prototype-persist-note" id="detail-device-info"></p>
+      <div class="money-kpis" id="order-payment-summary"></div>
+      <form id="order-detail-form">
+        <div class="two-col"><div class="field"><label for="detail-status">Estado</label><select id="detail-status"><option>Recibido</option><option>Diagnosticando</option><option>Esperando repuesto</option><option>En reparación</option><option>Listo</option><option>Entregado</option><option>Sin reparación</option></select></div><div class="field"><label for="detail-total">Precio acordado</label><input id="detail-total" type="number" min="0" required></div></div>
+        <div class="two-col"><div class="field"><label for="detail-cost">Costo estimado</label><input id="detail-cost" type="number" min="0"></div><div class="field"><label for="detail-payment">Registrar pago</label><input id="detail-payment" type="number" min="0" placeholder="$ 0"></div></div>
+        <div class="field"><label for="detail-method">Medio del pago</label><select id="detail-method"><option>Efectivo</option><option>Transferencia</option><option>Tarjeta</option><option>Otro</option></select></div>
+        <div class="field"><label for="detail-note">Agregar nota de seguimiento</label><textarea id="detail-note" placeholder="Diagnóstico, repuesto pedido o comunicación al cliente"></textarea></div>
+        <button class="primary-button" type="submit">Guardar cambios de muestra</button>
+      </form>
+      <div class="section-divider">Historial de pagos</div><div class="list-stack" id="order-payment-list"></div>
     </section>
   </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -322,13 +339,13 @@
   <script>
     // Prototipo visual aislado. Datos ficticios solo en memoria; no usa Supabase ni almacenamiento persistente.
     const sampleOrders = [
-      { n: 1538, cliente: "Cliente de muestra", modelo: "iPhone 13", falla: "Cambio de pantalla", estado: "En reparación", total: 245000, fecha: "Hoy · 09:18" },
-      { n: 1537, cliente: "Técnico de muestra", gremio: "Gremio de muestra", modelo: "iPhone 11", falla: "Cambio de batería", estado: "Esperando repuesto", total: 98000, fecha: "Hoy · 08:42" },
-      { n: 1536, cliente: "Persona de prueba", modelo: "Samsung A54", falla: "Pin de carga", estado: "Listo", total: 132000, fecha: "Ayer · 16:20" },
-      { n: 1535, cliente: "Cliente de ejemplo", modelo: "iPhone 12", falla: "Diagnóstico", estado: "En reparación", total: 0, fecha: "Ayer · 15:04" },
-      { n: 1534, cliente: "Gremio de muestra", gremio: "Gremio de muestra", modelo: "iPhone 14", falla: "Módulo", estado: "En reparación", total: 310000, fecha: "Ayer · 12:46" },
-      { n: 1533, cliente: "Persona de prueba", modelo: "Motorola G84", falla: "Centro de carga", estado: "Listo", total: 87000, fecha: "Ayer · 11:03" },
-      { n: 1532, cliente: "Cliente de muestra", modelo: "iPhone 13 Pro", falla: "Cámara trasera", estado: "En reparación", total: 175000, fecha: "Ayer · 10:21" }
+      { n: 1538, cliente: "Cliente de muestra", telefono: "11 0000-0001", modelo: "iPhone 13", falla: "Cambio de pantalla", estado: "En reparación", total: 245000, costo: 112000, pagos: [{ importe: 50000, medio: "Efectivo", fecha: "Hoy · 09:18" }], notas: ["Equipo recibido sin golpes visibles"], fecha: "Hoy · 09:18" },
+      { n: 1537, cliente: "Técnico de muestra", gremio: "Gremio de muestra", modelo: "iPhone 11", falla: "Cambio de batería", estado: "Esperando repuesto", total: 98000, costo: 42000, pagos: [], notas: ["Repuesto pedido"], fecha: "Hoy · 08:42" },
+      { n: 1536, cliente: "Persona de prueba", telefono: "11 0000-0002", modelo: "Samsung A54", falla: "Pin de carga", estado: "Listo", total: 132000, costo: 55000, pagos: [{ importe: 50000, medio: "Transferencia", fecha: "Ayer · 16:20" }], notas: [], fecha: "Ayer · 16:20" },
+      { n: 1535, cliente: "Cliente de ejemplo", telefono: "11 0000-0003", modelo: "iPhone 12", falla: "Diagnóstico", estado: "Diagnosticando", total: 0, costo: 0, pagos: [], notas: [], fecha: "Ayer · 15:04" },
+      { n: 1534, cliente: "Gremio de muestra", gremio: "Gremio de muestra", modelo: "iPhone 14", falla: "Módulo", estado: "En reparación", total: 310000, costo: 146000, pagos: [], notas: [], fecha: "Ayer · 12:46" },
+      { n: 1533, cliente: "Persona de prueba", telefono: "11 0000-0002", modelo: "Motorola G84", falla: "Centro de carga", estado: "Listo", total: 87000, costo: 37000, pagos: [], notas: [], fecha: "Ayer · 11:03" },
+      { n: 1532, cliente: "Cliente de muestra", telefono: "11 0000-0001", modelo: "iPhone 13 Pro", falla: "Cámara trasera", estado: "En reparación", total: 175000, costo: 72000, pagos: [], notas: [], fecha: "Ayer · 10:21" }
     ];
     const samplePrices = [
       { marca: "iPhone", modelo: "13", servicio: "Pantalla", precio: 245000 },
@@ -360,6 +377,7 @@
     let activeFilter = "Todas";
     let activeBrand = "Todos";
     let orderKind = "Particular";
+    let selectedOrderNumber = null;
     let toastTimer;
 
     const $ = (selector, root = document) => root.querySelector(selector);
@@ -367,14 +385,15 @@
     const money = value => new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(Number(value) || 0);
     const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
     const statusClass = status => status === "Listo" ? "ready" : status === "Esperando repuesto" ? "waiting" : "repair";
+    const paidAmount = order => (order.pagos || []).reduce((sum, payment) => sum + Number(payment.importe || 0), 0);
     const phoneIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.3"/><path d="M10 18.2h4"/></svg>';
 
     function renderOrderRow(order) {
       const person = order.gremio || order.cliente || "Cliente sin nombre";
-      return `<article class="order-row"><div class="order-device">${phoneIcon}</div><div class="order-main"><div class="order-title">#${String(order.n).padStart(4, "0")} · ${escapeHtml(order.modelo)}</div><div class="order-meta">${escapeHtml(person)} · ${escapeHtml(order.falla)} · ${escapeHtml(order.fecha)}</div></div><div class="order-side"><span class="status ${statusClass(order.estado)}">${escapeHtml(order.estado)}</span><div class="order-price">${Number(order.total) ? money(order.total) : "A presupuestar"}</div></div></article>`;
+      return `<article class="order-row"><div class="order-device">${phoneIcon}</div><div class="order-main"><div class="order-title">#${String(order.n).padStart(4, "0")} · ${escapeHtml(order.modelo)}</div><div class="order-meta">${escapeHtml(person)} · ${escapeHtml(order.falla)} · ${escapeHtml(order.fecha)}</div></div><div class="order-side"><span class="status ${statusClass(order.estado)}">${escapeHtml(order.estado)}</span><div class="order-price">${Number(order.total) ? `${money(order.total)} · resta ${money(Math.max(0, order.total - paidAmount(order)))}` : "A presupuestar"}</div><button class="text-button" type="button" data-order-open="${order.n}">Ver detalle</button></div></article>`;
     }
     function renderHomeOrders() {
-      const active = visibleOrders.filter(order => order.estado !== "Listo").slice(0, 4);
+      const active = visibleOrders.filter(order => !["Listo", "Entregado", "Sin reparación"].includes(order.estado)).slice(0, 4);
       $("#home-orders").innerHTML = active.map(renderOrderRow).join("") || '<div class="empty-state">No hay órdenes en curso.</div>';
       $("#metric-repair").textContent = visibleOrders.filter(order => order.estado === "En reparación").length;
       $("#metric-ready").textContent = visibleOrders.filter(order => order.estado === "Listo").length;
@@ -384,7 +403,7 @@
       const query = $("#order-search").value.trim().toLocaleLowerCase("es-AR");
       const matches = visibleOrders.filter(order => {
         const statusMatch = activeFilter === "Todas" || order.estado === activeFilter;
-        const searchText = `${order.n} ${order.cliente} ${order.gremio} ${order.modelo} ${order.falla}`.toLocaleLowerCase("es-AR");
+        const searchText = `${order.n} ${order.cliente} ${order.telefono} ${order.gremio} ${order.modelo} ${order.falla} ${order.estado}`.toLocaleLowerCase("es-AR");
         return statusMatch && (!query || searchText.includes(query));
       });
       $("#all-orders").innerHTML = matches.map(renderOrderRow).join("") || '<div class="empty-state">No encontré órdenes con esa búsqueda.</div>';
@@ -398,8 +417,28 @@
     function renderClients() {
       const query = $("#client-search").value.trim().toLocaleLowerCase("es-AR");
       const matches = sampleClients.filter(client => `${client.nombre} ${client.telefono}`.toLocaleLowerCase("es-AR").includes(query));
-      $("#client-list").innerHTML = matches.map(client => `<article class="list-card"><div class="list-card-main"><div class="list-card-title">${escapeHtml(client.nombre)}</div><div class="list-card-meta">${escapeHtml(client.telefono)} · ${client.ordenes.length} órdenes<br>${client.ordenes.map(escapeHtml).join("<br>")}</div></div></article>`).join("") || '<div class="empty-state">No encontré clientes.</div>';
+      $("#client-list").innerHTML = matches.map(client => { const history = visibleOrders.filter(order => order.cliente === client.nombre); return `<article class="list-card"><div class="list-card-main"><div class="list-card-title">${escapeHtml(client.nombre)}</div><div class="list-card-meta">${escapeHtml(client.telefono)} · ${history.length} órdenes<br>${history.map(order => `#${order.n} · ${escapeHtml(order.modelo)} · ${escapeHtml(order.estado)} · pagado ${money(paidAmount(order))}`).join("<br>") || "Sin reparaciones todavía"}</div></div></article>`; }).join("") || '<div class="empty-state">No encontré clientes.</div>';
     }
+    function openOrderDetail(number) {
+      const order = visibleOrders.find(item => item.n === Number(number)); if (!order) return;
+      selectedOrderNumber = order.n;
+      $("#detail-title").textContent = `Orden #${String(order.n).padStart(4, "0")}`;
+      $("#detail-subtitle").textContent = `${order.cliente || order.gremio} · ${order.modelo} · ${order.falla}`;
+      $("#detail-device-info").textContent = `Tel.: ${order.telefono || "sin teléfono"} · IMEI: ${order.imei || "sin cargar"} · Patrón/código: ${order.codigo || "sin cargar"}${order.notas?.length ? ` · Notas: ${order.notas.join(" / ")}` : ""}`;
+      $("#detail-status").value = order.estado;
+      $("#detail-total").value = Number(order.total) || 0;
+      $("#detail-cost").value = Number(order.costo) || 0;
+      $("#detail-payment").value = "";
+      $("#detail-note").value = "";
+      renderOrderPayments(order);
+      $("#order-detail-modal").classList.add("open"); $("#order-detail-modal").setAttribute("aria-hidden", "false");
+    }
+    function renderOrderPayments(order) {
+      const paid = paidAmount(order); const balance = Math.max(0, Number(order.total || 0) - paid);
+      $("#order-payment-summary").innerHTML = `<div class="money-kpi"><span>Total</span><strong>${money(order.total)}</strong></div><div class="money-kpi"><span>Pagado</span><strong>${money(paid)}</strong></div><div class="money-kpi"><span>Saldo</span><strong>${money(balance)}</strong></div><div class="money-kpi"><span>Margen bruto estimado</span><strong>${money(Number(order.total || 0) - Number(order.costo || 0))}</strong></div>`;
+      $("#order-payment-list").innerHTML = (order.pagos || []).map(payment => `<article class="list-card"><div class="list-card-main"><div class="list-card-title">${escapeHtml(payment.fecha || "Pago de muestra")}</div><div class="list-card-meta">${escapeHtml(payment.medio || "Efectivo")}</div></div><strong class="list-card-value">${money(payment.importe)}</strong></article>`).join("") || '<div class="empty-state">Esta orden todavía no tiene pagos.</div>';
+    }
+    function closeOrderDetail() { $("#order-detail-modal").classList.remove("open"); $("#order-detail-modal").setAttribute("aria-hidden", "true"); selectedOrderNumber = null; }
     function renderStock() {
       const low = sampleStock.filter(item => item.cantidad <= 3).length;
       $("#stock-kpis").innerHTML = `<div class="money-kpi"><span>Productos</span><strong>${sampleStock.length}</strong></div><div class="money-kpi"><span>Stock bajo</span><strong>${low}</strong></div>`;
@@ -482,6 +521,7 @@
       const faultButton = event.target.closest("[data-fault]");
       const priceButton = event.target.closest("[data-price-value]");
       const stockButton = event.target.closest("[data-stock]");
+      const orderOpenButton = event.target.closest("[data-order-open]");
       if (pageButton) openPage(pageButton.dataset.page);
       if (actionButton?.dataset.action === "new-order") openOrderModal();
       if (event.target.closest("[data-close]") || event.target === $("#order-modal")) closeOrderModal();
@@ -505,26 +545,50 @@
         const item = sampleStock.find(product => product.id === Number(stockButton.dataset.stock));
         item.cantidad = Math.max(0, item.cantidad + Number(stockButton.dataset.delta)); renderStock(); showToast(`Stock de muestra actualizado: ${item.cantidad}.`);
       }
+      if (orderOpenButton) openOrderDetail(orderOpenButton.dataset.orderOpen);
+      if (event.target.closest("[data-close-detail]") || event.target === $("#order-detail-modal")) closeOrderDetail();
     });
-    document.addEventListener("keydown", event => { if (event.key === "Escape") closeOrderModal(); });
+    document.addEventListener("keydown", event => { if (event.key === "Escape") { closeOrderModal(); closeOrderDetail(); } });
     $("#order-search").addEventListener("input", renderOrders);
     $("#price-search").addEventListener("input", renderPrices);
     $("#client-search").addEventListener("input", renderClients);
     $("#device").addEventListener("input", updateSuggestion);
     $("#fault").addEventListener("input", updateSuggestion);
     $$("[data-kind]").forEach(button => button.addEventListener("click", () => setOrderKind(button.dataset.kind)));
+    $("#order-detail-form").addEventListener("submit", event => {
+      event.preventDefault(); const order = visibleOrders.find(item => item.n === selectedOrderNumber); if (!order) return;
+      const previousPaid = paidAmount(order); const paymentAmount = Number($("#detail-payment").value) || 0; const newTotal = Number($("#detail-total").value) || 0;
+      if (newTotal < previousPaid) { showToast("El precio no puede quedar por debajo de los pagos ya registrados."); return; }
+      if (paymentAmount > 0 && previousPaid + paymentAmount > newTotal) { showToast("El pago supera el saldo pendiente de la orden."); return; }
+      order.estado = $("#detail-status").value; order.total = newTotal; order.costo = Number($("#detail-cost").value) || 0;
+      if (!order.pagos) order.pagos = [];
+      if (paymentAmount > 0) {
+        const medio = $("#detail-method").value; order.pagos.push({ importe: paymentAmount, medio, fecha: "Ahora · muestra" });
+        sampleCash.push({ tipo: "ingreso", concepto: `Pago orden #${order.n}`, importe: paymentAmount, medio });
+      }
+      const note = $("#detail-note").value.trim(); if (note) { if (!order.notas) order.notas = []; order.notas.unshift(note); }
+      if (order.estado === "Entregado" && !order.entregada) order.entregada = new Date().toISOString();
+      renderOrderPayments(order); renderHomeOrders(); renderOrders(); renderClients(); renderCash();
+      showToast(`Orden #${order.n} actualizada en esta sesión.`);
+    });
     $("#new-order-form").addEventListener("submit", event => {
       event.preventDefault();
       const form = new FormData(event.currentTarget);
+      const total = Number(form.get("total")) || 0; const deposit = Number(form.get("sena")) || 0;
+      if (deposit > total) { showToast("La seña no puede superar el total estimado."); return; }
       const order = {
         n: Math.max(0, ...visibleOrders.map(item => item.n)) + 1,
         cliente: orderKind === "Particular" ? String(form.get("cliente") || "").trim() : "",
         gremio: orderKind === "Gremio" ? String(form.get("gremio") || "").trim() : "",
+        telefono: orderKind === "Particular" ? String(form.get("telefono") || "").trim() : "",
         modelo: String(form.get("modelo") || "").trim(), falla: String(form.get("falla") || "").trim(),
-        estado: "Recibido", total: Number(form.get("total")) || 0, fecha: "Ahora · prototipo"
+        imei: String(form.get("imei") || "").trim(), codigo: String(form.get("codigo") || "").trim(), notas: String(form.get("nota") || "").trim() ? [String(form.get("nota")).trim()] : [],
+        estado: "Recibido", total, costo: 0, pagos: [], fecha: "Ahora · prototipo"
       };
+      if (order.cliente && !sampleClients.some(client => client.nombre.toLocaleLowerCase("es-AR") === order.cliente.toLocaleLowerCase("es-AR"))) sampleClients.unshift({ nombre: order.cliente, telefono: order.telefono, ordenes: [] });
+      if (deposit > 0) { order.pagos.push({ importe: deposit, medio: "Efectivo", fecha: "Ahora · muestra" }); sampleCash.push({ tipo: "ingreso", concepto: `Seña orden #${order.n}`, importe: deposit, medio: "Efectivo" }); }
       visibleOrders.unshift(order);
-      renderHomeOrders(); renderOrders();
+      renderHomeOrders(); renderOrders(); renderClients();
       event.currentTarget.reset(); setOrderKind("Particular"); closeOrderModal(); openPage("orders");
       showToast(`Orden de muestra #${String(order.n).padStart(4, "0")} agregada en esta pestaña.`);
     });

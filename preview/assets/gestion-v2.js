@@ -176,11 +176,18 @@
     $("#quick-client-toggle")?.addEventListener("click", () => {
       $("#quick-client-fields").hidden = false;
       $("#quick-client-toggle").hidden = true;
+      // Si se da de alta en línea, no exigir también elegir un cliente existente.
+      $("#f-cliente_id").required = false;
+      $("#f-cliente_id").disabled = true;
+      $("#f-nuevo_nombre").required = true;
       $("#f-nuevo_nombre").focus();
     });
     $("#quick-client-cancel")?.addEventListener("click", () => {
       $("#quick-client-fields").hidden = true;
       $("#quick-client-toggle").hidden = false;
+      $("#f-cliente_id").disabled = false;
+      $("#f-cliente_id").required = true;
+      $("#f-nuevo_nombre").required = false;
     });
   }
   function openPriceForm(price = null) {

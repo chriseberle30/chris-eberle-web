@@ -399,7 +399,7 @@
       { id: 3, nombre: "Vidrio templado universal", categoria: "Protección", cantidad: 2, costo: 1200, precio: 4500 },
       { id: 4, nombre: "Auricular Bluetooth", categoria: "Audio", cantidad: 0, costo: 14500, precio: 24900 }
     ];
-    const sampleSales = [{ nombre: "Vidrio templado universal", cantidad: 1, total: 4500, medio: "Efectivo", fecha: "Hoy · muestra" }];
+    const sampleSales = [{ nombre: "Vidrio templado universal", cantidad: 1, total: 4500, costoUnitario: 1200, medio: "Efectivo", fecha: "Hoy · muestra" }];
     const sampleBudgets = [{ cliente: "Persona de prueba", equipo: "Samsung A54", trabajo: "Pin de carga", importe: 132000, estado: "Pendiente" }];
     const sampleCash = [{ tipo: "ingreso", concepto: "Pago posterior orden #1538", importe: 50000, medio: "Efectivo" }, { tipo: "egreso", concepto: "Compra de insumos", importe: 12000, medio: "Efectivo" }, { tipo: "ingreso", concepto: "Venta de accesorio", importe: 4500, medio: "Efectivo" }];
     const demoRepository = window.E30DemoRepository.createBrowserDemoRepository(window.localStorage, "e30-gestion-preview-v1");
@@ -411,7 +411,7 @@
       sampleSales.splice(0, sampleSales.length, ...savedDemoState.sales);
       sampleBudgets.splice(0, sampleBudgets.length, ...savedDemoState.budgets);
       sampleCash.splice(0, sampleCash.length, ...savedDemoState.cash);
-      if (Array.isArray(savedDemoState.prices) && savedDemoState.prices.length) samplePrices.splice(0, samplePrices.length, ...savedDemoState.prices);
+      if (Array.isArray(savedDemoState.prices)) samplePrices.splice(0, samplePrices.length, ...savedDemoState.prices);
     }
     sampleOrders.forEach(order => { if (!Array.isArray(order.costos)) order.costos = Number(order.costo) > 0 ? [{ concepto: "Costo cargado", importe: Number(order.costo) }] : []; order.costo = 0; if (!Array.isArray(order.pagos)) order.pagos = []; });
     let visibleOrders = sampleOrders.slice();
@@ -522,7 +522,7 @@
       const repairSales = visibleOrders.reduce((sum, order) => sum + Number(order.total || 0), 0);
       const repairCosts = visibleOrders.reduce((sum, order) => sum + orderCostTotal(order), 0);
       const accessorySales = sampleSales.reduce((sum, sale) => sum + Number(sale.total || 0), 0);
-      const accessoryCost = sampleSales.reduce((sum, sale) => { const item = sampleStock.find(product => product.nombre === sale.nombre); return sum + Number(item?.costo || 0) * Number(sale.cantidad || 0); }, 0);
+      const accessoryCost = sampleSales.reduce((sum, sale) => { const item = sampleStock.find(product => product.nombre === sale.nombre); return sum + Number(sale.costoUnitario ?? item?.costo ?? 0) * Number(sale.cantidad || 0); }, 0);
       const gross = repairSales - repairCosts + accessorySales - accessoryCost;
       const receivables = visibleOrders.reduce((sum, order) => sum + Math.max(0, Number(order.total || 0) - paidAmount(order)), 0);
       const inventoryValue = sampleStock.reduce((sum, item) => sum + Number(item.cantidad || 0) * Number(item.costo || 0), 0);
@@ -742,7 +742,7 @@
       event.preventDefault(); const product = sampleStock.find(item => item.id === Number($("#sale-product").value)); const qty = Number($("#sale-qty").value);
       if (!product || qty < 1 || product.cantidad < qty) { showToast("No hay stock de muestra suficiente."); return; }
       const total = product.precio * qty; product.cantidad -= qty;
-      const medio = $("#sale-method").value; sampleSales.unshift({ nombre: product.nombre, cantidad: qty, total, medio, fecha: "Ahora · muestra" }); sampleCash.push({ tipo: "ingreso", concepto: `Venta: ${product.nombre}`, importe: total, medio });
+      const medio = $("#sale-method").value; sampleSales.unshift({ nombre: product.nombre, cantidad: qty, total, costoUnitario: product.costo, medio, fecha: "Ahora · muestra" }); sampleCash.push({ tipo: "ingreso", concepto: `Venta: ${product.nombre}`, importe: total, medio });
       saveDemoState();
       renderStock(); renderSales(); renderCash(); renderReports(); event.currentTarget.reset(); showToast("Venta de muestra registrada en esta sesión.");
     });

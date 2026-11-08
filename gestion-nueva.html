@@ -344,6 +344,13 @@
       <div class="section-divider">Historial de pagos</div><div class="list-stack" id="order-payment-list"></div>
     </section>
   </div>
+  <div class="modal-backdrop" id="reset-demo-modal" aria-hidden="true">
+    <section class="sheet" role="alertdialog" aria-modal="true" aria-labelledby="reset-demo-title">
+      <div class="sheet-grabber" aria-hidden="true"></div><div class="sheet-head"><div><h2 id="reset-demo-title">Restablecer la demo</h2><p>Se borrarán solo los cambios ficticios guardados en este navegador.</p></div><button class="close-button" type="button" id="cancel-reset-close" aria-label="Cancelar">×</button></div>
+      <p class="prototype-persist-note">Las órdenes reales de producción no están conectadas a esta vista previa y no se verán afectadas.</p>
+      <div class="form-grid"><button class="filter-chip" id="cancel-reset" type="button">Seguir probando</button><button class="primary-button" id="confirm-reset" type="button">Restablecer datos ficticios</button></div>
+    </section>
+  </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script>
@@ -644,8 +651,12 @@
       if (event.target.closest("#detail-print")) { const order = visibleOrders.find(item => item.n === selectedOrderNumber); if (order) printOrder(order); }
       if (event.target.closest("[data-close-detail]") || event.target === $("#order-detail-modal")) closeOrderDetail();
     });
-    document.addEventListener("keydown", event => { if (event.key === "Escape") { closeOrderModal(); closeOrderDetail(); } });
-    $("#reset-demo").addEventListener("click", () => { if (window.confirm("¿Restablecer los datos ficticios de esta demostración en este navegador?")) { localStorage.removeItem(demoStorageKey); window.location.reload(); } });
+    document.addEventListener("keydown", event => { if (event.key === "Escape") { closeOrderModal(); closeOrderDetail(); closeResetDemo(); } });
+    function closeResetDemo() { $("#reset-demo-modal").classList.remove("open"); $("#reset-demo-modal").setAttribute("aria-hidden", "true"); }
+    $("#reset-demo").addEventListener("click", () => { $("#reset-demo-modal").classList.add("open"); $("#reset-demo-modal").setAttribute("aria-hidden", "false"); $("#cancel-reset").focus(); });
+    $("#cancel-reset").addEventListener("click", closeResetDemo);
+    $("#cancel-reset-close").addEventListener("click", closeResetDemo);
+    $("#confirm-reset").addEventListener("click", () => { try { localStorage.removeItem(demoStorageKey); window.location.reload(); } catch { closeResetDemo(); showToast("No se pudo restablecer el almacenamiento local."); } });
     $("#order-search").addEventListener("input", renderOrders);
     $("#price-search").addEventListener("input", renderPrices);
     $("#client-search").addEventListener("input", renderClients);

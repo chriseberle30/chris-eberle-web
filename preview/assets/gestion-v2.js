@@ -135,9 +135,53 @@
   function openOrderForm(order = null) {
     const isEditing = Boolean(order?.id);
     const clientOptions = data.clients.map((client) => `<option value="${esc(client.id)}" ${client.id === order?.cliente_id ? "selected" : ""}>${esc(client.nombre)}${client.telefono ? ` · ${esc(client.telefono)}` : ""}</option>`).join("");
-    const body = `<div class="form-grid">${selectField("Sucursal *", "negocio", Rules.BRANCHES, order?.negocio || "E30")}${selectField("Estado", "estado", Rules.ORDER_STATES, order?.estado || "Recibido")}<div class="field span-2"><label for="f-cliente_id">Cliente *</label><select id="f-cliente_id" name="cliente_id" required><option value="">Elegí un cliente</option>${clientOptions}</select></div>${formField("Modelo del equipo *", "modelo", order?.modelo || "", "text")}${formField("Marca", "marca", order?.marca || "iPhone", "text")}${formField("Total acordado", "total", order?.total ?? 0, "number")}<div class="field"><label for="f-falla">Falla / trabajo solicitado *</label><textarea id="f-falla" name="falla" required>${esc(order?.falla || "")}</textarea></div><div class="field span-2"><label for="f-notas">Notas internas</label><textarea id="f-notas" name="notas">${esc(order?.notas || "")}</textarea></div>${formField("IMEI / serie", "imei", order?.imei || "")}${!isEditing ? `${formField("Seña inicial (opcional)", "sena", "0", "number")}${selectField("Medio de la seña", "medio", Rules.PAYMENT_METHODS, "Efectivo")}` : ""}</div>${data.clients.length ? "" : `<p class=\"error\">Primero agregá un cliente en Clientes.</p>`}`;
+    const body = `<div class="form-grid">
+      ${!isEditing ? selectField("Tipo de trabajo", "tipo", ["Particular", "Gremio"], "Particular", "span-2") : ""}
+      ${selectField("Sucursal *", "negocio", Rules.BRANCHES, order?.negocio || "E30")}
+      ${selectField("Estado", "estado", Rules.ORDER_STATES, order?.estado || "Recibido")}
+      <div class="field span-2" id="client-picker-wrap"><label for="f-cliente_id">Cliente</label>
+        <select id="f-cliente_id" name="cliente_id"><option value="">Elegí un cliente existente</option>${clientOptions}</select>
+        <button type="button" class="button" id="quick-client-toggle" style="margin-top:8px">＋ Crear cliente acá</button>
+      </div>
+      <div class="field span-2" id="quick-client-fields" hidden>
+        <label>Alta rápida de cliente</label>
+        ${formField("Nombre / comercio *", "nuevo_nombre")}
+        ${formField("Teléfono", "nuevo_telefono", "", "tel")}
+        ${formField("Email (opcional)", "nuevo_email", "", "email")}
+        <button type="button" class="button" id="quick-client-cancel">Cancelar alta rápida</button>
+      </div>
+      <div class="field span-2" id="guild-name-wrap" hidden>${formField("Técnico / comercio *", "gremio")}</div>
+      ${formField("Modelo del equipo *", "modelo", order?.modelo || "", "text")}
+      ${formField("Marca", "marca", order?.marca || "iPhone", "text")}
+      ${formField("Total acordado", "total", order?.total ?? 0, "number")}
+      <div class="field"><label for="f-falla">Falla / trabajo solicitado *</label><textarea id="f-falla" name="falla" required>${esc(order?.falla || "")}</textarea></div>
+      <div class="field span-2"><label for="f-notas">Notas internas</label><textarea id="f-notas" name="notas">${esc(order?.notas || "")}</textarea></div>
+      ${formField("IMEI / serie", "imei", order?.imei || "")}
+      ${!isEditing ? `${formField("Seña inicial (opcional)", "sena", "0", "number")}${selectField("Medio de la seña", "medio", Rules.PAYMENT_METHODS, "Efectivo")}` : ""}
+    </div>`;
     openModal(isEditing ? `Editar orden #${order.id}` : "Nueva orden de reparación", "ORDEN DE TRABAJO", body, actionButtons("Cancelar", isEditing ? "Guardar cambios" : "Crear orden"));
-    $("#modal-form").dataset.action = isEditing ? "update-order" : "create-order"; $("#modal-form").dataset.id = isEditing ? order.id : "";
+    $("#modal-form").dataset.action = isEditing ? "update-order" : "create-order";
+    $("#modal-form").dataset.id = isEditing ? order.id : "";
+    const type = $("#f-tipo");
+    const toggleType = () => {
+      const guild = type?.value === "Gremio";
+      $("#guild-name-wrap").hidden = !guild;
+      $("#f-gremio")?.toggleAttribute("required", guild);
+      $("#client-picker-wrap").hidden = guild;
+      $("#quick-client-fields").hidden = true;
+      $("#f-cliente_id").required = !guild;
+    };
+    type?.addEventListener("change", toggleType);
+    toggleType();
+    $("#quick-client-toggle")?.addEventListener("click", () => {
+      $("#quick-client-fields").hidden = false;
+      $("#quick-client-toggle").hidden = true;
+      $("#f-nuevo_nombre").focus();
+    });
+    $("#quick-client-cancel")?.addEventListener("click", () => {
+      $("#quick-client-fields").hidden = true;
+      $("#quick-client-toggle").hidden = false;
+    });
   }
   function openPriceForm(price = null) {
     const body = `<div class="form-grid">${formField("Marca", "marca", price?.marca || "iPhone")}${formField("Modelo *", "modelo", price?.modelo || "")} ${formField("Reparación *", "servicio", price?.servicio || "")} ${formField("Precio *", "precio", price?.precio ?? "", "number")}</div>`;
@@ -188,10 +232,18 @@
         const { error } = await query; if (error) throw error;
         notice("Cliente guardado.");
       } else if (action === "create-order" || action === "update-order") {
-        const client = data.clients.find((row) => row.id === values.cliente_id);
-        if (!client) throw new Error("Elegí un cliente de la lista.");
+        let client = data.clients.find((row) => row.id === values.cliente_id);
+        const tipo = action === "create-order" ? (values.tipo || "Particular") : (data.currentOrder?.tipo || "Particular");
+        if (tipo === "Particular" && !client && values.nuevo_nombre?.trim()) {
+          const quickPayload = Rules.validateClient({ nombre: values.nuevo_nombre, telefono: values.nuevo_telefono, email: values.nuevo_email });
+          const created = await sb.from("clientes").insert(quickPayload).select("id,nombre,telefono").single();
+          if (created.error) throw created.error;
+          client = created.data;
+        }
+        if (tipo === "Particular" && !client) throw new Error("Elegí un cliente o crealo desde esta misma pantalla.");
+        if (tipo === "Gremio" && !values.gremio?.trim()) throw new Error("Ingresá el nombre del técnico o comercio.");
         const valid = Rules.validateOrder({ ...values, sena: action === "create-order" ? values.sena : 0 });
-        const payload = { cliente_id: client.id, cliente: client.nombre, telefono: client.telefono, negocio: valid.negocio, tipo: "Particular", marca: values.marca || "iPhone", modelo: valid.modelo, falla: valid.falla, estado: values.estado || "Recibido", total: valid.total, notas: values.notas || null, imei: values.imei || null };
+        const payload = { cliente_id: tipo === "Particular" ? client.id : null, cliente: tipo === "Particular" ? client.nombre : values.gremio.trim(), telefono: tipo === "Particular" ? client.telefono : values.nuevo_telefono || null, negocio: valid.negocio, tipo, gremio: tipo === "Gremio" ? values.gremio.trim() : null, marca: values.marca || "iPhone", modelo: valid.modelo, falla: valid.falla, estado: values.estado || "Recibido", total: valid.total, notas: values.notas || null, imei: values.imei || null };
         if (action === "create-order") {
           const result = await sb.rpc("e30_crear_orden", { p_orden: payload, p_sena: valid.sena, p_medio: values.medio || "Efectivo" });
           if (result.error) throw result.error;

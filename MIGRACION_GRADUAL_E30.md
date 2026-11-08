@@ -68,6 +68,12 @@ Implicaciones para migrar:
 
 El preview offline de [`scripts/e30_migration.mjs`](scripts/e30_migration.mjs) incluye `accounting_reconciliation`: separa señas, compara pagos posteriores con movimientos vinculados por orden e informa diferencias sin alterar importes. La suite [`scripts/e30_migration.test.mjs`](scripts/e30_migration.test.mjs) contiene siete pruebas sintéticas ejecutables con `node --test scripts/e30_migration.test.mjs`; las siete pasan. Cubren preservación de `legacy_payload`, datos opacos, datos desconocidos, conciliación y verificación de copias. Falta ejecutarla con el export real privado y validar una restauración completa.
 
+### Relevamiento de rentabilidad y sucursales — 8 de noviembre de 2026
+
+La consulta agregada de solo lectura confirmó que las seis órdenes existentes tienen `local`, y que sus seis registros incluyen arrays de pagos y costos. La venta existente también tiene sucursal y costo. Los seis movimientos de caja, en cambio, no tienen `local` ni `negocio`; por eso no se pueden atribuir con evidencia a Las Flores o Moreno.
+
+El reporte por sucursal ahora separa y muestra esos movimientos como **sin sucursal asignada** y los agrega al CSV con esa misma etiqueta; no los suma a la sucursal seleccionada. No completar el local histórico por inferencia. El indicador actual es **ganancia bruta estimada** (facturación menos costos de orden y costo de los accesorios vendidos): no descuenta gastos generales de Caja y no representa ganancia neta. Para calcular el resultado neto por sucursal hay que clasificar y asignar los movimientos sin ubicación, y acordar qué categorías de caja son gastos operativos, compras de stock, costos ya contabilizados por orden o retiros personales.
+
 ## Modelo objetivo antes de importar
 
 Diseñar y aprobar el modelo relacional completo antes de transformar datos. Como mínimo:

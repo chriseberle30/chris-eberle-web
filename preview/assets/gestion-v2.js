@@ -72,7 +72,8 @@
         loadOrders({ trash: true }),
         sb.from("caja_movimientos").select("*").order("creado",{ascending:false}).limit(1500),
         sb.from("stock_items").select("*").order("nombre").limit(2000),
-        sb.from("ventas").select("*,venta_items(*)").order("creado",{ascending:false}).limit(1000),\n        sb.from("reclamos_garantia").select("*,ordenes(id,modelo,cliente,gremio,negocio,garantia_dias)").order("creado",{ascending:false}).limit(1000),
+        sb.from("ventas").select("*,venta_items(*)").order("creado",{ascending:false}).limit(1000),
+        sb.from("reclamos_garantia").select("*,ordenes(id,modelo,cliente,gremio,negocio,garantia_dias)").order("creado",{ascending:false}).limit(1000),
       ]);
       if (clients.error) throw clients.error;
       if (prices.error) throw prices.error;
@@ -277,7 +278,9 @@
         if (!price.modelo || !price.servicio || !Number.isFinite(price.precio) || price.precio < 0) throw new Error("Completá modelo, reparación y un precio válido.");
         const query = form.dataset.id ? sb.from("precios").update(price).eq("id", form.dataset.id) : sb.from("precios").insert(price);
         const { error } = await query; if (error) throw error; notice("Precio guardado.");
-      } else if(action==="save-claim"){\n        const orderId=Number(values.orden_id.split(" · ")[0]);if(!orderId||!values.motivo?.trim())throw new Error("Elegí una orden y describí el motivo.");const payload={orden_id:orderId,motivo:values.motivo.trim(),estado:values.estado,diagnostico:values.diagnostico||null,resolucion:values.resolucion||null,actualizado:new Date().toISOString()};const q=form.dataset.id?sb.from("reclamos_garantia").update(payload).eq("id",form.dataset.id):sb.from("reclamos_garantia").insert(payload);const {error}=await q;if(error)throw error;notice("Reclamo guardado.");\n      } else if(action==="save-cash"){
+      } else if(action==="save-claim"){
+        const orderId=Number(values.orden_id.split(" · ")[0]);if(!orderId||!values.motivo?.trim())throw new Error("Elegí una orden y describí el motivo.");const payload={orden_id:orderId,motivo:values.motivo.trim(),estado:values.estado,diagnostico:values.diagnostico||null,resolucion:values.resolucion||null,actualizado:new Date().toISOString()};const q=form.dataset.id?sb.from("reclamos_garantia").update(payload).eq("id",form.dataset.id):sb.from("reclamos_garantia").insert(payload);const {error}=await q;if(error)throw error;notice("Reclamo guardado.");
+      } else if(action==="save-cash"){
         const amount=Number(values.importe);if(!values.concepto?.trim()||!Number.isFinite(amount)||amount<=0)throw new Error("Completá concepto e importe válido.");
         const {error}=await sb.from("caja_movimientos").insert({tipo:values.tipo,categoria:values.categoria||"General",concepto:values.concepto.trim(),importe:amount,medio:values.medio,sucursal:values.sucursal});if(error)throw error;notice("Movimiento de caja registrado.");
       } else if(action==="save-stock"){
@@ -430,7 +433,8 @@
       else if (target.dataset.editPrice) openPriceForm(data.prices.find((row) => String(row.id) === target.dataset.editPrice));
       else if (target.dataset.togglePrice) togglePrice(target.dataset.togglePrice, target.dataset.active === "true");
       else if(target.dataset.stockMove)openStockMove(target.dataset.stockMove);
-      else if(target.dataset.stockEdit)openStockForm(data.stockItems.find(x=>String(x.id)===target.dataset.stockEdit));\n      else if(target.dataset.claimEdit)openClaimForm(data.claims.find(x=>String(x.id)===target.dataset.claimEdit));
+      else if(target.dataset.stockEdit)openStockForm(data.stockItems.find(x=>String(x.id)===target.dataset.stockEdit));
+      else if(target.dataset.claimEdit)openClaimForm(data.claims.find(x=>String(x.id)===target.dataset.claimEdit));
     });
     const queryOrders = () => { clearTimeout(data.queryTimer); data.queryTimer = setTimeout(async () => { try { const rows = await loadOrders({ search: $("#order-search").value }); data.orders = rows; renderOrders(rows); renderStats(); } catch (error) { notice(error.message, true); } }, 250); };
     $("#order-search").addEventListener("input", queryOrders); $("#branch-filter").addEventListener("change", () => renderOrders());

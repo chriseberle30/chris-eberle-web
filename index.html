@@ -965,6 +965,7 @@ qz.security.setSignaturePromise(function(toSign){
   <button type="button" onclick="bottomNavGo('movimientos')" aria-label="Caja"><svg viewBox="0 0 24 24"><rect x="3.5" y="6" width="17" height="14" rx="2"/><path d="M3.5 10h17M7 15h4M7 3.5h10"/></svg><span>Caja</span></button>
 </nav>
 
+<script src="assets/e30-price-search.js?v=1"></script>
 <script>
 /* ============================================================
    BASE DE DATOS PRIVADA (Supabase — misma cuenta que la web
@@ -1460,13 +1461,18 @@ function renderSearch(){
   if(!input||!results)return;
   const q=input.value.toLocaleLowerCase("es-AR").trim();
   if(!q){results.innerHTML="";return;}
-  const words=q.split(/\s+/).filter(Boolean);
-  let data=prices.filter(p=>p.activo!==false).filter(p=>{
-    const t=`${p.marca||""} ${p.modelo||""} ${p.reparacion||""}`.toLocaleLowerCase("es-AR");
-    return words.every(w=>t.includes(w));
-  });
+  let data;
+  if(window.E30PriceSearch){
+    data=window.E30PriceSearch.search(prices,input.value);
+  }else{
+    const words=q.split(/\s+/).filter(Boolean);
+    data=prices.filter(p=>p.activo!==false).filter(p=>{
+      const t=`${p.marca||""} ${p.modelo||""} ${p.reparacion||""}`.toLocaleLowerCase("es-AR");
+      return words.every(w=>t.includes(w));
+    });
+  }
   if(searchRepairChip!=="Todos")data=data.filter(p=>searchRepairCategory(p.reparacion)===searchRepairChip);
-  data.sort((a,b)=>compareSearchModels(a,b));
+  if(!window.E30PriceSearch)data.sort((a,b)=>compareSearchModels(a,b));
   const groups=[];
   data.forEach(p=>{
     const key=`${String(p.marca||"").trim().toLocaleLowerCase("es-AR")}||${String(p.modelo||"").trim().toLocaleLowerCase("es-AR")}`;
@@ -1478,7 +1484,7 @@ function renderSearch(){
   const chipHtml=`<div class="search-repair-chips" aria-label="Filtrar tipo de reparación">${chips.map(c=>`<button type="button" class="search-chip ${searchRepairChip===c?"active":""}" onclick="setSearchRepairChip('${c}')">${c}</button>`).join("")}</div>`;
   const groupsHtml=groups.map(g=>{
     g.items.sort((a,b)=>searchRepairOrder(a.reparacion)-searchRepairOrder(b.reparacion)||String(a.reparacion).localeCompare(String(b.reparacion),"es"));
-    return `<section class="search-model-group"><div class="search-model-heading"><h3>${g.marca} ${g.modelo}</h3><span>${g.items.length} ${g.items.length===1?"reparación":"reparaciones"}</span></div><div class="search-model-rows">${g.items.map(p=>`<div class="search-price-row"><div class="search-repair-name">${p.reparacion}</div><div class="search-price-value">${money(p.precio)}</div><button type="button" class="search-add-btn" aria-label="Crear orden para ${g.marca} ${g.modelo} - ${p.reparacion}" title="Usar este precio en una orden" onclick="newFromPrice(${p.id})">+</button><button type="button" class="search-wa-btn" title="Enviar precio por WhatsApp" aria-label="Enviar por WhatsApp" onclick="shareSearchPrice(${p.id})">↗</button></div>`).join("")}</div></section>`;
+    return `<section class="search-model-group"><div class="search-model-heading"><h3>${escapeHtml(g.marca)} ${escapeHtml(g.modelo)}</h3><span>${g.items.length} ${g.items.length===1?"reparación":"reparaciones"}</span></div><div class="search-model-rows">${g.items.map(p=>`<div class="search-price-row"><div class="search-repair-name">${escapeHtml(p.reparacion)}</div><div class="search-price-value">${money(p.precio)}</div><button type="button" class="search-add-btn" aria-label="Crear orden para ${escapeHtml(g.marca)} ${escapeHtml(g.modelo)} - ${escapeHtml(p.reparacion)}" title="Usar este precio en una orden" onclick="newFromPrice(${p.id})">+</button><button type="button" class="search-wa-btn" title="Enviar precio por WhatsApp" aria-label="Enviar por WhatsApp" onclick="shareSearchPrice(${p.id})">↗</button></div>`).join("")}</div></section>`;
   }).join("");
   results.innerHTML=chipHtml+(groupsHtml||'<div class="card empty">No encontré ese precio.</div>');
 }

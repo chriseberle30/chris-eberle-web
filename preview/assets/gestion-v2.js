@@ -330,10 +330,12 @@
     const isDelivery = type === "entrega";
     const paymentLines = (payments || []).map(p => `<div>${date(p.creado)} · ${esc(p.medio)}: ${money(p.importe)}</div>`).join("");
     const terms = order.garantia_dias === 0 ? "Trabajo sin garantía." : `Garantía: ${order.garantia_dias ? order.garantia_dias + " días" : "A definir"}.`;
-    const trackingUrl = order.tracking_token ? `${location.origin}${location.pathname.replace(/gestion-v2\\.html$/, "seguimiento.html")}?t=${encodeURIComponent(order.tracking_token)}` : "";\n    $("#print-area").innerHTML = `<div class="ticket">
+    const trackingUrl = order.tracking_token ? `${location.origin}${location.pathname.replace(/gestion-v2\.html$/, "seguimiento.html")}?t=${encodeURIComponent(order.tracking_token)}` : "";
+    $("#print-area").innerHTML = `<div class="ticket">
       <h2>${brand}</h2><p>${order.negocio === "i30" ? "Moreno" : "Las Flores"}</p><hr>
       <h3>${isDelivery ? "COMPROBANTE DE ENTREGA" : "COMPROBANTE DE RECEPCIÓN"}</h3>
-      <b>ORDEN #${esc(order.id)}</b><p>${date(isDelivery ? (order.entregada || new Date().toISOString()) : order.creada)}</p><hr>\n      ${trackingUrl ? `<div class="ticket-tracking"><div id="tracking-qr"></div><b>Seguimiento de reparación</b><small>Escaneá el QR para consultar el estado</small></div><hr>` : ""}
+      <b>ORDEN #${esc(order.id)}</b><p>${date(isDelivery ? (order.entregada || new Date().toISOString()) : order.creada)}</p><hr>
+      ${trackingUrl ? `<div class="ticket-tracking"><div id="tracking-qr"></div><b>Seguimiento de reparación</b><small>Escaneá el QR para consultar el estado</small></div><hr>` : ""}
       <b>CLIENTE</b><p>${esc(client)}<br>${esc(order.telefono || order.clientes?.telefono || "—")}</p>
       <b>EQUIPO</b><p>${esc(order.marca || "")} ${esc(order.modelo || "")}<br>IMEI: ${esc(order.imei || "—")}</p>
       <b>${isDelivery ? "TRABAJO REALIZADO" : "FALLA INFORMADA"}</b><p>${esc(isDelivery ? (order.trabajo_realizado || order.falla || "—") : (order.falla || "—"))}</p>

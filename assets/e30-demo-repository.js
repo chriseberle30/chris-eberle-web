@@ -1,8 +1,8 @@
 (function attachE30DemoRepository(global) {
   "use strict";
 
-  const COLLECTIONS = Object.freeze(["orders", "clients", "stock", "sales", "budgets", "cash", "prices"]);
-  const REQUIRED_COLLECTIONS = Object.freeze(COLLECTIONS.filter((name) => name !== "prices"));
+  const COLLECTIONS = Object.freeze(["orders", "clients", "stock", "sales", "budgets", "cash", "prices", "activity"]);
+  const REQUIRED_COLLECTIONS = Object.freeze(COLLECTIONS.filter((name) => name !== "prices" && name !== "activity"));
   const VERSION = 1;
 
   function isRecord(value) {
@@ -13,11 +13,13 @@
     if (!isRecord(snapshot) || snapshot.version !== VERSION) return false;
     if (!REQUIRED_COLLECTIONS.every((name) => Array.isArray(snapshot[name]))) return false;
     if (snapshot.prices !== undefined && !Array.isArray(snapshot.prices)) return false;
+    if (snapshot.activity !== undefined && !Array.isArray(snapshot.activity)) return false;
     return snapshot.orders.every((order) => isRecord(order)
       && Number.isSafeInteger(Number(order.n))
       && typeof order.modelo === "string"
       && typeof order.estado === "string")
       && snapshot.clients.every((client) => isRecord(client) && typeof client.nombre === "string")
+      && (snapshot.activity === undefined || snapshot.activity.every((item) => isRecord(item) && typeof item.tipo === "string" && typeof item.titulo === "string"))
       && (snapshot.prices === undefined || snapshot.prices.every((price) => isRecord(price) && typeof price.marca === "string" && typeof price.modelo === "string" && typeof price.servicio === "string"))
       && snapshot.stock.every((item) => isRecord(item) && Number.isSafeInteger(Number(item.id)) && typeof item.nombre === "string")
       && snapshot.sales.every((sale) => isRecord(sale) && typeof sale.nombre === "string")
@@ -37,7 +39,7 @@
           const raw = storage.getItem(storageKey);
           if (!raw) return null;
           const snapshot = JSON.parse(raw);
-          return isValidSnapshot(snapshot) ? snapshot : null;
+          return isValidSnapshot(snapshot) ? { ...snapshot, activity: Array.isArray(snapshot.activity) ? snapshot.activity : [] } : null;
         } catch {
           return null;
         }

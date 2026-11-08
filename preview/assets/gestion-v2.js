@@ -14,7 +14,7 @@
   const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
   const date = (value) => value ? new Date(value).toLocaleString("es-AR", { dateStyle: "short", timeStyle: "short" }) : "—";
   const stateClass = (state) => state === "Listo" ? "ready" : ["En reparación", "Esperando repuesto"].includes(state) ? "repair" : ["Pendiente", "Recibido"].includes(state) ? "pending" : "";
-  const data = { clients: [], orders: [], prices: [], trash: [], view: "ordenes", busy: false, queryTimer: null };
+  const data = { clients: [], orders: [], prices: [], trash: [], cash: [], stockItems: [], sales: [], view: "ordenes", busy: false, queryTimer: null };
 
   function notice(message, error = false) {
     const box = $("#notice"); box.textContent = message; box.classList.toggle("error", error); box.hidden = false;
@@ -65,16 +65,21 @@
   async function refresh() {
     try {
       setConnected("", "Actualizando…");
-      const [orders, clients, prices, trash] = await Promise.all([
+      const [orders, clients, prices, trash, cash, stockItems, sales] = await Promise.all([
         loadOrders(),
         sb.from("clientes").select("id,nombre,telefono,email,notas,creada,actualizada").order("nombre").limit(1000),
         sb.from("precios").select("id,marca,modelo,servicio,precio,activo").order("modelo").limit(3000),
         loadOrders({ trash: true }),
+        sb.from("caja_movimientos").select("*").order("creado",{ascending:false}).limit(1500),
+        sb.from("stock_items").select("*").order("nombre").limit(2000),
+        sb.from("ventas").select("*,venta_items(*)").order("creado",{ascending:false}).limit(1000),
       ]);
       if (clients.error) throw clients.error;
       if (prices.error) throw prices.error;
+      if (cash.error) throw cash.error; if (stockItems.error) throw stockItems.error; if (sales.error) throw sales.error;
       data.orders = orders; data.clients = clients.data || []; data.prices = prices.data || []; data.trash = trash;
-      setConnected("ok", "Conectado a pruebas"); renderCurrent(); renderStats();
+      data.cash = cash.data || []; data.stockItems = stockItems.data || []; data.sales = sales.data || [];
+      setConnected("ok", "Conectado a pruebas"); renderCurrent(); renderStats(); renderCash(); renderStock(); renderSales();
     } catch (error) {
       setConnected("bad", "Revisar configuración");
       const message = /clientes|schema cache|relation/i.test(error.message || "")
@@ -117,15 +122,16 @@
     $("#trash-list").innerHTML = data.trash.map((order) => `<article class="order-row"><b class="order-no">#${order.id}</b><div class="row-main"><b>${esc(order.cliente || order.gremio || "Cliente")}</b><small>${esc(order.modelo || "")} · Eliminada ${date(order.borrada)}</small></div><div><span class="branch-pill">${esc(order.negocio)}</span></div><button class="button" data-restore="${order.id}">Restaurar</button></article>`).join("") || `<div class="empty-state">La papelera está vacía.</div>`;
   }
   function renderCurrent() {
-    renderOrders(); renderClients($("#client-search").value); renderPrices($("#price-search").value); renderTrash();
+    renderOrders(); renderClients($("#client-search").value); renderPrices($("#price-search").value); renderTrash(); renderCash(); renderStock(); renderSales();
   }
   function setView(view) {
     data.view = view;
     $$(".view").forEach((section) => { section.hidden = section.id !== `view-${view}`; });
     $$('[data-view]').forEach((button) => button.classList.toggle("active", button.dataset.view === view));
-    const titles = { ordenes: "Órdenes de reparación", clientes: "Clientes", precios: "Precios de reparación", papelera: "Papelera de órdenes" };
+    const titles = { ordenes: "Órdenes de reparación", clientes: "Clientes", precios: "Precios de reparación", caja: "Caja y movimientos", stock: "Inventario y accesorios", ventas: "Ventas", papelera: "Papelera de órdenes" };
     $("#page-title").textContent = titles[view]; $(".sidebar").classList.remove("open");
     if (view === "ordenes") loadOrders({ search: $("#order-search").value }).then((rows) => { data.orders = rows; renderOrders(rows); renderStats(); }).catch((error) => notice(error.message, true));
+    if (["caja","stock","ventas"].includes(view)) refresh().catch((error) => notice(error.message,true));
   }
   function openClientForm(client = null) {
     const body = `<div class="form-grid">${formField("Nombre completo *", "nombre", client?.nombre || "", "text", "span-2")}${formField("Teléfono", "telefono", client?.telefono || "", "tel")}${formField("Email", "email", client?.email || "", "email")}<div class="field span-2"><label for="f-notas">Notas</label><textarea id="f-notas" name="notas">${esc(client?.notas || "")}</textarea></div></div>`;
@@ -270,6 +276,17 @@
         if (!price.modelo || !price.servicio || !Number.isFinite(price.precio) || price.precio < 0) throw new Error("Completá modelo, reparación y un precio válido.");
         const query = form.dataset.id ? sb.from("precios").update(price).eq("id", form.dataset.id) : sb.from("precios").insert(price);
         const { error } = await query; if (error) throw error; notice("Precio guardado.");
+      } else if(action==="save-cash"){
+        const amount=Number(values.importe);if(!values.concepto?.trim()||!Number.isFinite(amount)||amount<=0)throw new Error("Completá concepto e importe válido.");
+        const {error}=await sb.from("caja_movimientos").insert({tipo:values.tipo,categoria:values.categoria||"General",concepto:values.concepto.trim(),importe:amount,medio:values.medio,sucursal:values.sucursal});if(error)throw error;notice("Movimiento de caja registrado.");
+      } else if(action==="save-stock"){
+        const payload={nombre:values.nombre.trim(),categoria:values.categoria||"Accesorios",sku:values.sku||null,cantidad:Number(values.cantidad),costo:Number(values.costo),precio:Number(values.precio),minimo:Number(values.minimo)};if(!payload.nombre||Object.values(payload).some(v=>typeof v==="number"&&(!Number.isFinite(v)||v<0)))throw new Error("Revisá nombre, cantidades y precios.");
+        const q=form.dataset.id?sb.from("stock_items").update(payload).eq("id",form.dataset.id):sb.from("stock_items").insert(payload);const {error}=await q;if(error)throw error;notice("Artículo guardado.");
+      } else if(action==="stock-move"){
+        const {error}=await sb.rpc("e30_stock_movimiento",{p_item_id:Number(form.dataset.id),p_tipo:values.tipo,p_cantidad:Number(values.cantidad),p_costo:Number(values.costo||0),p_nota:values.nota||null});if(error)throw error;notice("Stock actualizado.");
+      } else if(action==="save-sale"){
+        const itemId=Number(values.item_id.split(" · ")[0]);const amount=Number(values.cantidad);const price=Number(values.precio_unitario);if(!Number.isFinite(amount)||amount<=0||!Number.isFinite(price)||price<0)throw new Error("Revisá cantidad y precio.");
+        const {data:id,error}=await sb.rpc("e30_registrar_venta",{p_venta:{sucursal:values.sucursal,cliente:values.cliente,medio:values.medio,precio_unitario:price},p_item_id:itemId,p_cantidad:amount});if(error)throw error;notice("Venta #"+id+" registrada; stock y caja actualizados.");
       } else if (action === "save-payment") {
         const order = data.orders.find((row) => String(row.id) === String(form.dataset.id));
         if (!order) throw new Error("No se encontró la orden.");
@@ -347,6 +364,14 @@
     </div>`;
     window.print();
   }
+  function monthStart(){const d=new Date();return new Date(d.getFullYear(),d.getMonth(),1);}
+  function renderCash(){if(!$("#cash-list"))return;const start=monthStart();const month=data.cash.filter(x=>new Date(x.creado)>=start);const income=month.filter(x=>x.tipo==="Ingreso").reduce((a,x)=>a+Number(x.importe),0);const expense=month.filter(x=>x.tipo==="Egreso").reduce((a,x)=>a+Number(x.importe),0);$("#cash-income").textContent=money(income);$("#cash-expense").textContent=money(expense);$("#cash-net").textContent=money(income-expense);const branch=$("#cash-branch")?.value||"";const rows=data.cash.filter(x=>!branch||x.sucursal===branch);$("#cash-list").innerHTML=rows.map(x=>"<article class=\"order-row\"><div class=\"row-main\"><b>"+esc(x.concepto)+"</b><small>"+date(x.creado)+" · "+esc(x.categoria)+" · "+esc(x.medio)+"</small></div><span class=\"branch-pill\">"+esc(x.sucursal)+"</span><b class=\"money\" style=\"color:"+(x.tipo==="Ingreso"?"#16805d":"#b42318")+"\">"+(x.tipo==="Ingreso"?"+":"−")+money(x.importe)+"</b></article>").join("")||"<div class=\"empty-state\">Todavía no hay movimientos de caja.</div>";}
+  function renderStock(search=""){if(!$("#stock-list"))return;const q=search.toLocaleLowerCase("es-AR").trim();const rows=data.stockItems.filter(x=>x.activo&&[x.nombre,x.categoria,x.sku].join(" ").toLocaleLowerCase("es-AR").includes(q));$("#stock-count").textContent=data.stockItems.filter(x=>x.activo).length;$("#stock-units").textContent=rows.reduce((a,x)=>a+Number(x.cantidad),0);$("#stock-low").textContent=data.stockItems.filter(x=>x.activo&&Number(x.cantidad)<=Number(x.minimo)).length;$("#stock-list").innerHTML=rows.map(x=>"<article class=\"order-row\"><div class=\"row-main\"><b>"+esc(x.nombre)+"</b><small>"+esc(x.categoria)+" · SKU "+esc(x.sku||"—")+"</small></div><div class=\"row-main\"><b>"+Number(x.cantidad)+" unidades</b><small>Mínimo "+Number(x.minimo)+"</small></div><div class=\"row-main\"><b>"+money(x.precio)+"</b><small>Costo "+money(x.costo)+"</small></div><div class=\"price-actions\"><button class=\"button\" data-stock-move=\""+x.id+"\">Movimiento</button><button class=\"button\" data-stock-edit=\""+x.id+"\">Editar</button></div>"+(Number(x.cantidad)<=Number(x.minimo)?"<span class=\"state-pill pending\">Stock bajo</span>":"")+"</article>").join("")||"<div class=\"empty-state\">No hay artículos cargados. Agregá el primero para empezar.</div>";}
+  function renderSales(){if(!$("#sales-list"))return;const start=monthStart();const rows=data.sales.filter(x=>new Date(x.creado)>=start);$("#sales-total").textContent=money(rows.reduce((a,x)=>a+Number(x.total),0));$("#sales-units").textContent=rows.reduce((a,x)=>a+(x.venta_items||[]).reduce((n,i)=>n+Number(i.cantidad),0),0);$("#sales-margin").textContent=money(rows.reduce((a,x)=>a+Number(x.total)-Number(x.costo_total),0));$("#sales-list").innerHTML=data.sales.map(x=>"<article class=\"order-row\"><div class=\"row-main\"><b>Venta #"+x.id+" · "+esc(x.concepto||"Venta")+"</b><small>"+date(x.creado)+" · "+esc(x.cliente||"Consumidor final")+" · "+esc(x.medio)+"</small></div><span class=\"branch-pill\">"+esc(x.sucursal)+"</span><b class=\"money\">"+money(x.total)+"</b></article>").join("")||"<div class=\"empty-state\">Todavía no hay ventas.</div>";}
+  function openCashForm(){const body="<div class=\"form-grid\">"+selectField("Tipo","tipo",["Egreso","Ingreso"],"Egreso")+selectField("Sucursal","sucursal",Rules.BRANCHES,"E30")+formField("Categoría","categoria","Gastos del local")+selectField("Medio","medio",Rules.PAYMENT_METHODS,"Efectivo")+formField("Concepto *","concepto")+formField("Importe *","importe","","number")+"</div>";openModal("Registrar movimiento","CAJA",body,actionButtons("Cancelar","Guardar movimiento"));$("#modal-form").dataset.action="save-cash";}
+  function openStockForm(item=null){const body="<div class=\"form-grid\">"+formField("Nombre *","nombre",item?.nombre||"")+formField("Categoría","categoria",item?.categoria||"Accesorios")+formField("SKU / código","sku",item?.sku||"")+formField("Cantidad inicial","cantidad",item?.cantidad??0,"number")+formField("Costo unitario","costo",item?.costo??0,"number")+formField("Precio de venta","precio",item?.precio??0,"number")+formField("Stock mínimo","minimo",item?.minimo??0,"number")+"</div>";openModal(item?"Editar artículo":"Nuevo artículo","INVENTARIO",body,actionButtons());$("#modal-form").dataset.action="save-stock";$("#modal-form").dataset.id=item?.id||"";}
+  function openStockMove(itemId){const item=data.stockItems.find(x=>String(x.id)===String(itemId));if(!item)return;const body="<p class=\"muted\">"+esc(item.nombre)+" · Stock actual: "+item.cantidad+"</p><div class=\"form-grid\">"+selectField("Movimiento","tipo",["Entrada","Salida","Ajuste"],"Entrada")+formField("Cantidad *","cantidad","1","number")+formField("Costo unitario","costo",item.costo,"number")+"<div class=\"field span-2\"><label for=\"f-nota\">Nota</label><input id=\"f-nota\" name=\"nota\"></div></div>";openModal("Movimiento de stock","ARTÍCULO #"+item.id,body,actionButtons());$("#modal-form").dataset.action="stock-move";$("#modal-form").dataset.id=item.id;}
+  function openSaleForm(){const active=data.stockItems.filter(x=>x.activo&&Number(x.cantidad)>0);if(!active.length)return notice("Primero cargá artículos con stock disponible.",true);const opts=active.map(x=>x.id+" · "+x.nombre+" · "+x.cantidad+" disponibles");const body="<div class=\"form-grid\">"+selectField("Artículo *","item_id",opts,opts[0],"span-2")+formField("Cantidad *","cantidad","1","number")+formField("Precio unitario","precio_unitario",active[0].precio,"number")+formField("Cliente (opcional)","cliente")+selectField("Sucursal","sucursal",Rules.BRANCHES,"E30")+selectField("Medio de pago","medio",Rules.PAYMENT_METHODS,"Efectivo")+"</div><p class=\"muted\">Al confirmar se descuenta el stock y se registra el ingreso en caja.</p>";openModal("Nueva venta","VENTAS",body,actionButtons("Cancelar","Registrar venta"));$("#modal-form").dataset.action="save-sale";$("#f-item_id").addEventListener("change",()=>{const id=$("#f-item_id").value.split(" · ")[0];const item=active.find(x=>String(x.id)===id);if(item)$("#f-precio_unitario").value=item.precio;});}
   function bindEvents() {
     $$("[data-view]").forEach((button) => button.addEventListener("click", () => setView(button.dataset.view)));
     $("#login-form").addEventListener("submit", async (event) => {
@@ -374,6 +399,9 @@
     $("#new-order").addEventListener("click", () => openOrderForm());
     $("#new-client").addEventListener("click", () => openClientForm());
     $("#new-price").addEventListener("click", () => openPriceForm());
+    $("#cash-add").addEventListener("click",openCashForm);$("#cash-branch").addEventListener("change",renderCash);
+    $("#stock-add").addEventListener("click",()=>openStockForm());$("#stock-search").addEventListener("input",e=>renderStock(e.target.value));
+    $("#sale-add").addEventListener("click",openSaleForm);
     $("#menu-toggle").addEventListener("click", () => $(".sidebar").classList.toggle("open"));
     $("#modal-form").addEventListener("submit", runAction);
     $("#modal").addEventListener("click", (event) => { if (event.target === $("#modal") || event.target.closest("[data-close]")) closeModal(); });
@@ -393,6 +421,8 @@
       else if (target.dataset.updateState) updateOrderState(target.dataset.updateState);
       else if (target.dataset.editPrice) openPriceForm(data.prices.find((row) => String(row.id) === target.dataset.editPrice));
       else if (target.dataset.togglePrice) togglePrice(target.dataset.togglePrice, target.dataset.active === "true");
+      else if(target.dataset.stockMove)openStockMove(target.dataset.stockMove);
+      else if(target.dataset.stockEdit)openStockForm(data.stockItems.find(x=>String(x.id)===target.dataset.stockEdit));
     });
     const queryOrders = () => { clearTimeout(data.queryTimer); data.queryTimer = setTimeout(async () => { try { const rows = await loadOrders({ search: $("#order-search").value }); data.orders = rows; renderOrders(rows); renderStats(); } catch (error) { notice(error.message, true); } }, 250); };
     $("#order-search").addEventListener("input", queryOrders); $("#branch-filter").addEventListener("change", () => renderOrders());

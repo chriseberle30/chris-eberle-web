@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f5f6fa">
+  <title>E30 · Gestión nueva · Prototipo</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #20233a;
+      --muted: #777d91;
+      --line: #e8eaf1;
+      --surface: #fff;
+      --canvas: #f5f6fa;
+      --brand: #4d4ae8;
+      --brand-dark: #3936c8;
+      --brand-soft: #efefff;
+      --green: #17845d;
+      --green-soft: #e8f7f0;
+      --amber: #a76513;
+      --amber-soft: #fff4df;
+      --blue: #3169bb;
+      --blue-soft: #eaf2ff;
+      --red: #bc4545;
+      --shadow: 0 12px 36px rgba(31, 35, 69, .07);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-width: 320px; background: var(--canvas); color: var(--ink); }
+    button, input, select, textarea { font: inherit; }
+    button { color: inherit; }
+    button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid rgba(77, 74, 232, .2); outline-offset: 2px; }
+    .app-shell { min-height: 100vh; }
+    .sidebar { display: none; }
+    .main { width: min(100%, 1160px); margin: 0 auto; padding: 18px 18px 104px; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 18px; }
+    .brand-lockup { display: flex; align-items: center; gap: 11px; min-width: 0; }
+    .brand-mark { display: grid; width: 42px; height: 42px; place-items: center; border-radius: 14px; background: var(--ink); color: #fff; font-size: 15px; font-weight: 850; letter-spacing: -.7px; box-shadow: 0 6px 16px rgba(32,35,58,.15); }
+    .brand-title { margin: 0; font-size: 17px; font-weight: 780; letter-spacing: -.45px; }
+    .brand-subtitle { margin-top: 2px; color: var(--muted); font-size: 12px; }
+    .top-actions { display: flex; align-items: center; gap: 9px; }
+    .icon-button { display: grid; width: 42px; height: 42px; place-items: center; border: 1px solid var(--line); border-radius: 14px; background: #fff; cursor: pointer; }
+    .icon-button svg, .nav-icon svg, .action-icon svg, .section-icon svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .user-dot { display: grid; width: 38px; height: 38px; place-items: center; border-radius: 50%; background: #e8e8ff; color: var(--brand-dark); font-size: 12px; font-weight: 800; }
+    .prototype-banner { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 20px; padding: 12px 14px; border: 1px solid #eeddb7; border-radius: 14px; background: #fff9e9; color: #77521b; font-size: 12px; line-height: 1.45; }
+    .prototype-banner strong { display: block; margin-bottom: 1px; font-size: 12px; }
+    .prototype-banner svg { flex: 0 0 17px; width: 17px; height: 17px; margin-top: 1px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+    .welcome { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; margin: 5px 0 18px; }
+    .eyebrow { color: var(--muted); font-size: 11px; font-weight: 750; letter-spacing: .09em; text-transform: uppercase; }
+    h1 { margin: 4px 0 0; font-size: clamp(24px, 5vw, 31px); letter-spacing: -1.2px; line-height: 1.12; }
+    .welcome-note { margin: 7px 0 0; color: var(--muted); font-size: 13px; }
+    .date-pill { flex: 0 0 auto; padding: 8px 11px; border: 1px solid var(--line); border-radius: 12px; background: #fff; color: #62687a; font-size: 11px; font-weight: 650; }
+    .quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; margin: 18px 0; }
+    .quick-card { display: flex; min-height: 106px; flex-direction: column; align-items: flex-start; justify-content: space-between; padding: 14px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); box-shadow: 0 3px 12px rgba(31,35,69,.025); text-align: left; cursor: pointer; transition: transform .16s ease, box-shadow .16s ease; }
+    .quick-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+    .action-icon { display: grid; width: 36px; height: 36px; place-items: center; border-radius: 12px; background: var(--brand-soft); color: var(--brand); }
+    .quick-card.price .action-icon { background: var(--green-soft); color: var(--green); }
+    .quick-card strong { margin-top: 10px; font-size: 14px; letter-spacing: -.2px; }
+    .quick-card small { display: block; margin-top: 2px; color: var(--muted); font-size: 11px; }
+    .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 24px 0 12px; }
+    .section-heading h2 { margin: 0; font-size: 16px; letter-spacing: -.35px; }
+    .text-button { padding: 5px 0; border: 0; background: none; color: var(--brand); font-size: 12px; font-weight: 720; cursor: pointer; }
+    .metric-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 9px; }
+    .metric { min-width: 0; padding: 13px 12px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
+    .metric-label { color: var(--muted); font-size: 10px; font-weight: 650; }
+    .metric-value { display: block; margin-top: 8px; font-size: 22px; font-weight: 800; letter-spacing: -.8px; line-height: 1; font-variant-numeric: tabular-nums; }
+    .metric-hint { display: block; margin-top: 6px; color: var(--muted); font-size: 10px; white-space: nowrap; }
+    .orders-panel { overflow: hidden; border: 1px solid var(--line); border-radius: 18px; background: #fff; }
+    .order-row { display: flex; align-items: center; gap: 11px; padding: 13px; border-bottom: 1px solid #f0f1f5; }
+    .order-row:last-child { border-bottom: 0; }
+    .order-device { display: grid; width: 39px; height: 39px; flex: 0 0 39px; place-items: center; border-radius: 13px; background: #f1f2f8; color: #51576e; }
+    .order-device svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+    .order-main { min-width: 0; flex: 1; }
+    .order-title { overflow: hidden; font-size: 12px; font-weight: 760; text-overflow: ellipsis; white-space: nowrap; }
+    .order-meta { overflow: hidden; margin-top: 4px; color: var(--muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+    .order-side { flex: 0 0 auto; text-align: right; }
+    .status { display: inline-flex; align-items: center; gap: 5px; padding: 5px 8px; border-radius: 999px; font-size: 9px; font-weight: 750; white-space: nowrap; }
+    .status::before { width: 5px; height: 5px; border-radius: 50%; background: currentColor; content: ""; }
+    .status.repair { background: var(--blue-soft); color: var(--blue); }
+    .status.ready { background: var(--green-soft); color: var(--green); }
+    .status.waiting { background: var(--amber-soft); color: var(--amber); }
+    .order-price { margin-top: 5px; color: #63697a; font-size: 10px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .empty-state { padding: 28px 18px; color: var(--muted); font-size: 13px; text-align: center; }
+    .search-box { display: flex; align-items: center; gap: 10px; padding: 0 13px; border: 1px solid var(--line); border-radius: 15px; background: #fff; }
+    .search-box svg { width: 18px; height: 18px; flex: 0 0 18px; fill: none; stroke: #858a9a; stroke-width: 1.8; }
+    .search-box input { width: 100%; min-width: 0; height: 48px; border: 0; outline: 0; background: transparent; color: var(--ink); font-size: 13px; }
+    .search-box input:focus-visible { outline: 0; }
+    .search-box:focus-within { border-color: #afadff; box-shadow: 0 0 0 3px rgba(77,74,232,.08); }
+    .page { display: none; }
+    .page.active { display: block; animation: enter .16s ease-out; }
+    @keyframes enter { from { opacity: .65; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
+    .page-title-row { margin: 4px 0 17px; }
+    .page-title-row h1 { font-size: 25px; }
+    .filter-row { display: flex; gap: 7px; overflow-x: auto; margin: 13px 0; padding-bottom: 3px; scrollbar-width: none; }
+    .filter-row::-webkit-scrollbar { display: none; }
+    .filter-chip { flex: 0 0 auto; padding: 8px 11px; border: 1px solid var(--line); border-radius: 999px; background: #fff; color: #696e80; font-size: 11px; font-weight: 700; cursor: pointer; }
+    .filter-chip.active { border-color: var(--brand); background: var(--brand); color: #fff; }
+    .price-list { display: grid; gap: 9px; margin-top: 12px; }
+    .price-item { display: flex; align-items: center; gap: 12px; padding: 13px; border: 1px solid var(--line); border-radius: 15px; background: #fff; text-align: left; cursor: pointer; }
+    .price-item:hover { border-color: #b9b8ff; }
+    .price-item-main { min-width: 0; flex: 1; }
+    .price-model { font-size: 12px; font-weight: 760; }
+    .price-repair { overflow: hidden; margin-top: 4px; color: var(--muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+    .price-value { color: var(--green); font-size: 14px; font-weight: 800; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .sample-note { margin: 14px 0; color: #888da0; font-size: 10px; line-height: 1.45; }
+    .orders-search { margin-bottom: 13px; }
+    .bottom-nav { position: fixed; z-index: 5; right: 0; bottom: 0; left: 0; display: grid; grid-template-columns: repeat(3,1fr); padding: 8px 10px calc(8px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); background: rgba(255,255,255,.96); backdrop-filter: blur(16px); }
+    .nav-button { display: grid; justify-items: center; gap: 4px; padding: 5px 4px; border: 0; border-radius: 12px; background: transparent; color: #858a9a; font-size: 9px; font-weight: 680; cursor: pointer; }
+    .nav-button.active { color: var(--brand); }
+    .nav-icon { display: grid; width: 26px; height: 24px; place-items: center; }
+    .nav-icon svg { width: 20px; height: 20px; }
+    .nav-button.primary .nav-icon { width: 33px; height: 26px; border-radius: 9px; background: var(--brand); color: #fff; }
+    .modal-backdrop { position: fixed; z-index: 10; inset: 0; display: none; align-items: flex-end; justify-content: center; padding: 0; background: rgba(21,24,43,.42); }
+    .modal-backdrop.open { display: flex; }
+    .sheet { width: min(100%, 600px); max-height: 94dvh; overflow: auto; padding: 9px 19px calc(22px + env(safe-area-inset-bottom)); border-radius: 24px 24px 0 0; background: #fff; box-shadow: 0 -14px 50px rgba(20,22,50,.16); animation: rise .19s ease-out; }
+    @keyframes rise { from { transform: translateY(18px); opacity: .5; } to { transform: translateY(0); opacity: 1; } }
+    .sheet-grabber { width: 36px; height: 4px; margin: 2px auto 17px; border-radius: 4px; background: #dadce5; }
+    .sheet-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 17px; }
+    .sheet-head h2 { margin: 0; font-size: 20px; letter-spacing: -.55px; }
+    .sheet-head p { margin: 4px 0 0; color: var(--muted); font-size: 11px; }
+    .close-button { display: grid; width: 34px; height: 34px; flex: 0 0 34px; place-items: center; border: 0; border-radius: 50%; background: #f1f2f6; color: #696e80; font-size: 18px; cursor: pointer; }
+    .field { margin: 13px 0; }
+    .field label { display: block; margin-bottom: 6px; color: #5f6477; font-size: 11px; font-weight: 720; }
+    .field input, .field select, .field textarea { width: 100%; min-height: 45px; padding: 11px 12px; border: 1px solid #dfe2eb; border-radius: 12px; background: #fff; color: var(--ink); font-size: 13px; }
+    .field textarea { min-height: 70px; resize: vertical; }
+    .field-help { margin-top: 5px; color: #8a8fa0; font-size: 10px; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .segmented { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; padding: 4px; border-radius: 13px; background: #f1f2f7; }
+    .segment { min-height: 39px; border: 0; border-radius: 10px; background: transparent; color: #72778a; font-size: 12px; font-weight: 720; cursor: pointer; }
+    .segment.active { background: #fff; color: var(--brand); box-shadow: 0 2px 5px rgba(23,25,52,.09); }
+    .chips { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 7px; }
+    .chip { padding: 7px 10px; border: 1px solid var(--line); border-radius: 999px; background: #fff; color: #61667a; font-size: 10px; cursor: pointer; }
+    .suggestion { display: none; margin: 9px 0; padding: 11px 12px; border: 1px solid #cde9d9; border-radius: 12px; background: var(--green-soft); color: #286b4f; font-size: 11px; }
+    .suggestion.show { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .suggestion button { padding: 6px 9px; border: 0; border-radius: 9px; background: #d5efdf; color: #1e6746; font-size: 10px; font-weight: 750; cursor: pointer; }
+    .primary-button { display: flex; width: 100%; min-height: 48px; align-items: center; justify-content: center; gap: 8px; margin-top: 17px; border: 0; border-radius: 13px; background: var(--brand); color: #fff; font-size: 13px; font-weight: 760; cursor: pointer; box-shadow: 0 8px 18px rgba(77,74,232,.2); }
+    .primary-button:hover { background: var(--brand-dark); }
+    .primary-button:disabled { opacity: .55; cursor: wait; }
+    .toast { position: fixed; z-index: 20; right: 16px; bottom: 82px; left: 16px; display: none; width: fit-content; max-width: calc(100% - 32px); margin: auto; padding: 11px 15px; border-radius: 12px; background: var(--ink); color: #fff; font-size: 12px; box-shadow: var(--shadow); }
+    .toast.show { display: block; animation: enter .16s ease-out; }
+    @media (min-width: 760px) {
+      .app-shell { display: grid; grid-template-columns: 220px minmax(0,1fr); }
+      .sidebar { position: sticky; top: 0; display: flex; height: 100vh; flex-direction: column; padding: 23px 15px; border-right: 1px solid var(--line); background: #fff; }
+      .sidebar .brand-lockup { padding: 0 7px 25px; }
+      .side-label { margin: 12px 8px 7px; color: #9a9eac; font-size: 9px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+      .side-button { display: flex; align-items: center; gap: 11px; width: 100%; min-height: 43px; margin: 2px 0; padding: 0 11px; border: 0; border-radius: 12px; background: transparent; color: #73788a; font-size: 12px; font-weight: 670; text-align: left; cursor: pointer; }
+      .side-button.active { background: var(--brand-soft); color: var(--brand); }
+      .side-button .nav-icon { width: 21px; }
+      .side-bottom { margin-top: auto; padding: 12px 10px; border: 1px solid var(--line); border-radius: 13px; background: #fafbfe; color: #777d91; font-size: 10px; line-height: 1.5; }
+      .main { width: min(100%, 1240px); padding: 25px 30px 45px; }
+      .bottom-nav { display: none; }
+      .prototype-banner { margin-bottom: 22px; }
+      .quick-grid { grid-template-columns: repeat(2,minmax(190px, 240px)); }
+      .metric-grid { max-width: 640px; gap: 12px; }
+      .metric { padding: 15px; }
+      .metric-value { font-size: 25px; }
+      .order-row { padding: 15px 17px; }
+      .order-title { font-size: 13px; }
+      .order-meta { font-size: 11px; }
+      .modal-backdrop { align-items: center; padding: 20px; }
+      .sheet { max-height: min(90dvh, 800px); padding: 13px 24px 25px; border-radius: 23px; }
+      .sheet-grabber { margin-bottom: 20px; }
+      .toast { bottom: 24px; }
+    }
+    @media (min-width: 1100px) {
+      .main { padding-right: 48px; padding-left: 48px; }
+      .content-grid { display: grid; grid-template-columns: minmax(0,1.2fr) minmax(290px,.8fr); gap: 28px; align-items: start; }
+      .content-grid .section-heading:first-child { margin-top: 24px; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Navegación principal">
+      <div class="brand-lockup"><div class="brand-mark">E30</div><div><p class="brand-title">E30 Gestión</p><div class="brand-subtitle">Técnico de celulares</div></div></div>
+      <div class="side-label">Operación</div>
+      <button class="side-button active" data-page="home"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg></span>Inicio</button>
+      <button class="side-button" data-page="orders"><span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg></span>Órdenes</button>
+      <button class="side-button" data-action="new-order"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>Nueva orden</button>
+      <div class="side-label">Herramientas</div>
+      <button class="side-button" data-page="prices"><span class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg></span>Buscar precios</button>
+      <div class="side-bottom"><strong>Prototipo independiente</strong><br>Los cambios viven solo en esta pestaña y se pierden al recargar.</div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="brand-lockup"><div class="brand-mark">E30</div><div><p class="brand-title">E30 Gestión</p><div class="brand-subtitle">Las Flores · E30</div></div></div>
+        <div class="top-actions"><button class="icon-button" type="button" aria-label="Notificaciones"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg></button><div class="user-dot" aria-label="Usuario Chris">CE</div></div>
+      </header>
+
+      <div class="prototype-banner" role="note">
+        <svg viewBox="0 0 24 24"><path d="M12 3 2.8 19a1.3 1.3 0 0 0 1.1 2h16.2a1.3 1.3 0 0 0 1.1-2L12 3Z"/><path d="M12 9v5M12 17.5v.1"/></svg>
+        <div><strong>Prototipo de diseño · datos de muestra</strong>Esta pantalla no está conectada a producción ni guarda datos. Las órdenes de ejemplo son ficticias.</div>
+      </div>
+
+      <section class="page active" id="page-home" aria-labelledby="home-title">
+        <div class="welcome"><div><div class="eyebrow">Lunes · Las Flores</div><h1 id="home-title">Buen día, Chris</h1><p class="welcome-note">Lo importante de hoy, a mano.</p></div><div class="date-pill" id="today-label">Hoy</div></div>
+
+        <div class="quick-grid">
+          <button class="quick-card" type="button" data-action="new-order"><span class="action-icon"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><span><strong>Nueva orden</strong><small>Recepción rápida</small></span></button>
+          <button class="quick-card price" type="button" data-page="prices"><span class="action-icon"><svg viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg></span><span><strong>Buscar precio</strong><small>Sin entrar a otra sección</small></span></button>
+        </div>
+
+        <div class="content-grid">
+          <div>
+            <div class="section-heading"><h2>Órdenes en curso</h2><button class="text-button" type="button" data-page="orders">Ver todas&nbsp; →</button></div>
+            <div class="orders-panel" id="home-orders"></div>
+          </div>
+          <div>
+            <div class="section-heading"><h2>Resumen de hoy</h2><span class="eyebrow">Muestra</span></div>
+            <div class="metric-grid">
+              <div class="metric"><span class="metric-label">En reparación</span><strong class="metric-value" id="metric-repair">4</strong><span class="metric-hint">órdenes activas</span></div>
+              <div class="metric"><span class="metric-label">Listas para retirar</span><strong class="metric-value" id="metric-ready">2</strong><span class="metric-hint">avisar al cliente</span></div>
+              <div class="metric"><span class="metric-label">Esperando repuesto</span><strong class="metric-value" id="metric-waiting">1</strong><span class="metric-hint">seguimiento pendiente</span></div>
+            </div>
+            <p class="sample-note">Indicadores visuales de ejemplo. En la versión conectada, los valores se calcularán con órdenes reales.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="page" id="page-orders" aria-labelledby="orders-title">
+        <div class="page-title-row"><div class="eyebrow">Operación</div><h1 id="orders-title">Órdenes</h1><p class="welcome-note">Encontrá una reparación sin recorrer listas largas.</p></div>
+        <label class="search-box orders-search"><svg viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg><input id="order-search" type="search" placeholder="N.º, cliente, teléfono o modelo" autocomplete="off"></label>
+        <div class="filter-row" id="order-filters" aria-label="Filtrar órdenes">
+          <button class="filter-chip active" type="button" data-filter="Todas">Todas</button><button class="filter-chip" type="button" data-filter="En reparación">En reparación</button><button class="filter-chip" type="button" data-filter="Listo">Listas</button><button class="filter-chip" type="button" data-filter="Esperando repuesto">Esperando repuesto</button>
+        </div>
+        <div class="orders-panel" id="all-orders"></div>
+      </section>
+
+      <section class="page" id="page-prices" aria-labelledby="prices-title">
+        <div class="page-title-row"><div class="eyebrow">Consulta rápida</div><h1 id="prices-title">Buscar precio</h1><p class="welcome-note">Modelo y reparación; el resultado aparece al instante.</p></div>
+        <label class="search-box"><svg viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg><input id="price-search" type="search" placeholder="Ej.: iPhone 13 pantalla" autocomplete="off"></label>
+        <div class="filter-row" id="price-filters" aria-label="Filtrar precios"><button class="filter-chip active" type="button" data-brand="Todos">Todos</button><button class="filter-chip" type="button" data-brand="iPhone">iPhone</button><button class="filter-chip" type="button" data-brand="Motorola">Motorola</button><button class="filter-chip" type="button" data-brand="Samsung">Samsung</button></div>
+        <div class="price-list" id="price-results"></div>
+        <p class="sample-note">Precios inventados para mostrar el diseño. No uses estos importes para presupuestar.</p>
+      </section>
+    </main>
+  </div>
+
+  <nav class="bottom-nav" aria-label="Navegación inferior">
+    <button class="nav-button active" type="button" data-page="home"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg></span>Inicio</button>
+    <button class="nav-button primary" type="button" data-action="new-order"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>Nueva orden</button>
+    <button class="nav-button" type="button" data-page="prices"><span class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg></span>Precios</button>
+  </nav>
+
+  <div class="modal-backdrop" id="order-modal" aria-hidden="true">
+    <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="order-modal-title">
+      <div class="sheet-grabber" aria-hidden="true"></div>
+      <div class="sheet-head"><div><h2 id="order-modal-title">Nueva orden</h2><p>Los datos obligatorios, sin pasos de más.</p></div><button class="close-button" type="button" data-close aria-label="Cerrar">×</button></div>
+      <form id="new-order-form">
+        <div class="field"><label>Tipo de atención</label><div class="segmented" role="group" aria-label="Tipo de atención"><button class="segment active" type="button" data-kind="Particular" aria-pressed="true">Particular</button><button class="segment" type="button" data-kind="Gremio" aria-pressed="false">Gremio</button></div></div>
+        <div class="field" id="client-field"><label for="client-name">Cliente</label><input id="client-name" name="cliente" placeholder="Nombre y apellido" autocomplete="name"></div>
+        <div class="field" id="phone-field"><label for="client-phone">Teléfono <span style="font-weight:500;color:#9297a6">· opcional</span></label><input id="client-phone" name="telefono" type="tel" inputmode="tel" placeholder="Para avisarle cuando esté lista" autocomplete="tel"></div>
+        <div class="field" id="guild-field" hidden><label for="guild-name">Gremio / técnico</label><input id="guild-name" name="gremio" placeholder="Elegí o escribí el nombre" list="guild-options" autocomplete="organization"><datalist id="guild-options"><option value="Gremio de muestra"></option></datalist></div>
+        <div class="two-col">
+          <div class="field"><label for="business">Negocio</label><select id="business" name="negocio"><option>E30</option><option>i30</option></select></div>
+          <div class="field"><label for="device">Equipo</label><input id="device" name="modelo" placeholder="Ej.: iPhone 13" required autocomplete="off"></div>
+        </div>
+        <div class="field"><label for="fault">Falla principal</label><input id="fault" name="falla" placeholder="¿Qué le pasa al equipo?" required autocomplete="off"><div class="chips"><button class="chip" type="button" data-fault="Pantalla">Pantalla</button><button class="chip" type="button" data-fault="Batería">Batería</button><button class="chip" type="button" data-fault="Pin de carga">Pin de carga</button><button class="chip" type="button" data-fault="Software">Software</button></div></div>
+        <div class="suggestion" id="price-suggestion"><span id="suggestion-copy"></span><button type="button" id="use-suggestion">Usar precio</button></div>
+        <div class="two-col"><div class="field"><label for="total">Total estimado</label><input id="total" name="total" type="number" min="0" inputmode="numeric" placeholder="$ 0"></div><div class="field"><label for="deposit">Seña <span style="font-weight:500;color:#9297a6">· opcional</span></label><input id="deposit" name="sena" type="number" min="0" inputmode="numeric" placeholder="$ 0"></div></div>
+        <div class="field"><label for="note">Nota de recepción <span style="font-weight:500;color:#9297a6">· opcional</span></label><textarea id="note" name="nota" placeholder="Un detalle importante para recordar"></textarea><div class="field-help">El patrón, IMEI y demás datos pueden agregarse en el siguiente paso del diseño.</div></div>
+        <button class="primary-button" type="submit"><span>＋</span> Crear orden de muestra</button>
+      </form>
+    </section>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    // Prototipo visual aislado. Datos ficticios en memoria; no usa Supabase ni localStorage.
+    const sampleOrders = [
+      { n: 1538, cliente: "Cliente de muestra", modelo: "iPhone 13", falla: "Cambio de pantalla", estado: "En reparación", total: 245000, fecha: "Hoy · 09:18" },
+      { n: 1537, cliente: "Técnico de muestra", gremio: "Gremio de muestra", modelo: "iPhone 11", falla: "Cambio de batería", estado: "Esperando repuesto", total: 98000, fecha: "Hoy · 08:42" },
+      { n: 1536, cliente: "Persona de prueba", modelo: "Samsung A54", falla: "Pin de carga", estado: "Listo", total: 132000, fecha: "Ayer · 16:20" },
+      { n: 1535, cliente: "Cliente de ejemplo", modelo: "iPhone 12", falla: "Diagnóstico", estado: "En reparación", total: 0, fecha: "Ayer · 15:04" },
+      { n: 1534, cliente: "Gremio de muestra", gremio: "Gremio de muestra", modelo: "iPhone 14", falla: "Módulo", estado: "En reparación", total: 310000, fecha: "Ayer · 12:46" },
+      { n: 1533, cliente: "Persona de prueba", modelo: "Motorola G84", falla: "Centro de carga", estado: "Listo", total: 87000, fecha: "Ayer · 11:03" },
+      { n: 1532, cliente: "Cliente de muestra", modelo: "iPhone 13 Pro", falla: "Cámara trasera", estado: "En reparación", total: 175000, fecha: "Ayer · 10:21" }
+    ];
+    const samplePrices = [
+      { marca: "iPhone", modelo: "13", servicio: "Pantalla", precio: 245000 },
+      { marca: "iPhone", modelo: "13", servicio: "Batería", precio: 118000 },
+      { marca: "iPhone", modelo: "13 Pro", servicio: "Pantalla", precio: 385000 },
+      { marca: "iPhone", modelo: "13 Pro", servicio: "Cámara trasera", precio: 175000 },
+      { marca: "iPhone", modelo: "11", servicio: "Batería", precio: 98000 },
+      { marca: "iPhone", modelo: "14", servicio: "Pantalla", precio: 310000 },
+      { marca: "Motorola", modelo: "G84", servicio: "Centro de carga", precio: 87000 },
+      { marca: "Motorola", modelo: "G31", servicio: "Módulo", precio: 126000 },
+      { marca: "Samsung", modelo: "A54", servicio: "Pin de carga", precio: 132000 },
+      { marca: "Samsung", modelo: "A34", servicio: "Pantalla", precio: 198000 }
+    ];
+    let visibleOrders = sampleOrders.slice();
+    let activeFilter = "Todas";
+    let activeBrand = "Todos";
+    let orderKind = "Particular";
+    let toastTimer;
+
+    const $ = (selector, root = document) => root.querySelector(selector);
+    const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
+    const money = value => new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(Number(value) || 0);
+    const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
+    const statusClass = status => status === "Listo" ? "ready" : status === "Esperando repuesto" ? "waiting" : "repair";
+    const phoneIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.3"/><path d="M10 18.2h4"/></svg>';
+
+    function renderOrderRow(order) {
+      const person = order.gremio || order.cliente || "Cliente sin nombre";
+      return `<article class="order-row"><div class="order-device">${phoneIcon}</div><div class="order-main"><div class="order-title">#${String(order.n).padStart(4, "0")} · ${escapeHtml(order.modelo)}</div><div class="order-meta">${escapeHtml(person)} · ${escapeHtml(order.falla)} · ${escapeHtml(order.fecha)}</div></div><div class="order-side"><span class="status ${statusClass(order.estado)}">${escapeHtml(order.estado)}</span><div class="order-price">${Number(order.total) ? money(order.total) : "A presupuestar"}</div></div></article>`;
+    }
+    function renderHomeOrders() {
+      const active = visibleOrders.filter(order => order.estado !== "Listo").slice(0, 4);
+      $("#home-orders").innerHTML = active.map(renderOrderRow).join("") || '<div class="empty-state">No hay órdenes en curso.</div>';
+      $("#metric-repair").textContent = visibleOrders.filter(order => order.estado === "En reparación").length;
+      $("#metric-ready").textContent = visibleOrders.filter(order => order.estado === "Listo").length;
+      $("#metric-waiting").textContent = visibleOrders.filter(order => order.estado === "Esperando repuesto").length;
+    }
+    function renderOrders() {
+      const query = $("#order-search").value.trim().toLocaleLowerCase("es-AR");
+      const matches = visibleOrders.filter(order => {
+        const statusMatch = activeFilter === "Todas" || order.estado === activeFilter;
+        const searchText = `${order.n} ${order.cliente} ${order.gremio} ${order.modelo} ${order.falla}`.toLocaleLowerCase("es-AR");
+        return statusMatch && (!query || searchText.includes(query));
+      });
+      $("#all-orders").innerHTML = matches.map(renderOrderRow).join("") || '<div class="empty-state">No encontré órdenes con esa búsqueda.</div>';
+    }
+    function renderPrices() {
+      const query = $("#price-search").value.trim().toLocaleLowerCase("es-AR");
+      const words = query.split(/\s+/).filter(Boolean);
+      const matches = samplePrices.filter(item => (activeBrand === "Todos" || item.marca === activeBrand) && words.every(word => `${item.marca} ${item.modelo} ${item.servicio}`.toLocaleLowerCase("es-AR").includes(word)));
+      $("#price-results").innerHTML = matches.map(item => `<button class="price-item" type="button" data-price-model="${escapeHtml(item.modelo)}" data-price-brand="${escapeHtml(item.marca)}" data-price-service="${escapeHtml(item.servicio)}" data-price-value="${item.precio}"><span class="price-item-main"><span class="price-model">${escapeHtml(item.marca)} ${escapeHtml(item.modelo)}</span><span class="price-repair">${escapeHtml(item.servicio)}</span></span><span class="price-value">${money(item.precio)}</span></button>`).join("") || '<div class="empty-state">No encontré ese precio.</div>';
+    }
+    function openPage(page) {
+      $$(".page").forEach(element => element.classList.toggle("active", element.id === `page-${page}`));
+      $$("[data-page]").forEach(button => button.classList.toggle("active", button.dataset.page === page));
+      if (page === "orders") renderOrders();
+      if (page === "prices") { renderPrices(); setTimeout(() => $("#price-search").focus({ preventScroll: true }), 60); }
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+    function showToast(message) {
+      const toast = $("#toast");
+      toast.textContent = message;
+      toast.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove("show"), 2600);
+    }
+    function openOrderModal(prefill = {}) {
+      const modal = $("#order-modal");
+      modal.classList.add("open");
+      modal.setAttribute("aria-hidden", "false");
+      if (prefill.modelo) $("#device").value = `${prefill.marca === "iPhone" ? "iPhone " : ""}${prefill.modelo}`;
+      if (prefill.falla) $("#fault").value = prefill.falla;
+      if (prefill.precio) $("#total").value = prefill.precio;
+      updateSuggestion();
+      setTimeout(() => (orderKind === "Gremio" ? $("#guild-name") : $("#client-name")).focus(), 80);
+    }
+    function closeOrderModal() {
+      const modal = $("#order-modal");
+      modal.classList.remove("open");
+      modal.setAttribute("aria-hidden", "true");
+    }
+    function setOrderKind(kind) {
+      orderKind = kind;
+      $$("[data-kind]").forEach(button => {
+        const active = button.dataset.kind === kind;
+        button.classList.toggle("active", active);
+        button.setAttribute("aria-pressed", String(active));
+      });
+      $("#client-field").hidden = kind === "Gremio";
+      $("#phone-field").hidden = kind === "Gremio";
+      $("#guild-field").hidden = kind !== "Gremio";
+      $("#client-name").required = kind === "Particular";
+      $("#guild-name").required = kind === "Gremio";
+      updateSuggestion();
+    }
+    function updateSuggestion() {
+      const model = $("#device").value.toLocaleLowerCase("es-AR").replace(/iphone/g, "").trim();
+      const fault = $("#fault").value.toLocaleLowerCase("es-AR");
+      const match = samplePrices.find(item => item.modelo.toLocaleLowerCase("es-AR") === model && fault.includes(item.servicio.toLocaleLowerCase("es-AR")));
+      const suggestion = $("#price-suggestion");
+      suggestion.classList.toggle("show", Boolean(match));
+      if (match) {
+        $("#suggestion-copy").textContent = `Precio de muestra: ${money(match.precio)}`;
+        $("#use-suggestion").dataset.value = match.precio;
+      }
+    }
+
+    document.addEventListener("click", event => {
+      const pageButton = event.target.closest("[data-page]");
+      const actionButton = event.target.closest("[data-action]");
+      const filterButton = event.target.closest("[data-filter]");
+      const brandButton = event.target.closest("[data-brand]");
+      const faultButton = event.target.closest("[data-fault]");
+      const priceButton = event.target.closest("[data-price-value]");
+      if (pageButton) openPage(pageButton.dataset.page);
+      if (actionButton?.dataset.action === "new-order") openOrderModal();
+      if (event.target.closest("[data-close]") || event.target === $("#order-modal")) closeOrderModal();
+      if (filterButton) {
+        activeFilter = filterButton.dataset.filter;
+        $$("#order-filters [data-filter]").forEach(button => button.classList.toggle("active", button === filterButton));
+        renderOrders();
+      }
+      if (brandButton) {
+        activeBrand = brandButton.dataset.brand;
+        $$("#price-filters [data-brand]").forEach(button => button.classList.toggle("active", button === brandButton));
+        renderPrices();
+      }
+      if (faultButton) { $("#fault").value = faultButton.dataset.fault; updateSuggestion(); }
+      if (event.target.closest("#use-suggestion")) $("#total").value = event.target.closest("#use-suggestion").dataset.value;
+      if (priceButton) {
+        closeOrderModal();
+        openOrderModal({ marca: priceButton.dataset.priceBrand, modelo: priceButton.dataset.priceModel, falla: priceButton.dataset.priceService, precio: priceButton.dataset.priceValue });
+      }
+    });
+    document.addEventListener("keydown", event => { if (event.key === "Escape") closeOrderModal(); });
+    $("#order-search").addEventListener("input", renderOrders);
+    $("#price-search").addEventListener("input", renderPrices);
+    $("#device").addEventListener("input", updateSuggestion);
+    $("#fault").addEventListener("input", updateSuggestion);
+    $$("[data-kind]").forEach(button => button.addEventListener("click", () => setOrderKind(button.dataset.kind)));
+    $("#new-order-form").addEventListener("submit", event => {
+      event.preventDefault();
+      const form = new FormData(event.currentTarget);
+      const order = {
+        n: Math.max(0, ...visibleOrders.map(item => item.n)) + 1,
+        cliente: orderKind === "Particular" ? String(form.get("cliente") || "").trim() : "",
+        gremio: orderKind === "Gremio" ? String(form.get("gremio") || "").trim() : "",
+        modelo: String(form.get("modelo") || "").trim(), falla: String(form.get("falla") || "").trim(),
+        estado: "Recibido", total: Number(form.get("total")) || 0, fecha: "Ahora · prototipo"
+      };
+      visibleOrders.unshift(order);
+      renderHomeOrders(); renderOrders();
+      event.currentTarget.reset(); setOrderKind("Particular"); closeOrderModal(); openPage("orders");
+      showToast(`Orden de muestra #${String(order.n).padStart(4, "0")} agregada en esta pestaña.`);
+    });
+    $("#today-label").textContent = new Intl.DateTimeFormat("es-AR", { day: "numeric", month: "short" }).format(new Date());
+    renderHomeOrders(); renderOrders(); renderPrices();
+  </script>
+</body>
+</html>
+

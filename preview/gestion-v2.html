@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#101828">
+  <title>Gestión E30</title>
+  <link rel="stylesheet" href="assets/gestion-v2.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js" defer></script>
+  <script src="assets/e30-gestion-domain.js" defer></script>
+  <script src="assets/gestion-v2.js" defer></script>
+</head>
+<body>
+  <div id="notice" class="notice" role="status" hidden></div>
+  <main id="login-screen" class="login-wrap" hidden>
+    <form id="login-form" class="login-card">
+      <div class="brand-mark">E30</div><p class="eyebrow">SISTEMA DE GESTIÓN</p>
+      <h1>Ingresá a tu cuenta</h1><p class="muted">Acceso privado para el equipo.</p>
+      <label for="login-email">Email</label><input id="login-email" type="email" autocomplete="username" required>
+      <label for="login-password">Contraseña</label><input id="login-password" type="password" autocomplete="current-password" required>
+      <button class="button primary full" type="submit">Iniciar sesión</button>
+      <button id="signup-button" class="button full" type="button">Crear cuenta de prueba</button>
+      <p class="muted">Cada cuenta tiene sus propios datos; no puede ver los de otros usuarios.</p>
+      <p id="login-error" class="error" aria-live="polite"></p>
+    </form>
+  </main>
+  <main id="loading-screen" class="loading-wrap"><div class="spinner"></div><p>Conectando con Gestión…</p></main>
+  <div id="app" class="app-shell" hidden>
+    <aside class="sidebar">
+      <a class="brand" href="#ordenes"><span class="brand-mark">E30</span><span><b>Gestión</b><small>Servicio técnico</small></span></a>
+      <div class="env-badge">ENTORNO DE PRUEBAS</div>
+      <nav class="side-nav" aria-label="Navegación principal">
+        <button data-view="ordenes" class="nav-item active"><span>▦</span>Órdenes</button>
+        <button data-view="clientes" class="nav-item"><span>♙</span>Clientes</button>
+        <button data-view="precios" class="nav-item"><span>＄</span>Precios</button>
+        <button data-view="papelera" class="nav-item"><span>⌫</span>Papelera</button>
+      </nav>
+      <div class="sidebar-bottom"><span class="connection-dot"></span><span id="connection-label">Conectando</span><button id="sign-out" class="button ghost full">Cerrar sesión</button></div>
+    </aside>
+    <div class="main-column">
+      <header class="topbar"><button id="menu-toggle" class="icon-button mobile-only" aria-label="Abrir menú">☰</button><div><p class="eyebrow">E30 · i30</p><h1 id="page-title">Órdenes de reparación</h1></div><div class="top-actions"><span id="user-label" class="user-chip"></span><button id="new-order" class="button primary">＋ Nueva orden</button></div></header>
+      <main class="content">
+        <section id="view-ordenes" class="view">
+          <div class="stats-row"><article class="stat-card"><span>Órdenes activas</span><b id="stat-active">—</b></article><article class="stat-card"><span>Listas para entregar</span><b id="stat-ready">—</b></article><article class="stat-card"><span>Saldos pendientes</span><b id="stat-balance">—</b></article></div>
+          <div class="toolbar"><div class="search-wrap"><span>⌕</span><input id="order-search" type="search" placeholder="Buscar por número, cliente, teléfono, equipo…" autocomplete="off"></div><select id="branch-filter" aria-label="Filtrar sucursal"><option value="">Todas las sucursales</option><option>E30</option><option>i30</option></select><select id="state-filter" aria-label="Filtrar estado"><option value="">Todos los estados</option></select></div>
+          <div class="panel table-panel"><div class="panel-heading"><div><h2>Reparaciones</h2><p class="muted">Órdenes actuales y su saldo</p></div><span id="order-count" class="count-label"></span></div><div id="orders-list" class="orders-list"></div></div>
+        </section>
+        <section id="view-clientes" class="view" hidden>
+          <div class="toolbar"><div class="search-wrap"><span>⌕</span><input id="client-search" type="search" placeholder="Buscar por nombre o teléfono…"></div><button id="new-client" class="button primary">＋ Nuevo cliente</button></div>
+          <div id="clients-list" class="client-grid"></div>
+        </section>
+        <section id="view-precios" class="view" hidden>
+          <div class="toolbar"><div class="search-wrap"><span>⌕</span><input id="price-search" type="search" placeholder="Buscar modelo, marca o reparación…"></div><button id="new-price" class="button primary">＋ Agregar precio</button></div>
+          <div class="panel table-panel"><div class="panel-heading"><div><h2>Lista de precios</h2><p class="muted">Tarifas activas para presupuestar reparaciones</p></div><span id="price-count" class="count-label"></span></div><div id="prices-list" class="orders-list"></div></div>
+        </section>
+        <section id="view-papelera" class="view" hidden><div class="panel table-panel"><div class="panel-heading"><div><h2>Órdenes eliminadas</h2><p class="muted">Se conservan y pueden restaurarse</p></div></div><div id="trash-list" class="orders-list"></div></div></section>
+      </main>
+      <nav class="mobile-nav" aria-label="Navegación móvil"><button data-view="ordenes" class="active">▦<span>Órdenes</span></button><button data-view="clientes">♙<span>Clientes</span></button><button data-view="precios">＄<span>Precios</span></button><button data-view="papelera">⌫<span>Papelera</span></button></nav>
+    </div>
+  </div>
+  <dialog id="modal" class="modal"><form id="modal-form" method="dialog"><div class="modal-heading"><div><p class="eyebrow" id="modal-eyebrow"></p><h2 id="modal-title"></h2></div><button type="button" class="icon-button" data-close aria-label="Cerrar">×</button></div><div id="modal-body" class="modal-body"></div><div id="modal-actions" class="modal-actions"></div></form></dialog>
+  <div id="print-area" class="print-area"></div>
+</body>
+</html>
+

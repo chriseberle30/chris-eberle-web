@@ -866,8 +866,10 @@ qz.security.setSignaturePromise(function(toSign){
 </div></div>
 <div class="card">
 <h3 style="margin-top:0">Copia de seguridad</h3>
-<div class="sub" style="margin-bottom:12px">Descargá todos tus datos en un archivo y guardalo en Drive. Hacelo una vez por semana.</div>
+<div class="sub" style="margin-bottom:12px">La copia operativa sirve para restaurar órdenes, clientes, precios y movimientos desde esta aplicación. El snapshot íntegro conserva todas las filas de e30_kv, incluidas claves internas.</div>
 <div class="actions"><button class="btn" type="button" onclick="exportBackup()">Exportar copia</button><button class="btn secondary" type="button" onclick="document.getElementById('backupFile').click()">Restaurar copia…</button><input id="backupFile" type="file" accept="application/json,.json" style="display:none" onchange="importBackup(this)"></div>
+<div class="actions" style="margin-top:9px"><button class="btn secondary" type="button" onclick="exportCompleteKVSnapshot(this)">Descargar snapshot verificable de e30_kv</button></div>
+<div class="sub" style="margin-top:7px">Incluye datos personales y hashes de acceso. Guardalo de forma privada. No incluye usuarios de Auth, archivos de Storage ni configuración del proyecto Supabase.</div>
 <div id="backupInfo" class="sub" style="margin-top:8px"></div>
 </div>
 <div class="card">
@@ -2450,6 +2452,60 @@ function exportBackup(){
   try{localStorage.setItem("e30-last-backup",d.toISOString());}catch(e){}
   const i=document.getElementById("backupInfo");if(i)i.textContent="Copia descargada: "+orders.length+" órdenes, "+prices.length+" precios, "+clients.length+" clientes.";
 }
+function e30CanonicalJson(value){
+  if(Array.isArray(value))return "["+value.map(e30CanonicalJson).join(",")+"]";
+  if(value&&typeof value==="object")return "{"+Object.keys(value).sort().map(key=>JSON.stringify(key)+":"+e30CanonicalJson(value[key])).join(",")+"}";
+  return JSON.stringify(value);
+}
+async function readAllE30KVRows(){
+  const token=await e30AccessToken(),pageSize=500,rows=[];
+  for(let offset=0;;offset+=pageSize){
+    const end=offset+pageSize-1;
+    const response=await fetch(SUPABASE_URL+"/rest/v1/e30_kv?select=key,value&order=key.asc",{
+      headers:Object.assign(sbHeaders({"Cache-Control":"no-cache","Pragma":"no-cache","Range-Unit":"items","Range":offset+"-"+end}),{Authorization:"Bearer "+token}),
+      cache:"no-store"
+    });
+    if(!response.ok)throw new Error("No se pudo exportar e30_kv (HTTP "+response.status+").");
+    const page=await response.json();
+    if(!Array.isArray(page))throw new Error("Supabase devolvió un formato inesperado.");
+    rows.push(...page);
+    if(page.length<pageSize)break;
+  }
+  rows.sort((a,b)=>a.key<b.key?-1:a.key>b.key?1:0);
+  const keys=new Set();
+  for(const row of rows){
+    if(!row||typeof row.key!=="string"||!("value" in row))throw new Error("La exportación contiene una fila incompleta.");
+    if(keys.has(row.key))throw new Error("La exportación contiene una clave duplicada.");
+    keys.add(row.key);
+  }
+  return rows;
+}
+async function exportCompleteKVSnapshot(button){
+  const info=document.getElementById("backupInfo"),oldLabel=button?.textContent;
+  if(button){button.disabled=true;button.textContent="Verificando y descargando…";}
+  try{
+    const first=await readAllE30KVRows();
+    const second=await readAllE30KVRows();
+    const values=Object.fromEntries(first.map(row=>[row.key,row.value]));
+    const repeatedValues=Object.fromEntries(second.map(row=>[row.key,row.value]));
+    const digest=await sha256Hex(e30CanonicalJson(values));
+    const repeatedDigest=await sha256Hex(e30CanonicalJson(repeatedValues));
+    if(digest!==repeatedDigest)throw new Error("Los datos cambiaron durante la exportación. Esperá un momento y volvé a intentarlo.");
+    const projectRef=new URL(SUPABASE_URL).hostname.split(".")[0];
+    const snapshot={format:"e30-kv-snapshot",version:1,source_project_ref:projectRef,captured_at:new Date().toISOString(),row_count:first.length,dataset_sha256:digest,rows:first};
+    const blob=new Blob([JSON.stringify(snapshot,null,2)],{type:"application/json"});
+    const date=new Date(),stamp=date.getFullYear()+"-"+String(date.getMonth()+1).padStart(2,"0")+"-"+String(date.getDate()).padStart(2,"0");
+    const link=document.createElement("a"),url=URL.createObjectURL(blob);
+    link.href=url;link.download="E30-e30_kv-"+stamp+".json";document.body.appendChild(link);link.click();link.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),30000);
+    if(info)info.textContent="Snapshot descargado y releído dos veces: "+first.length+" filas · SHA-256 de datos "+digest+". Guardalo de forma privada.";
+  }catch(error){
+    if(info)info.textContent="No se generó el snapshot: "+(error.message||"error de lectura");
+  }finally{
+    if(button){button.disabled=false;button.textContent=oldLabel;}
+  }
+}
+
 async function importBackup(input){
   const file=input?.files?.[0];if(!file)return;
   try{

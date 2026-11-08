@@ -1,7 +1,8 @@
 (function attachE30DemoRepository(global) {
   "use strict";
 
-  const COLLECTIONS = Object.freeze(["orders", "clients", "stock", "sales", "budgets", "cash"]);
+  const COLLECTIONS = Object.freeze(["orders", "clients", "stock", "sales", "budgets", "cash", "prices"]);
+  const REQUIRED_COLLECTIONS = Object.freeze(COLLECTIONS.filter((name) => name !== "prices"));
   const VERSION = 1;
 
   function isRecord(value) {
@@ -10,12 +11,14 @@
 
   function isValidSnapshot(snapshot) {
     if (!isRecord(snapshot) || snapshot.version !== VERSION) return false;
-    if (!COLLECTIONS.every((name) => Array.isArray(snapshot[name]))) return false;
+    if (!REQUIRED_COLLECTIONS.every((name) => Array.isArray(snapshot[name]))) return false;
+    if (snapshot.prices !== undefined && !Array.isArray(snapshot.prices)) return false;
     return snapshot.orders.every((order) => isRecord(order)
       && Number.isSafeInteger(Number(order.n))
       && typeof order.modelo === "string"
       && typeof order.estado === "string")
       && snapshot.clients.every((client) => isRecord(client) && typeof client.nombre === "string")
+      && (snapshot.prices === undefined || snapshot.prices.every((price) => isRecord(price) && typeof price.marca === "string" && typeof price.modelo === "string" && typeof price.servicio === "string"))
       && snapshot.stock.every((item) => isRecord(item) && Number.isSafeInteger(Number(item.id)) && typeof item.nombre === "string")
       && snapshot.sales.every((sale) => isRecord(sale) && typeof sale.nombre === "string")
       && snapshot.budgets.every((budget) => isRecord(budget) && typeof budget.cliente === "string")

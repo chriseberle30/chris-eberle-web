@@ -362,6 +362,10 @@
       <hr><p>Declaro recibir / entregar el equipo y acepto las condiciones informadas.</p>
       <p style="margin-top:28px">Firma: ______________________</p><p>Aclaración: __________________</p><hr><p>Gracias por confiar en ${esc(order.negocio)}.</p>
     </div>`;
+    if (trackingUrl && window.QRCode) {
+      new QRCode($("#tracking-qr"), { text: trackingUrl, width: 112, height: 112, correctLevel: QRCode.CorrectLevel.M });
+      await new Promise((resolve) => setTimeout(resolve, 300));
+    }
     window.print();
   }
   function monthStart(){const d=new Date();return new Date(d.getFullYear(),d.getMonth(),1);}

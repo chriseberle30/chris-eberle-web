@@ -227,16 +227,35 @@ alter table public.ordenes enable row level security;
 alter table public.pagos enable row level security;
 alter table public.precios enable row level security;
 
+-- Aislamiento por usuario: cada cuenta solo puede leer y modificar sus propios
+-- registros, incluso si el proveedor permite crear nuevas cuentas.
+alter table public.clientes add column if not exists owner_id uuid default auth.uid();
+alter table public.ordenes add column if not exists owner_id uuid default auth.uid();
+alter table public.pagos add column if not exists owner_id uuid default auth.uid();
+alter table public.precios add column if not exists owner_id uuid default auth.uid();
+alter table public.orden_historial add column if not exists owner_id uuid default auth.uid();
+
+create index if not exists clientes_owner_id_idx on public.clientes(owner_id);
+create index if not exists ordenes_owner_id_idx on public.ordenes(owner_id);
+create index if not exists pagos_owner_id_idx on public.pagos(owner_id);
+create index if not exists precios_owner_id_idx on public.precios(owner_id);
+create index if not exists orden_historial_owner_id_idx on public.orden_historial(owner_id);
+
 drop policy if exists "e30 authenticated clients" on public.clientes;
-create policy "e30 authenticated clients" on public.clientes for all to authenticated using (true) with check (true);
+create policy "e30 authenticated clients" on public.clientes for all to authenticated
+  using (owner_id = (select auth.uid())) with check (owner_id = (select auth.uid()));
 drop policy if exists "e30 authenticated history" on public.orden_historial;
-create policy "e30 authenticated history" on public.orden_historial for select to authenticated using (true);
+create policy "e30 authenticated history" on public.orden_historial for select to authenticated
+  using (owner_id = (select auth.uid()));
 drop policy if exists "e30 authenticated orders" on public.ordenes;
-create policy "e30 authenticated orders" on public.ordenes for all to authenticated using (true) with check (true);
+create policy "e30 authenticated orders" on public.ordenes for all to authenticated
+  using (owner_id = (select auth.uid())) with check (owner_id = (select auth.uid()));
 drop policy if exists "e30 authenticated payments" on public.pagos;
-create policy "e30 authenticated payments" on public.pagos for all to authenticated using (true) with check (true);
+create policy "e30 authenticated payments" on public.pagos for all to authenticated
+  using (owner_id = (select auth.uid())) with check (owner_id = (select auth.uid()));
 drop policy if exists "e30 authenticated prices" on public.precios;
-create policy "e30 authenticated prices" on public.precios for all to authenticated using (true) with check (true);
+create policy "e30 authenticated prices" on public.precios for all to authenticated
+  using (owner_id = (select auth.uid())) with check (owner_id = (select auth.uid()));
 
 grant select, insert, update on public.clientes to authenticated;
 grant select, insert, update on public.ordenes to authenticated;

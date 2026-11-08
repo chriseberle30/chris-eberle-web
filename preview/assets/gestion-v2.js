@@ -156,7 +156,7 @@
       ${formField("Total acordado", "total", order?.total ?? 0, "number")}
       <div class="field"><label for="f-falla">Falla / trabajo solicitado *</label><textarea id="f-falla" name="falla" required>${esc(order?.falla || "")}</textarea></div>
       <div class="field span-2"><label for="f-notas">Notas internas</label><textarea id="f-notas" name="notas">${esc(order?.notas || "")}</textarea></div>
-      ${formField("IMEI / serie", "imei", order?.imei || "")}
+      ${formField("IMEI / serie", "imei", order?.imei || "")}${selectField("Garantía", "garantia_dias", ["A definir", "Sin garantía", "30", "60", "90", "180"], order?.garantia_dias == null ? "A definir" : String(order.garantia_dias))}<div class="field span-2"><label for="f-garantia_condiciones">Condiciones de garantía</label><textarea id="f-garantia_condiciones" name="garantia_condiciones">${esc(order?.garantia_condiciones || "")}</textarea></div>${formField("Trabajo realizado (para entrega)", "trabajo_realizado", order?.trabajo_realizado || "")}
       ${!isEditing ? `${formField("Seña inicial (opcional)", "sena", "0", "number")}${selectField("Medio de la seña", "medio", Rules.PAYMENT_METHODS, "Efectivo")}` : ""}
     </div>`;
     openModal(isEditing ? `Editar orden #${order.id}` : "Nueva orden de reparación", "ORDEN DE TRABAJO", body, actionButtons("Cancelar", isEditing ? "Guardar cambios" : "Crear orden"));
@@ -211,7 +211,7 @@
     if (historyError || paymentsError) return notice(`No se pudo cargar el historial: ${(historyError || paymentsError).message}`, true);
     const due = Rules.balance({ ...order, pagos: payments || [] });
     const stateOptions = Rules.ORDER_STATES.map((state) => `<option value="${esc(state)}" ${state === order.estado ? "selected" : ""}>${esc(state)}</option>`).join("");
-    const body = `<div class="detail-grid"><div class="detail-item"><small>Cliente</small><b>${esc(order.clientes?.nombre || order.cliente || order.gremio || "Sin nombre")}</b></div><div class="detail-item"><small>Equipo · sucursal</small><b>${esc(order.modelo)} · ${esc(order.negocio)}</b></div><div class="detail-item"><small>Estado</small><b>${esc(order.estado)}</b></div><div class="detail-item"><small>Total · saldo</small><b>${money(order.total)} · ${money(due)}</b></div><div class="detail-item"><small>Falla / trabajo</small><b>${esc(order.falla || "—")}</b></div><div class="detail-item"><small>Teléfono</small><b>${esc(order.telefono || order.clientes?.telefono || "—")}</b></div><div class="detail-item"><small>IMEI / serie</small><b>${esc(order.imei || "—")}</b></div><div class="detail-item"><small>Creada</small><b>${date(order.creada)}</b></div></div><div class="quick-actions">${due > 0 ? `<button class="button primary" data-payment="${order.id}" data-balance="${due}">＋ Registrar pago / seña</button>` : ""}<button class="button" data-edit-order="${order.id}">Editar orden</button><button class="button" data-ticket="${order.id}">Imprimir ticket</button>${order.borrada ? `<button class="button" data-restore="${order.id}">Restaurar</button>` : `<button class="button danger" data-trash="${order.id}">Enviar a papelera</button>`}</div><div class="field state-editor"><label for="detail-state">Cambiar estado</label><select id="detail-state">${stateOptions}</select><button class="button primary" type="button" data-update-state="${order.id}">Guardar estado</button></div><h3 class="section-title">Pagos registrados</h3>${(payments || []).map((payment) => `<div class="payment-row"><span>${date(payment.creado)} · ${esc(payment.medio || "Efectivo")}</span><b>${money(payment.importe)}</b></div>`).join("") || `<p class="muted">Todavía no hay pagos registrados.</p>`}<h3 class="section-title">Historial de la reparación</h3>${(history || []).map((entry) => `<div class="history-item"><b>${esc(entry.evento)}</b>${entry.detalle ? ` · ${esc(entry.detalle)}` : ""}<small>${date(entry.creado)}</small></div>`).join("") || `<p class="muted">Sin eventos de historial.</p>`}`;
+    const body = `<div class="detail-grid"><div class="detail-item"><small>Cliente</small><b>${esc(order.clientes?.nombre || order.cliente || order.gremio || "Sin nombre")}</b></div><div class="detail-item"><small>Equipo · sucursal</small><b>${esc(order.modelo)} · ${esc(order.negocio)}</b></div><div class="detail-item"><small>Estado</small><b>${esc(order.estado)}</b></div><div class="detail-item"><small>Total · saldo</small><b>${money(order.total)} · ${money(due)}</b></div><div class="detail-item"><small>Falla / trabajo</small><b>${esc(order.falla || "—")}</b></div><div class="detail-item"><small>Teléfono</small><b>${esc(order.telefono || order.clientes?.telefono || "—")}</b></div><div class="detail-item"><small>IMEI / serie</small><b>${esc(order.imei || "—")}</b></div><div class="detail-item"><small>Creada</small><b>${date(order.creada)}</b></div></div><div class="quick-actions">${due > 0 ? `<button class="button primary" data-payment="${order.id}" data-balance="${due}">＋ Registrar pago / seña</button>` : ""}<button class="button" data-edit-order="${order.id}">Editar orden</button><button class="button" data-ticket="${order.id}" data-ticket-type="recepcion">Imprimir recepción</button><button class="button" data-ticket="${order.id}" data-ticket-type="entrega">Imprimir entrega</button>${order.borrada ? `<button class="button" data-restore="${order.id}">Restaurar</button>` : `<button class="button danger" data-trash="${order.id}">Enviar a papelera</button>`}</div><div class="field state-editor"><label for="detail-state">Cambiar estado</label><select id="detail-state">${stateOptions}</select><button class="button primary" type="button" data-update-state="${order.id}">Guardar estado</button></div><h3 class="section-title">Pagos registrados</h3>${(payments || []).map((payment) => `<div class="payment-row"><span>${date(payment.creado)} · ${esc(payment.medio || "Efectivo")}</span><b>${money(payment.importe)}</b></div>`).join("") || `<p class="muted">Todavía no hay pagos registrados.</p>`}<h3 class="section-title">Historial de la reparación</h3>${(history || []).map((entry) => `<div class="history-item"><b>${esc(entry.evento)}</b>${entry.detalle ? ` · ${esc(entry.detalle)}` : ""}<small>${date(entry.creado)}</small></div>`).join("") || `<p class="muted">Sin eventos de historial.</p>`}`;
     openModal(`Orden #${order.id}`, "DETALLE DE REPARACIÓN", body, `<button class="button" type="button" data-close>Cerrar</button>`);
     $("#modal-form").dataset.action = "dismiss";
   }
@@ -250,7 +250,7 @@
         if (tipo === "Particular" && !client) throw new Error("Elegí un cliente o crealo desde esta misma pantalla.");
         if (tipo === "Gremio" && !values.gremio?.trim()) throw new Error("Ingresá el nombre del técnico o comercio.");
         const valid = Rules.validateOrder({ ...values, sena: action === "create-order" ? values.sena : 0 });
-        const payload = { cliente_id: tipo === "Particular" ? client.id : null, cliente: tipo === "Particular" ? client.nombre : values.gremio.trim(), telefono: tipo === "Particular" ? client.telefono : values.nuevo_telefono || null, negocio: valid.negocio, tipo, gremio: tipo === "Gremio" ? values.gremio.trim() : null, marca: values.marca || "iPhone", modelo: valid.modelo, falla: valid.falla, estado: values.estado || "Recibido", total: valid.total, notas: values.notas || null, imei: values.imei || null };
+        const payload = { cliente_id: tipo === "Particular" ? client.id : null, cliente: tipo === "Particular" ? client.nombre : values.gremio.trim(), telefono: tipo === "Particular" ? client.telefono : values.nuevo_telefono || null, negocio: valid.negocio, tipo, gremio: tipo === "Gremio" ? values.gremio.trim() : null, marca: values.marca || "iPhone", modelo: valid.modelo, falla: valid.falla, estado: values.estado || "Recibido", total: valid.total, notas: values.notas || null, imei: values.imei || null, garantia_dias: values.garantia_dias === "A definir" || !values.garantia_dias ? null : values.garantia_dias === "Sin garantía" ? 0 : Number(values.garantia_dias), garantia_condiciones: values.garantia_condiciones || null, trabajo_realizado: values.trabajo_realizado || null };
         if (action === "create-order") {
           const result = await sb.rpc("e30_crear_orden", { p_orden: payload, p_sena: valid.sena, p_medio: values.medio || "Efectivo" });
           if (result.error) throw result.error;
@@ -311,11 +311,38 @@
     const { error } = await sb.from("precios").update({ activo: !active }).eq("id", priceId);
     if (error) return notice(error.message, true); await refresh(); notice(active ? "Tarifa pausada." : "Tarifa activada.");
   }
-  async function printTicket(orderId) {
-    const order = data.orders.find((row) => String(row.id) === String(orderId)); if (!order) return;
-    const payments = order.pagos || []; const client = order.clientes?.nombre || order.cliente || "";
+  async function printTicket(orderId, type = "recepcion") {
+    let order = data.orders.find((row) => String(row.id) === String(orderId)) || data.trash.find((row) => String(row.id) === String(orderId));
+    if (!order) {
+      const result = await sb.from("ordenes").select("*,pagos(id,importe,medio,creado),clientes(id,nombre,telefono)").eq("id", orderId).maybeSingle();
+      if (result.error) return notice(result.error.message, true);
+      order = result.data;
+    }
+    if (!order) return;
+    const { data: payments, error } = await sb.from("pagos").select("id,importe,medio,creado").eq("orden_id", order.id).order("creado");
+    if (error) return notice(error.message, true);
+    const client = order.clientes?.nombre || order.cliente || order.gremio || "—";
+    const paid = (payments || []).reduce((sum, p) => sum + Number(p.importe || 0), 0);
+    const due = Math.max(0, Number(order.total || 0) - paid);
     const brand = order.negocio === "i30" ? "i30 | iPhone Service" : "E30 | Técnico de celulares";
-    $("#print-area").innerHTML = `<h2>${brand}</h2><p>${order.negocio === "i30" ? "Piovano 2960 — Moreno" : "Demóstenes 3101 — Las Flores"}</p><hr><b>ORDEN #${esc(order.id)}</b><p>${date(order.creada)}<br>${esc(client)}<br>${esc(order.telefono || "")}<br>${esc(order.modelo)}<br>${esc(order.falla)}</p><hr>Total ${money(order.total)}<br>Pagado ${money(payments.reduce((sum, payment) => sum + Number(payment.importe || 0), 0))}<br><b>Saldo ${money(Rules.balance(order))}</b><p>Conserve este comprobante.</p>`;
+    const warrantyEnd = order.entregada && order.garantia_dias > 0
+      ? new Date(new Date(order.entregada).getTime() + Number(order.garantia_dias) * 86400000).toLocaleDateString("es-AR") : "No corresponde / pendiente";
+    const isDelivery = type === "entrega";
+    const paymentLines = (payments || []).map(p => `<div>${date(p.creado)} · ${esc(p.medio)}: ${money(p.importe)}</div>`).join("");
+    const terms = order.garantia_dias === 0 ? "Trabajo sin garantía." : `Garantía: ${order.garantia_dias ? order.garantia_dias + " días" : "A definir"}.`;
+    $("#print-area").innerHTML = `<div class="ticket">
+      <h2>${brand}</h2><p>${order.negocio === "i30" ? "Moreno" : "Las Flores"}</p><hr>
+      <h3>${isDelivery ? "COMPROBANTE DE ENTREGA" : "COMPROBANTE DE RECEPCIÓN"}</h3>
+      <b>ORDEN #${esc(order.id)}</b><p>${date(isDelivery ? (order.entregada || new Date().toISOString()) : order.creada)}</p><hr>
+      <b>CLIENTE</b><p>${esc(client)}<br>${esc(order.telefono || order.clientes?.telefono || "—")}</p>
+      <b>EQUIPO</b><p>${esc(order.marca || "")} ${esc(order.modelo || "")}<br>IMEI: ${esc(order.imei || "—")}</p>
+      <b>${isDelivery ? "TRABAJO REALIZADO" : "FALLA INFORMADA"}</b><p>${esc(isDelivery ? (order.trabajo_realizado || order.falla || "—") : (order.falla || "—"))}</p>
+      <hr><b>RESUMEN DE CUENTA</b><p>Total: ${money(order.total)}<br>Pagado: ${money(paid)}<br><b>Saldo: ${money(due)}</b></p>
+      ${isDelivery ? `<b>PAGOS</b><p>${paymentLines || "Sin pagos registrados"}</p>` : ""}
+      <hr><b>GARANTÍA Y CONDICIONES</b><p>${terms}<br>${esc(order.garantia_condiciones || "Conserve este comprobante para cualquier consulta.")}${isDelivery && order.garantia_dias > 0 ? `<br>Vencimiento estimado: ${warrantyEnd}` : ""}</p>
+      <hr><p>Declaro recibir / entregar el equipo y acepto las condiciones informadas.</p>
+      <p style="margin-top:28px">Firma: ______________________</p><p>Aclaración: __________________</p><hr><p>Gracias por confiar en ${esc(order.negocio)}.</p>
+    </div>`;
     window.print();
   }
   function bindEvents() {
@@ -360,7 +387,7 @@
       else if (target.dataset.payment) openPayment(target.dataset.payment, Number(target.dataset.balance));
       else if (target.dataset.trash) trashOrder(target.dataset.trash);
       else if (target.dataset.restore) restoreOrder(target.dataset.restore);
-      else if (target.dataset.ticket) printTicket(target.dataset.ticket);
+      else if (target.dataset.ticket) printTicket(target.dataset.ticket, target.dataset.ticketType || "recepcion");
       else if (target.dataset.updateState) updateOrderState(target.dataset.updateState);
       else if (target.dataset.editPrice) openPriceForm(data.prices.find((row) => String(row.id) === target.dataset.editPrice));
       else if (target.dataset.togglePrice) togglePrice(target.dataset.togglePrice, target.dataset.active === "true");

@@ -259,6 +259,7 @@
               <div class="metric"><span class="metric-label">Esperando repuesto</span><strong class="metric-value" id="metric-waiting">1</strong><span class="metric-hint">seguimiento pendiente</span></div>
             </div>
             <p class="sample-note">Indicadores visuales de ejemplo. En la versión conectada, los valores se calcularán con órdenes reales.</p>
+            <div class="section-heading"><h2>Actividad reciente</h2></div><div class="list-stack" id="activity-list"></div>
           </div>
         </div>
       </section>
@@ -319,18 +320,24 @@
       <div class="sheet-head"><div><h2 id="order-modal-title">Nueva orden</h2><p>Los datos obligatorios, sin pasos de más.</p></div><button class="close-button" type="button" data-close aria-label="Cerrar">×</button></div>
       <form id="new-order-form">
         <div class="field"><label>Tipo de atención</label><div class="segmented" role="group" aria-label="Tipo de atención"><button class="segment active" type="button" data-kind="Particular" aria-pressed="true">Particular</button><button class="segment" type="button" data-kind="Gremio" aria-pressed="false">Gremio</button></div></div>
-        <div class="field" id="client-field"><label for="client-name">Cliente</label><input id="client-name" name="cliente" placeholder="Nombre y apellido" autocomplete="name"></div>
+        <div class="field" id="client-field"><label for="client-name">Cliente</label><input id="client-name" name="cliente" placeholder="Nombre y apellido" list="demo-client-options" autocomplete="name"><datalist id="demo-client-options"></datalist></div>
         <div class="field" id="phone-field"><label for="client-phone">Teléfono <span style="font-weight:500;color:#9297a6">· opcional</span></label><input id="client-phone" name="telefono" type="tel" inputmode="tel" placeholder="Para avisarle cuando esté lista" autocomplete="tel"></div>
         <div class="field" id="guild-field" hidden><label for="guild-name">Gremio / técnico</label><input id="guild-name" name="gremio" placeholder="Elegí o escribí el nombre" list="guild-options" autocomplete="organization"><datalist id="guild-options"><option value="Gremio de muestra"></option></datalist></div>
         <div class="two-col">
           <div class="field"><label for="business">Negocio</label><select id="business" name="negocio"><option>E30</option><option>i30</option></select></div>
-          <div class="field"><label for="device">Equipo</label><input id="device" name="modelo" placeholder="Ej.: iPhone 13" required autocomplete="off"></div>
+          <div class="field"><label for="order-local">Sucursal</label><select id="order-local" name="local"><option>Demóstenes 3101 — Las Flores</option><option>Piovano 2960 — Moreno</option></select></div>
         </div>
+        <div class="two-col"><div class="field"><label for="order-brand">Marca</label><input id="order-brand" name="marca" placeholder="Ej.: Apple, Samsung" autocomplete="off"></div><div class="field"><label for="device">Modelo</label><input id="device" name="modelo" placeholder="Ej.: iPhone 13" required autocomplete="off"></div></div>
         <div class="field"><label for="fault">Falla principal</label><input id="fault" name="falla" placeholder="¿Qué le pasa al equipo?" required autocomplete="off"><div class="chips"><button class="chip" type="button" data-fault="Pantalla">Pantalla</button><button class="chip" type="button" data-fault="Batería">Batería</button><button class="chip" type="button" data-fault="Pin de carga">Pin de carga</button><button class="chip" type="button" data-fault="Software">Software</button></div></div>
         <div class="suggestion" id="price-suggestion"><span id="suggestion-copy"></span><button type="button" id="use-suggestion">Usar precio</button></div>
+        <div class="field"><label for="order-work">Trabajo a realizar</label><input id="order-work" name="trabajo" placeholder="Ej.: cambio de pantalla"></div>
+        <div class="field"><label for="device-condition">Estado físico al recibir</label><textarea id="device-condition" name="obsEquipo" placeholder="Golpes, pantalla rota, accesorios recibidos..."></textarea></div>
         <div class="two-col"><div class="field"><label for="total">Total estimado</label><input id="total" name="total" type="number" min="0" inputmode="numeric" placeholder="$ 0"></div><div class="field"><label for="deposit">Seña <span style="font-weight:500;color:#9297a6">· opcional</span></label><input id="deposit" name="sena" type="number" min="0" inputmode="numeric" placeholder="$ 0"></div></div>
-        <div class="two-col"><div class="field"><label for="imei">IMEI <span style="font-weight:500;color:#9297a6">· opcional</span></label><input id="imei" name="imei" inputmode="numeric" autocomplete="off" placeholder="Identificación del equipo"></div><div class="field"><label for="unlock-code">Patrón / código <span style="font-weight:500;color:#9297a6">· opcional</span></label><input id="unlock-code" name="codigo" autocomplete="off" placeholder="Solo con autorización del cliente"></div></div>
-        <div class="field"><label for="note">Nota de recepción <span style="font-weight:500;color:#9297a6">· opcional</span></label><textarea id="note" name="nota" placeholder="Estado físico, accesorios recibidos o detalle importante"></textarea><div class="field-help">Solo para probar el recorrido: guardado local en este navegador, sin sincronización.</div></div>
+        <div class="two-col"><div class="field"><label for="deposit-method">Medio de la seña</label><select id="deposit-method" name="pago"><option>Sin pago</option><option>Efectivo</option><option>Transferencia</option><option>Mercado Pago</option><option>Tarjeta</option><option>Otro</option></select></div><div class="field"><label for="order-warranty">Garantía prevista</label><select id="order-warranty" name="garantiaDias"><option value="30">30 días</option><option value="60">60 días</option></select></div></div>
+        <div class="two-col"><div class="field"><label for="order-status">Estado inicial</label><select id="order-status" name="estado"><option>Recibido</option><option>Pendiente</option><option>Diagnosticando</option><option>Esperando repuesto</option><option>En reparación</option><option>Listo</option><option>Entregado</option><option>Cancelado</option><option>Sin reparación</option></select></div><div class="field"><label for="order-delivery">Entrega estimada</label><input id="order-delivery" name="entrega" type="date"></div></div>
+        <div class="two-col"><div class="field"><label for="imei">IMEI <span style="font-weight:500;color:#9297a6">· opcional</span></label><input id="imei" name="imei" inputmode="numeric" autocomplete="off" placeholder="Identificación del equipo"></div><div class="field"><label for="unlock-code">Código del equipo <span style="font-weight:500;color:#9297a6">· opcional</span></label><input id="unlock-code" name="desbloqueo" autocomplete="off" placeholder="Solo con autorización del cliente"></div></div>
+        <div class="field"><label for="internal-note">Nota técnica interna <span style="font-weight:500;color:#9297a6">· opcional</span></label><textarea id="internal-note" name="obsTecnico" placeholder="Indicaciones privadas para el técnico"></textarea><div class="field-help">No aparece en el comprobante para el cliente.</div></div>
+        <div class="field"><label for="note">Nota de recepción <span style="font-weight:500;color:#9297a6">· opcional</span></label><textarea id="note" name="nota" placeholder="Detalle adicional que quieras conservar en el historial"></textarea><div class="field-help">Datos ficticios de esta demo; guardado local en este navegador.</div></div>
         <button class="primary-button" type="submit"><span>＋</span> Crear orden de muestra</button>
       </form>
     </section>
@@ -402,6 +409,7 @@
     const sampleSales = [{ nombre: "Vidrio templado universal", cantidad: 1, total: 4500, costoUnitario: 1200, medio: "Efectivo", fecha: "Hoy · muestra" }];
     const sampleBudgets = [{ cliente: "Persona de prueba", equipo: "Samsung A54", trabajo: "Pin de carga", importe: 132000, estado: "Pendiente" }];
     const sampleCash = [{ tipo: "ingreso", concepto: "Pago posterior orden #1538", importe: 50000, medio: "Efectivo" }, { tipo: "egreso", concepto: "Compra de insumos", importe: 12000, medio: "Efectivo" }, { tipo: "ingreso", concepto: "Venta de accesorio", importe: 4500, medio: "Efectivo" }];
+    const sampleActivity = [];
     const demoRepository = window.E30DemoRepository.createBrowserDemoRepository(window.localStorage, "e30-gestion-preview-v1");
     const savedDemoState = demoRepository.loadSnapshot();
     if (savedDemoState) {
@@ -411,6 +419,7 @@
       sampleSales.splice(0, sampleSales.length, ...savedDemoState.sales);
       sampleBudgets.splice(0, sampleBudgets.length, ...savedDemoState.budgets);
       sampleCash.splice(0, sampleCash.length, ...savedDemoState.cash);
+      if (Array.isArray(savedDemoState.activity)) sampleActivity.splice(0, sampleActivity.length, ...savedDemoState.activity);
       if (Array.isArray(savedDemoState.prices)) samplePrices.splice(0, samplePrices.length, ...savedDemoState.prices);
     }
     sampleOrders.forEach(order => { if (!Array.isArray(order.costos)) order.costos = Number(order.costo) > 0 ? [{ concepto: "Costo cargado", importe: Number(order.costo) }] : []; order.costo = 0; if (!Array.isArray(order.pagos)) order.pagos = []; });
@@ -430,13 +439,22 @@
     const orderCostTotal = order => (order.costos || []).reduce((sum, cost) => sum + Number(cost.importe || 0), 0) || Number(order.costo || 0);
     const phoneIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.3"/><path d="M10 18.2h4"/></svg>';
     function saveDemoState() {
-      const result = demoRepository.saveSnapshot({ orders: visibleOrders, clients: sampleClients, stock: sampleStock, sales: sampleSales, budgets: sampleBudgets, cash: sampleCash, prices: samplePrices });
+      const result = demoRepository.saveSnapshot({ orders: visibleOrders, clients: sampleClients, stock: sampleStock, sales: sampleSales, budgets: sampleBudgets, cash: sampleCash, prices: samplePrices, activity: sampleActivity });
       if (result.ok) {
         $("#demo-save-status").textContent = " · Guardado en este dispositivo";
       } else {
         $("#demo-save-status").textContent = result.reason === "invalid-snapshot" ? " · No se guardó: datos de demo inválidos" : " · No se pudo guardar en este dispositivo";
       }
       return result.ok;
+    }
+    function recordDemoActivity(tipo, titulo, detalle = "", ref = "") {
+      const now = new Date();
+      sampleActivity.unshift({ id: `A${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, tipo, titulo, detalle, ref, fecha: now.toLocaleDateString("es-AR"), hora: now.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit", hour12: false }), fechaISO: now.toISOString() });
+      if (sampleActivity.length > 300) sampleActivity.length = 300;
+      renderActivity();
+    }
+    function renderActivity() {
+      $("#activity-list").innerHTML = sampleActivity.slice(0, 8).map(item => `<article class="list-card"><div class="list-card-main"><div class="list-card-title">${escapeHtml(item.titulo)}</div><div class="list-card-meta">${escapeHtml(item.detalle)} · ${escapeHtml(item.fecha)} ${escapeHtml(item.hora)}</div></div></article>`).join("") || '<div class="empty-state">Los cambios que hagas en esta demo aparecerán acá.</div>';
     }
     if (savedDemoState) $("#demo-save-status").textContent = " · Cambios recuperados de este navegador";
 
@@ -455,7 +473,7 @@
       const query = $("#order-search").value.trim().toLocaleLowerCase("es-AR");
       const matches = visibleOrders.filter(order => {
         const statusMatch = activeFilter === "Todas" || order.estado === activeFilter;
-        const searchText = `${order.n} ${order.cliente} ${order.telefono} ${order.gremio} ${order.modelo} ${order.falla} ${order.estado}`.toLocaleLowerCase("es-AR");
+        const searchText = `${order.n} ${order.cliente} ${order.telefono} ${order.gremio} ${order.marca} ${order.modelo} ${order.imei} ${order.trabajo} ${order.falla} ${order.estado}`.toLocaleLowerCase("es-AR");
         return statusMatch && (!query || searchText.includes(query));
       });
       $("#all-orders").innerHTML = matches.map(renderOrderRow).join("") || '<div class="empty-state">No encontré órdenes con esa búsqueda.</div>';
@@ -469,7 +487,14 @@
     function renderClients() {
       const query = $("#client-search").value.trim().toLocaleLowerCase("es-AR");
       const matches = sampleClients.filter(client => `${client.nombre} ${client.telefono}`.toLocaleLowerCase("es-AR").includes(query));
-      $("#client-list").innerHTML = matches.map(client => { const history = visibleOrders.filter(order => order.cliente === client.nombre); return `<article class="list-card"><div class="list-card-main"><div class="list-card-title">${escapeHtml(client.nombre)}</div><div class="list-card-meta">${escapeHtml(client.telefono)} · ${history.length} órdenes</div>${history.map(order => `<button class="text-button" type="button" data-order-open="${order.n}">#${order.n} · ${escapeHtml(order.modelo)} · ${escapeHtml(order.estado)} · pagado ${money(paidAmount(order))}</button>`).join("") || '<div class="list-card-meta">Sin reparaciones todavía</div>'}</div></article>`; }).join("") || '<div class="empty-state">No encontré clientes.</div>';
+      $("#client-list").innerHTML = matches.map(client => { const history = visibleOrders.filter(order => (client.id && order.clientId === client.id) || (!order.clientId && order.cliente === client.nombre)); return `<article class="list-card"><div class="list-card-main"><div class="list-card-title">${escapeHtml(client.nombre)}</div><div class="list-card-meta">${escapeHtml(client.telefono)} · ${history.length} órdenes</div>${history.map(order => `<button class="text-button" type="button" data-order-open="${order.n}">#${order.n} · ${escapeHtml(order.modelo)} · ${escapeHtml(order.estado)} · pagado ${money(paidAmount(order))}</button>`).join("") || '<div class="list-card-meta">Sin reparaciones todavía</div>'}</div></article>`; }).join("") || '<div class="empty-state">No encontré clientes.</div>';
+    }
+    function renderDemoClientOptions() { $("#demo-client-options").innerHTML = sampleClients.map(client => `<option value="${escapeHtml(client.nombre)}"></option>`).join(""); }
+    function selectDemoClientByName() {
+      if (orderKind !== "Particular") return;
+      const name = $("#client-name").value.trim().toLocaleLowerCase("es-AR");
+      const client = sampleClients.find(item => item.nombre.toLocaleLowerCase("es-AR") === name);
+      if (client) { if (!$("#client-phone").value) $("#client-phone").value = client.telefono || ""; $("#client-name").dataset.clientId = client.id || ""; }
     }
     function openOrderDetail(number) {
       const order = visibleOrders.find(item => item.n === Number(number)); if (!order) return;
@@ -577,6 +602,7 @@
       const modal = $("#order-modal");
       modal.classList.add("open");
       modal.setAttribute("aria-hidden", "false");
+      renderDemoClientOptions();
       if (prefill.modelo) $("#device").value = `${prefill.marca === "iPhone" ? "iPhone " : ""}${prefill.modelo}`;
       if (prefill.falla) $("#fault").value = prefill.falla;
       if (prefill.precio) $("#total").value = prefill.precio;
@@ -647,12 +673,12 @@
       }
       if (stockButton) {
         const item = sampleStock.find(product => product.id === Number(stockButton.dataset.stock));
-        item.cantidad = Math.max(0, item.cantidad + Number(stockButton.dataset.delta)); saveDemoState(); renderStock(); showToast(`Stock de muestra actualizado: ${item.cantidad}.`);
+        item.cantidad = Math.max(0, item.cantidad + Number(stockButton.dataset.delta)); recordDemoActivity("stock", `Stock actualizado · ${item.nombre}`, `Existencias: ${item.cantidad}`, item.id); saveDemoState(); renderStock(); renderReports(); showToast(`Stock de muestra actualizado: ${item.cantidad}.`);
       }
-      if (priceDisableButton) { const item = samplePrices[Number(priceDisableButton.dataset.priceDisable)]; if (item) { item.activo = false; saveDemoState(); renderPrices(); showToast("Precio desactivado en la demo."); } }
-      if (budgetStatusButton) { const budget = sampleBudgets[Number(budgetStatusButton.dataset.budgetStatus)]; if (budget) { budget.estado = budget.estado === "Pendiente" ? "Aceptado" : "Pendiente"; saveDemoState(); renderBudgets(); showToast(`Presupuesto ${budget.estado.toLocaleLowerCase("es-AR")} en la demo.`); } }
+      if (priceDisableButton) { const item = samplePrices[Number(priceDisableButton.dataset.priceDisable)]; if (item) { item.activo = false; recordDemoActivity("precio", "Precio desactivado", `${item.marca} ${item.modelo} · ${item.servicio}`, ""); saveDemoState(); renderPrices(); showToast("Precio desactivado en la demo."); } }
+      if (budgetStatusButton) { const budget = sampleBudgets[Number(budgetStatusButton.dataset.budgetStatus)]; if (budget) { budget.estado = budget.estado === "Pendiente" ? "Aceptado" : "Pendiente"; recordDemoActivity("presupuesto", `Presupuesto ${budget.estado.toLocaleLowerCase("es-AR")}`, `${budget.cliente} · ${budget.equipo}`, budget.n || ""); saveDemoState(); renderBudgets(); showToast(`Presupuesto ${budget.estado.toLocaleLowerCase("es-AR")} en la demo.`); } }
       if (orderOpenButton) openOrderDetail(orderOpenButton.dataset.orderOpen);
-      if (deleteCostButton) { const order = visibleOrders.find(item => item.n === selectedOrderNumber); if (order) { order.costos.splice(Number(deleteCostButton.dataset.deleteCost), 1); saveDemoState(); renderOrderPayments(order); renderReports(); renderPendingCosts(); showToast("Costo quitado de la muestra."); } }
+      if (deleteCostButton) { const order = visibleOrders.find(item => item.n === selectedOrderNumber); if (order) { order.costos.splice(Number(deleteCostButton.dataset.deleteCost), 1); recordDemoActivity("costo", `Costo quitado · orden #${order.n}`, "Ajuste de costo de reparación", order.n); saveDemoState(); renderOrderPayments(order); renderReports(); renderPendingCosts(); showToast("Costo quitado de la muestra."); } }
       if (event.target.closest("#detail-print")) { const order = visibleOrders.find(item => item.n === selectedOrderNumber); if (order) printOrder(order); }
       if (event.target.closest("[data-close-detail]") || event.target === $("#order-detail-modal")) closeOrderDetail();
     });
@@ -665,28 +691,29 @@
     $("#order-search").addEventListener("input", renderOrders);
     $("#price-search").addEventListener("input", renderPrices);
     $("#client-search").addEventListener("input", renderClients);
+    $("#client-name").addEventListener("change", selectDemoClientByName);
     $("#client-form").addEventListener("submit", event => {
       event.preventDefault(); const nombre = $("#client-new-name").value.trim(); const telefono = $("#client-new-phone").value.trim();
       if (sampleClients.some(client => client.nombre.toLocaleLowerCase("es-AR") === nombre.toLocaleLowerCase("es-AR") && (!telefono || client.telefono === telefono))) { showToast("Ese cliente ya existe en la demo."); return; }
-      sampleClients.unshift({ nombre, telefono, ordenes: [] }); saveDemoState(); renderClients(); event.currentTarget.reset(); showToast("Cliente ficticio guardado.");
+      sampleClients.unshift({ id: `C${Date.now()}`, nombre, telefono, ordenes: [], createdAt: new Date().toISOString() }); recordDemoActivity("cliente", "Cliente agregado", nombre); saveDemoState(); renderDemoClientOptions(); renderClients(); event.currentTarget.reset(); showToast("Cliente ficticio guardado.");
     });
     $("#stock-form").addEventListener("submit", event => {
       event.preventDefault(); const nombre = $("#stock-name").value.trim(); const categoria = $("#stock-category").value.trim();
       if (sampleStock.some(item => item.nombre.toLocaleLowerCase("es-AR") === nombre.toLocaleLowerCase("es-AR"))) { showToast("Ese producto ya existe; ajustá su ficha en la lista."); return; }
-      sampleStock.unshift({ id: Math.max(0, ...sampleStock.map(item => Number(item.id) || 0)) + 1, nombre, categoria, cantidad: Number($("#stock-qty").value), costo: Number($("#stock-cost").value), precio: Number($("#stock-price").value) });
-      saveDemoState(); renderStock(); renderReports(); event.currentTarget.reset(); showToast("Producto de muestra agregado al inventario.");
+      const item = { id: Math.max(0, ...sampleStock.map(item => Number(item.id) || 0)) + 1, nombre, categoria, cantidad: Number($("#stock-qty").value), costo: Number($("#stock-cost").value), precio: Number($("#stock-price").value) }; sampleStock.unshift(item);
+      recordDemoActivity("stock", "Producto agregado", `${item.nombre} · ${item.cantidad} unidades`, item.id); saveDemoState(); renderStock(); renderReports(); event.currentTarget.reset(); showToast("Producto de muestra agregado al inventario.");
     });
     $("#stock-list").addEventListener("submit", event => {
       const form = event.target.closest("[data-stock-update]"); if (!form) return; event.preventDefault();
       const item = sampleStock.find(product => product.id === Number(form.dataset.stockUpdate)); if (!item) return;
       const fields = new FormData(form); item.cantidad = Number(fields.get("cantidad")); item.costo = Number(fields.get("costo")); item.precio = Number(fields.get("precio"));
-      saveDemoState(); renderStock(); renderReports(); showToast("Ficha y existencias actualizadas en la demo.");
+      recordDemoActivity("stock", `Ficha actualizada · ${item.nombre}`, `Existencias: ${item.cantidad}`, item.id); saveDemoState(); renderStock(); renderReports(); showToast("Ficha y existencias actualizadas en la demo.");
     });
     $("#price-form").addEventListener("submit", event => {
       event.preventDefault(); const marca = $("#price-brand").value.trim(); const modelo = $("#price-model").value.trim(); const servicio = $("#price-service").value.trim(); const precio = Number($("#price-amount").value);
       const existing = samplePrices.find(item => item.marca.toLocaleLowerCase("es-AR") === marca.toLocaleLowerCase("es-AR") && item.modelo.toLocaleLowerCase("es-AR") === modelo.toLocaleLowerCase("es-AR") && item.servicio.toLocaleLowerCase("es-AR") === servicio.toLocaleLowerCase("es-AR"));
       if (existing) { existing.precio = precio; existing.activo = true; } else samplePrices.unshift({ marca, modelo, servicio, precio, activo: true });
-      saveDemoState(); renderPrices(); event.currentTarget.reset(); showToast("Lista de precios de muestra actualizada.");
+      recordDemoActivity("precio", "Precio actualizado", `${marca} ${modelo} · ${servicio} · ${money(precio)}`); saveDemoState(); renderPrices(); event.currentTarget.reset(); showToast("Lista de precios de muestra actualizada.");
     });
     $("#device").addEventListener("input", updateSuggestion);
     $("#fault").addEventListener("input", updateSuggestion);
@@ -702,9 +729,11 @@
       if (paymentAmount > 0) {
         const medio = $("#detail-method").value; order.pagos.push({ importe: paymentAmount, medio, fecha: "Ahora · muestra" });
         sampleCash.push({ tipo: "ingreso", concepto: `Pago orden #${order.n}`, importe: paymentAmount, medio });
+        recordDemoActivity("cobro", `Cobro de orden #${order.n}`, `${money(paymentAmount)} · ${medio}`, order.n);
       }
       const note = $("#detail-note").value.trim(); if (note) { if (!order.notas) order.notas = []; order.notas.unshift(note); }
       if (order.estado === "Entregado" && previousStatus !== "Entregado") { order.entregada = new Date().toISOString(); showToast(`Entrega registrada. Garantía de ${order.garantiaDias} días.`); }
+      if (previousStatus !== order.estado) recordDemoActivity("orden", `Estado de orden #${order.n}`, `${previousStatus} → ${order.estado}`, order.n);
       $("#detail-warranty-info").textContent = order.entregada ? warrantyLabel(order) : "Se calcula al marcar la orden como entregada.";
       saveDemoState();
       renderOrderPayments(order); renderHomeOrders(); renderOrders(); renderClients(); renderCash();
@@ -715,26 +744,41 @@
       const order = visibleOrders.find(item => item.n === selectedOrderNumber); const concepto = $("#cost-concept").value.trim(); const importe = Number($("#cost-amount").value);
       if (!order || !concepto || importe <= 0) { showToast("Ingresá el concepto y un importe mayor a cero."); return; }
       if (!order.costos) order.costos = Number(order.costo) > 0 ? [{ concepto: "Costo heredado de muestra", importe: Number(order.costo) }] : [];
-      order.costos.push({ concepto, importe }); order.costo = 0; $("#cost-concept").value = ""; $("#cost-amount").value = ""; saveDemoState(); renderOrderPayments(order); renderReports(); renderPendingCosts(); showToast("Costo agregado a la orden de muestra.");
+      order.costos.push({ concepto, importe }); order.costo = 0; $("#cost-concept").value = ""; $("#cost-amount").value = ""; recordDemoActivity("costo", `Costo agregado · orden #${order.n}`, `${concepto} · ${money(importe)}`, order.n); saveDemoState(); renderOrderPayments(order); renderReports(); renderPendingCosts(); showToast("Costo agregado a la orden de muestra.");
     });
     $("#new-order-form").addEventListener("submit", event => {
       event.preventDefault();
       const form = new FormData(event.currentTarget);
       const total = Number(form.get("total")) || 0; const deposit = Number(form.get("sena")) || 0;
       if (deposit > total) { showToast("La seña no puede superar el total estimado."); return; }
+      if (deposit > 0 && String(form.get("pago") || "Sin pago") === "Sin pago") { showToast("Elegí el medio de pago de la seña."); return; }
+      const orderClientName = orderKind === "Particular" ? String(form.get("cliente") || "").trim() : String(form.get("gremio") || "").trim();
+      const orderPhone = orderKind === "Particular" ? String(form.get("telefono") || "").trim() : "";
+      let clientId = "";
+      if (orderKind === "Particular") {
+        let client = sampleClients.find(item => item.nombre.toLocaleLowerCase("es-AR") === orderClientName.toLocaleLowerCase("es-AR") && (!orderPhone || !item.telefono || item.telefono === orderPhone));
+        if (!client) { client = { id: `C${Date.now()}`, nombre: orderClientName, telefono: orderPhone, ordenes: [], createdAt: new Date().toISOString() }; sampleClients.unshift(client); }
+        if (!client.id) client.id = `C${Date.now()}`;
+        if (orderPhone) client.telefono = orderPhone;
+        clientId = client.id;
+      }
+      const now = new Date();
       const order = {
         n: Math.max(0, ...visibleOrders.map(item => item.n)) + 1,
-        cliente: orderKind === "Particular" ? String(form.get("cliente") || "").trim() : "",
-        gremio: orderKind === "Gremio" ? String(form.get("gremio") || "").trim() : "",
-        telefono: orderKind === "Particular" ? String(form.get("telefono") || "").trim() : "",
-        modelo: String(form.get("modelo") || "").trim(), falla: String(form.get("falla") || "").trim(),
-        imei: String(form.get("imei") || "").trim(), codigo: String(form.get("codigo") || "").trim(), notas: String(form.get("nota") || "").trim() ? [String(form.get("nota")).trim()] : [],
-        estado: "Recibido", total, sena: deposit, costo: 0, costos: [], pagos: [], fecha: "Ahora · prototipo"
+        cliente: orderClientName, clientId, tipoOrden: orderKind, gremio: orderKind === "Gremio" ? orderClientName : "", telefono: orderPhone,
+        negocio: String(form.get("negocio") || "E30") === "i30" ? "i30" : "E30", local: String(form.get("local") || ""),
+        marca: String(form.get("marca") || "").trim(), modelo: String(form.get("modelo") || "").trim(), falla: String(form.get("falla") || "").trim(), trabajo: String(form.get("trabajo") || "").trim(),
+        obsEquipo: String(form.get("obsEquipo") || "").trim(), obsTecnico: String(form.get("obsTecnico") || "").trim(),
+        imei: String(form.get("imei") || "").trim(), desbloqueo: String(form.get("desbloqueo") || "").trim(), unlockType: "codigo", patron: "", notas: String(form.get("nota") || "").trim() ? [String(form.get("nota")).trim()] : [],
+        estado: String(form.get("estado") || "Recibido"), garantiaDias: Math.max(0, Math.min(365, Number(form.get("garantiaDias")) || 30)), entrega: String(form.get("entrega") || ""),
+        total, sena: deposit, pago: deposit > 0 ? String(form.get("pago") || "Efectivo") : "Sin pago", costo: 0, costos: [], pagos: [],
+        fecha: now.toLocaleDateString("es-AR"), hora: now.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit", hour12: false }), createdAt: now.toISOString()
       };
-      if (order.cliente && !sampleClients.some(client => client.nombre.toLocaleLowerCase("es-AR") === order.cliente.toLocaleLowerCase("es-AR"))) sampleClients.unshift({ nombre: order.cliente, telefono: order.telefono, ordenes: [] });
       visibleOrders.unshift(order);
+      if (order.estado === "Entregado") order.entregada = now.toISOString();
+      recordDemoActivity("orden", `Orden #${order.n} creada`, `${order.marca} ${order.modelo} · ${order.cliente}`, order.n);
       saveDemoState();
-      renderHomeOrders(); renderOrders(); renderClients();
+      renderHomeOrders(); renderOrders(); renderDemoClientOptions(); renderClients();
       event.currentTarget.reset(); setOrderKind("Particular"); closeOrderModal(); openPage("orders");
       showToast(`Orden ficticia #${String(order.n).padStart(4, "0")} guardada en esta demostración.`);
     });
@@ -743,17 +787,18 @@
       if (!product || qty < 1 || product.cantidad < qty) { showToast("No hay stock de muestra suficiente."); return; }
       const total = product.precio * qty; product.cantidad -= qty;
       const medio = $("#sale-method").value; sampleSales.unshift({ nombre: product.nombre, cantidad: qty, total, costoUnitario: product.costo, medio, fecha: "Ahora · muestra" }); sampleCash.push({ tipo: "ingreso", concepto: `Venta: ${product.nombre}`, importe: total, medio });
+      recordDemoActivity("venta", "Venta registrada", `${product.nombre} × ${qty} · ${money(total)}`);
       saveDemoState();
       renderStock(); renderSales(); renderCash(); renderReports(); event.currentTarget.reset(); showToast("Venta de muestra registrada en esta sesión.");
     });
     $("#budget-form").addEventListener("submit", event => {
-      event.preventDefault(); sampleBudgets.unshift({ cliente: $("#budget-client").value.trim(), equipo: $("#budget-device").value.trim(), trabajo: $("#budget-work").value.trim(), importe: Number($("#budget-amount").value), estado: "Pendiente" }); saveDemoState(); renderBudgets(); event.currentTarget.reset(); showToast("Presupuesto de muestra agregado.");
+      event.preventDefault(); const budget = { cliente: $("#budget-client").value.trim(), equipo: $("#budget-device").value.trim(), trabajo: $("#budget-work").value.trim(), importe: Number($("#budget-amount").value), estado: "Pendiente" }; sampleBudgets.unshift(budget); recordDemoActivity("presupuesto", "Presupuesto creado", `${budget.cliente} · ${budget.equipo} · ${money(budget.importe)}`); saveDemoState(); renderBudgets(); event.currentTarget.reset(); showToast("Presupuesto de muestra agregado.");
     });
     $("#cash-form").addEventListener("submit", event => {
-      event.preventDefault(); sampleCash.push({ tipo: $("#cash-kind").value, concepto: $("#cash-note").value.trim(), importe: Number($("#cash-amount").value), medio: $("#cash-method").value }); saveDemoState(); renderCash(); renderReports(); event.currentTarget.reset(); showToast("Movimiento de muestra agregado.");
+      event.preventDefault(); const movement = { tipo: $("#cash-kind").value, concepto: $("#cash-note").value.trim(), importe: Number($("#cash-amount").value), medio: $("#cash-method").value }; sampleCash.push(movement); recordDemoActivity("caja", "Movimiento manual registrado", `${movement.concepto} · ${money(movement.importe)}`); saveDemoState(); renderCash(); renderReports(); event.currentTarget.reset(); showToast("Movimiento de muestra agregado.");
     });
     $("#today-label").textContent = new Intl.DateTimeFormat("es-AR", { day: "numeric", month: "short" }).format(new Date());
-    renderHomeOrders(); renderOrders(); renderPrices();
+    renderHomeOrders(); renderOrders(); renderPrices(); renderActivity();
   </script>
 </body>
 </html>

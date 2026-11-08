@@ -429,7 +429,7 @@
     function renderClients() {
       const query = $("#client-search").value.trim().toLocaleLowerCase("es-AR");
       const matches = sampleClients.filter(client => `${client.nombre} ${client.telefono}`.toLocaleLowerCase("es-AR").includes(query));
-      $("#client-list").innerHTML = matches.map(client => { const history = visibleOrders.filter(order => order.cliente === client.nombre); return `<article class="list-card"><div class="list-card-main"><div class="list-card-title">${escapeHtml(client.nombre)}</div><div class="list-card-meta">${escapeHtml(client.telefono)} · ${history.length} órdenes<br>${history.map(order => `#${order.n} · ${escapeHtml(order.modelo)} · ${escapeHtml(order.estado)} · pagado ${money(paidAmount(order))}`).join("<br>") || "Sin reparaciones todavía"}</div></div></article>`; }).join("") || '<div class="empty-state">No encontré clientes.</div>';
+      $("#client-list").innerHTML = matches.map(client => { const history = visibleOrders.filter(order => order.cliente === client.nombre); return `<article class="list-card"><div class="list-card-main"><div class="list-card-title">${escapeHtml(client.nombre)}</div><div class="list-card-meta">${escapeHtml(client.telefono)} · ${history.length} órdenes</div>${history.map(order => `<button class="text-button" type="button" data-order-open="${order.n}">#${order.n} · ${escapeHtml(order.modelo)} · ${escapeHtml(order.estado)} · pagado ${money(paidAmount(order))}</button>`).join("") || '<div class="list-card-meta">Sin reparaciones todavía</div>'}</div></article>`; }).join("") || '<div class="empty-state">No encontré clientes.</div>';
     }
     function openOrderDetail(number) {
       const order = visibleOrders.find(item => item.n === Number(number)); if (!order) return;
@@ -631,8 +631,8 @@
         sampleCash.push({ tipo: "ingreso", concepto: `Pago orden #${order.n}`, importe: paymentAmount, medio });
       }
       const note = $("#detail-note").value.trim(); if (note) { if (!order.notas) order.notas = []; order.notas.unshift(note); }
-      if (order.estado === "Entregado" && !order.entregada) { order.entregada = new Date().toISOString(); showToast(`Entrega registrada. Garantía de ${order.garantiaDias} días.`); }
-      if (previousStatus === "Entregado" && order.estado !== "Entregado") order.entregada = null;
+      if (order.estado === "Entregado" && previousStatus !== "Entregado") { order.entregada = new Date().toISOString(); showToast(`Entrega registrada. Garantía de ${order.garantiaDias} días.`); }
+      $("#detail-warranty-info").textContent = order.entregada ? warrantyLabel(order) : "Se calcula al marcar la orden como entregada.";
       renderOrderPayments(order); renderHomeOrders(); renderOrders(); renderClients(); renderCash();
       renderReceivables(); renderReports(); renderPendingCosts();
       if (order.estado !== "Entregado") showToast(`Orden #${order.n} actualizada en esta sesión.`);

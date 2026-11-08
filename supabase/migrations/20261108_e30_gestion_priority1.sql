@@ -241,6 +241,16 @@ create index if not exists pagos_owner_id_idx on public.pagos(owner_id);
 create index if not exists precios_owner_id_idx on public.precios(owner_id);
 create index if not exists orden_historial_owner_id_idx on public.orden_historial(owner_id);
 
+-- Elimina políticas permisivas heredadas del esquema de pruebas; en PostgreSQL
+-- las políticas permisivas se combinan con OR y podrían anular el aislamiento.
+drop policy if exists "solo logueados" on public.ordenes;
+drop policy if exists "solo logueados" on public.pagos;
+drop policy if exists "solo logueados" on public.precios;
+
+-- Estas funciones solo deben ejecutarse indirectamente por sus triggers.
+revoke all on function public.e30_registrar_historial_orden() from public, anon, authenticated;
+revoke all on function public.e30_registrar_historial_pago() from public, anon, authenticated;
+
 drop policy if exists "e30 authenticated clients" on public.clientes;
 create policy "e30 authenticated clients" on public.clientes for all to authenticated
   using (owner_id = (select auth.uid())) with check (owner_id = (select auth.uid()));

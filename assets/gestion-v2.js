@@ -159,7 +159,8 @@
     ]);
     if (historyError || paymentsError) return notice(`No se pudo cargar el historial: ${(historyError || paymentsError).message}`, true);
     const due = Rules.balance({ ...order, pagos: payments || [] });
-    const body = `<div class="detail-grid"><div class="detail-item"><small>Cliente</small><b>${esc(order.clientes?.nombre || order.cliente || order.gremio || "Sin nombre")}</b></div><div class="detail-item"><small>Equipo · sucursal</small><b>${esc(order.modelo)} · ${esc(order.negocio)}</b></div><div class="detail-item"><small>Estado</small><b>${esc(order.estado)}</b></div><div class="detail-item"><small>Total · saldo</small><b>${money(order.total)} · ${money(due)}</b></div><div class="detail-item"><small>Falla / trabajo</small><b>${esc(order.falla || "—")}</b></div><div class="detail-item"><small>Teléfono</small><b>${esc(order.telefono || order.clientes?.telefono || "—")}</b></div><div class="detail-item"><small>IMEI / serie</small><b>${esc(order.imei || "—")}</b></div><div class="detail-item"><small>Creada</small><b>${date(order.creada)}</b></div></div><div class="quick-actions">${due > 0 ? `<button class="button primary" data-payment="${order.id}" data-balance="${due}">＋ Registrar pago / seña</button>` : ""}<button class="button" data-edit-order="${order.id}">Editar orden</button><button class="button" data-ticket="${order.id}">Imprimir ticket</button>${order.borrada ? `<button class="button" data-restore="${order.id}">Restaurar</button>` : `<button class="button danger" data-trash="${order.id}">Enviar a papelera</button>`}</div><h3 class="section-title">Pagos registrados</h3>${(payments || []).map((payment) => `<div class="payment-row"><span>${date(payment.creado)} · ${esc(payment.medio || "Efectivo")}</span><b>${money(payment.importe)}</b></div>`).join("") || `<p class="muted">Todavía no hay pagos registrados.</p>`}<h3 class="section-title">Historial de la reparación</h3>${(history || []).map((entry) => `<div class="history-item"><b>${esc(entry.evento)}</b>${entry.detalle ? ` · ${esc(entry.detalle)}` : ""}<small>${date(entry.creado)}</small></div>`).join("") || `<p class="muted">Sin eventos de historial.</p>`}`;
+    const stateOptions = Rules.ORDER_STATES.map((state) => `<option value="${esc(state)}" ${state === order.estado ? "selected" : ""}>${esc(state)}</option>`).join("");
+    const body = `<div class="detail-grid"><div class="detail-item"><small>Cliente</small><b>${esc(order.clientes?.nombre || order.cliente || order.gremio || "Sin nombre")}</b></div><div class="detail-item"><small>Equipo · sucursal</small><b>${esc(order.modelo)} · ${esc(order.negocio)}</b></div><div class="detail-item"><small>Estado</small><b>${esc(order.estado)}</b></div><div class="detail-item"><small>Total · saldo</small><b>${money(order.total)} · ${money(due)}</b></div><div class="detail-item"><small>Falla / trabajo</small><b>${esc(order.falla || "—")}</b></div><div class="detail-item"><small>Teléfono</small><b>${esc(order.telefono || order.clientes?.telefono || "—")}</b></div><div class="detail-item"><small>IMEI / serie</small><b>${esc(order.imei || "—")}</b></div><div class="detail-item"><small>Creada</small><b>${date(order.creada)}</b></div></div><div class="quick-actions">${due > 0 ? `<button class="button primary" data-payment="${order.id}" data-balance="${due}">＋ Registrar pago / seña</button>` : ""}<button class="button" data-edit-order="${order.id}">Editar orden</button><button class="button" data-ticket="${order.id}">Imprimir ticket</button>${order.borrada ? `<button class="button" data-restore="${order.id}">Restaurar</button>` : `<button class="button danger" data-trash="${order.id}">Enviar a papelera</button>`}</div><div class="field state-editor"><label for="detail-state">Cambiar estado</label><select id="detail-state">${stateOptions}</select><button class="button primary" type="button" data-update-state="${order.id}">Guardar estado</button></div><h3 class="section-title">Pagos registrados</h3>${(payments || []).map((payment) => `<div class="payment-row"><span>${date(payment.creado)} · ${esc(payment.medio || "Efectivo")}</span><b>${money(payment.importe)}</b></div>`).join("") || `<p class="muted">Todavía no hay pagos registrados.</p>`}<h3 class="section-title">Historial de la reparación</h3>${(history || []).map((entry) => `<div class="history-item"><b>${esc(entry.evento)}</b>${entry.detalle ? ` · ${esc(entry.detalle)}` : ""}<small>${date(entry.creado)}</small></div>`).join("") || `<p class="muted">Sin eventos de historial.</p>`}`;
     openModal(`Orden #${order.id}`, "DETALLE DE REPARACIÓN", body, `<button class="button" type="button" data-close>Cerrar</button>`);
     $("#modal-form").dataset.action = "dismiss";
   }
@@ -205,7 +206,8 @@
         }
         notice(action === "create-order" ? `Orden #${data.lastCreatedOrderId} creada.` : "Orden actualizada.");
       } else if (action === "save-price") {
-        const price = { marca: values.marca || "iPhone", modelo: values.modelo.trim(), servicio: values.servicio.trim(), precio: Number(values.precio), activo: true };
+        const existingPrice = data.prices.find((row) => String(row.id) === String(form.dataset.id));
+        const price = { marca: values.marca || "iPhone", modelo: values.modelo.trim(), servicio: values.servicio.trim(), precio: Number(values.precio), activo: existingPrice ? existingPrice.activo : true };
         if (!price.modelo || !price.servicio || !Number.isFinite(price.precio) || price.precio < 0) throw new Error("Completá modelo, reparación y un precio válido.");
         const query = form.dataset.id ? sb.from("precios").update(price).eq("id", form.dataset.id) : sb.from("precios").insert(price);
         const { error } = await query; if (error) throw error; notice("Precio guardado.");
@@ -226,6 +228,15 @@
     } catch (error) { notice(error.message || "No se pudo guardar el cambio.", true); }
     finally { data.busy = false; }
   }
+  async function updateOrderState(orderId) {
+    const state = $("#detail-state").value;
+    if (!Rules.ORDER_STATES.includes(state)) return notice("Elegí un estado válido.", true);
+    const patch = { estado: state, entregada: state === "Entregado" ? new Date().toISOString() : null };
+    const { error } = await sb.from("ordenes").update(patch).eq("id", orderId);
+    if (error) return notice(`No se pudo actualizar el estado: ${error.message}`, true);
+    closeModal(); await refresh(); notice("Estado actualizado.");
+  }
+
   async function trashOrder(orderId) {
     if (!confirm(`¿Enviar la orden #${orderId} a la papelera? Se puede restaurar después.`)) return;
     const { error } = await sb.from("ordenes").update({ borrada: new Date().toISOString() }).eq("id", orderId);
@@ -263,7 +274,7 @@
     $("#modal-form").addEventListener("submit", runAction);
     $("#modal").addEventListener("click", (event) => { if (event.target === $("#modal") || event.target.closest("[data-close]")) closeModal(); });
     document.addEventListener("click", (event) => {
-      const target = event.target.closest("[data-order],[data-client],[data-edit-client],[data-client-new-order],[data-edit-order],[data-open-order],[data-payment],[data-trash],[data-restore],[data-ticket],[data-edit-price],[data-toggle-price]");
+      const target = event.target.closest("[data-order],[data-client],[data-edit-client],[data-client-new-order],[data-edit-order],[data-open-order],[data-payment],[data-trash],[data-restore],[data-ticket],[data-edit-price],[data-toggle-price],[data-update-state]");
       if (!target) return;
       if (target.dataset.order) openOrder(target.dataset.order);
       else if (target.dataset.client) openClient(target.dataset.client);
@@ -275,6 +286,7 @@
       else if (target.dataset.trash) trashOrder(target.dataset.trash);
       else if (target.dataset.restore) restoreOrder(target.dataset.restore);
       else if (target.dataset.ticket) printTicket(target.dataset.ticket);
+      else if (target.dataset.updateState) updateOrderState(target.dataset.updateState);
       else if (target.dataset.editPrice) openPriceForm(data.prices.find((row) => String(row.id) === target.dataset.editPrice));
       else if (target.dataset.togglePrice) togglePrice(target.dataset.togglePrice, target.dataset.active === "true");
     });

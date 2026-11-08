@@ -14,7 +14,7 @@
   const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
   const date = (value) => value ? new Date(value).toLocaleString("es-AR", { dateStyle: "short", timeStyle: "short" }) : "—";
   const stateClass = (state) => state === "Listo" ? "ready" : ["En reparación", "Esperando repuesto"].includes(state) ? "repair" : ["Pendiente", "Recibido"].includes(state) ? "pending" : "";
-  const data = { clients: [], orders: [], prices: [], trash: [], cash: [], stockItems: [], sales: [], view: "ordenes", busy: false, queryTimer: null };
+  const data = { clients: [], orders: [], prices: [], trash: [], cash: [], stockItems: [], sales: [], claims: [], view: "ordenes", busy: false, queryTimer: null };
 
   function notice(message, error = false) {
     const box = $("#notice"); box.textContent = message; box.classList.toggle("error", error); box.hidden = false;
@@ -65,21 +65,21 @@
   async function refresh() {
     try {
       setConnected("", "Actualizando…");
-      const [orders, clients, prices, trash, cash, stockItems, sales] = await Promise.all([
+      const [orders, clients, prices, trash, cash, stockItems, sales, claims] = await Promise.all([
         loadOrders(),
         sb.from("clientes").select("id,nombre,telefono,email,notas,creada,actualizada").order("nombre").limit(1000),
         sb.from("precios").select("id,marca,modelo,servicio,precio,activo").order("modelo").limit(3000),
         loadOrders({ trash: true }),
         sb.from("caja_movimientos").select("*").order("creado",{ascending:false}).limit(1500),
         sb.from("stock_items").select("*").order("nombre").limit(2000),
-        sb.from("ventas").select("*,venta_items(*)").order("creado",{ascending:false}).limit(1000),
+        sb.from("ventas").select("*,venta_items(*)").order("creado",{ascending:false}).limit(1000),\n        sb.from("reclamos_garantia").select("*,ordenes(id,modelo,cliente,gremio,negocio,garantia_dias)").order("creado",{ascending:false}).limit(1000),
       ]);
       if (clients.error) throw clients.error;
       if (prices.error) throw prices.error;
-      if (cash.error) throw cash.error; if (stockItems.error) throw stockItems.error; if (sales.error) throw sales.error;
+      if (cash.error) throw cash.error; if (stockItems.error) throw stockItems.error; if (sales.error) throw sales.error; if (claims.error) throw claims.error;
       data.orders = orders; data.clients = clients.data || []; data.prices = prices.data || []; data.trash = trash;
-      data.cash = cash.data || []; data.stockItems = stockItems.data || []; data.sales = sales.data || [];
-      setConnected("ok", "Conectado a pruebas"); renderCurrent(); renderStats(); renderCash(); renderStock(); renderSales();
+      data.cash = cash.data || []; data.stockItems = stockItems.data || []; data.sales = sales.data || []; data.claims = claims.data || [];
+      setConnected("ok", "Conectado a pruebas"); renderCurrent(); renderStats(); renderCash(); renderStock(); renderSales(); renderClaims(); renderReports();
     } catch (error) {
       setConnected("bad", "Revisar configuración");
       const message = /clientes|schema cache|relation/i.test(error.message || "")
@@ -122,16 +122,16 @@
     $("#trash-list").innerHTML = data.trash.map((order) => `<article class="order-row"><b class="order-no">#${order.id}</b><div class="row-main"><b>${esc(order.cliente || order.gremio || "Cliente")}</b><small>${esc(order.modelo || "")} · Eliminada ${date(order.borrada)}</small></div><div><span class="branch-pill">${esc(order.negocio)}</span></div><button class="button" data-restore="${order.id}">Restaurar</button></article>`).join("") || `<div class="empty-state">La papelera está vacía.</div>`;
   }
   function renderCurrent() {
-    renderOrders(); renderClients($("#client-search").value); renderPrices($("#price-search").value); renderTrash(); renderCash(); renderStock(); renderSales();
+    renderOrders(); renderClients($("#client-search").value); renderPrices($("#price-search").value); renderTrash(); renderCash(); renderStock(); renderSales(); renderClaims(); renderReports();
   }
   function setView(view) {
     data.view = view;
     $$(".view").forEach((section) => { section.hidden = section.id !== `view-${view}`; });
     $$('[data-view]').forEach((button) => button.classList.toggle("active", button.dataset.view === view));
-    const titles = { ordenes: "Órdenes de reparación", clientes: "Clientes", precios: "Precios de reparación", caja: "Caja y movimientos", stock: "Inventario y accesorios", ventas: "Ventas", papelera: "Papelera de órdenes" };
+    const titles = { ordenes: "Órdenes de reparación", clientes: "Clientes", precios: "Precios de reparación", caja: "Caja y movimientos", stock: "Inventario y accesorios", ventas: "Ventas", garantias: "Garantías y reclamos", reportes: "Reportes del negocio", papelera: "Papelera de órdenes" };
     $("#page-title").textContent = titles[view]; $(".sidebar").classList.remove("open");
     if (view === "ordenes") loadOrders({ search: $("#order-search").value }).then((rows) => { data.orders = rows; renderOrders(rows); renderStats(); }).catch((error) => notice(error.message, true));
-    if (["caja","stock","ventas"].includes(view)) refresh().catch((error) => notice(error.message,true));
+    if (["caja","stock","ventas","garantias","reportes"].includes(view)) refresh().catch((error) => notice(error.message,true));
   }
   function openClientForm(client = null) {
     const body = `<div class="form-grid">${formField("Nombre completo *", "nombre", client?.nombre || "", "text", "span-2")}${formField("Teléfono", "telefono", client?.telefono || "", "tel")}${formField("Email", "email", client?.email || "", "email")}<div class="field span-2"><label for="f-notas">Notas</label><textarea id="f-notas" name="notas">${esc(client?.notas || "")}</textarea></div></div>`;
@@ -159,7 +159,7 @@
       <div class="field span-2" id="guild-name-wrap" hidden>${formField("Técnico / comercio *", "gremio")}</div>
       ${formField("Modelo del equipo *", "modelo", order?.modelo || "", "text")}
       ${formField("Marca", "marca", order?.marca || "iPhone", "text")}
-      ${formField("Total acordado", "total", order?.total ?? 0, "number")}
+      ${formField("Total acordado", "total", order?.total ?? 0, "number")}${formField("Costo estimado / repuestos", "costo", order?.costo ?? 0, "number")}
       <div class="field"><label for="f-falla">Falla / trabajo solicitado *</label><textarea id="f-falla" name="falla" required>${esc(order?.falla || "")}</textarea></div>
       <div class="field span-2"><label for="f-notas">Notas internas</label><textarea id="f-notas" name="notas">${esc(order?.notas || "")}</textarea></div>
       ${formField("IMEI / serie", "imei", order?.imei || "")}${selectField("Garantía", "garantia_dias", ["A definir", "Sin garantía", "30", "60", "90", "180"], order?.garantia_dias == null ? "A definir" : String(order.garantia_dias))}<div class="field span-2"><label for="f-garantia_condiciones">Condiciones de garantía</label><textarea id="f-garantia_condiciones" name="garantia_condiciones">${esc(order?.garantia_condiciones || "")}</textarea></div>${formField("Trabajo realizado (para entrega)", "trabajo_realizado", order?.trabajo_realizado || "")}
@@ -256,7 +256,7 @@
         if (tipo === "Particular" && !client) throw new Error("Elegí un cliente o crealo desde esta misma pantalla.");
         if (tipo === "Gremio" && !values.gremio?.trim()) throw new Error("Ingresá el nombre del técnico o comercio.");
         const valid = Rules.validateOrder({ ...values, sena: action === "create-order" ? values.sena : 0 });
-        const payload = { cliente_id: tipo === "Particular" ? client.id : null, cliente: tipo === "Particular" ? client.nombre : values.gremio.trim(), telefono: tipo === "Particular" ? client.telefono : values.nuevo_telefono || null, negocio: valid.negocio, tipo, gremio: tipo === "Gremio" ? values.gremio.trim() : null, marca: values.marca || "iPhone", modelo: valid.modelo, falla: valid.falla, estado: values.estado || "Recibido", total: valid.total, notas: values.notas || null, imei: values.imei || null, garantia_dias: values.garantia_dias === "A definir" || !values.garantia_dias ? null : values.garantia_dias === "Sin garantía" ? 0 : Number(values.garantia_dias), garantia_condiciones: values.garantia_condiciones || null, trabajo_realizado: values.trabajo_realizado || null };
+        const payload = { cliente_id: tipo === "Particular" ? client.id : null, cliente: tipo === "Particular" ? client.nombre : values.gremio.trim(), telefono: tipo === "Particular" ? client.telefono : values.nuevo_telefono || null, negocio: valid.negocio, tipo, gremio: tipo === "Gremio" ? values.gremio.trim() : null, marca: values.marca || "iPhone", modelo: valid.modelo, falla: valid.falla, estado: values.estado || "Recibido", total: valid.total, costo: Number(values.costo || 0), notas: values.notas || null, imei: values.imei || null, garantia_dias: values.garantia_dias === "A definir" || !values.garantia_dias ? null : values.garantia_dias === "Sin garantía" ? 0 : Number(values.garantia_dias), garantia_condiciones: values.garantia_condiciones || null, trabajo_realizado: values.trabajo_realizado || null };
         if (action === "create-order") {
           const result = await sb.rpc("e30_crear_orden", { p_orden: payload, p_sena: valid.sena, p_medio: values.medio || "Efectivo" });
           if (result.error) throw result.error;
@@ -276,7 +276,7 @@
         if (!price.modelo || !price.servicio || !Number.isFinite(price.precio) || price.precio < 0) throw new Error("Completá modelo, reparación y un precio válido.");
         const query = form.dataset.id ? sb.from("precios").update(price).eq("id", form.dataset.id) : sb.from("precios").insert(price);
         const { error } = await query; if (error) throw error; notice("Precio guardado.");
-      } else if(action==="save-cash"){
+      } else if(action==="save-claim"){\n        const orderId=Number(values.orden_id.split(" · ")[0]);if(!orderId||!values.motivo?.trim())throw new Error("Elegí una orden y describí el motivo.");const payload={orden_id:orderId,motivo:values.motivo.trim(),estado:values.estado,diagnostico:values.diagnostico||null,resolucion:values.resolucion||null,actualizado:new Date().toISOString()};const q=form.dataset.id?sb.from("reclamos_garantia").update(payload).eq("id",form.dataset.id):sb.from("reclamos_garantia").insert(payload);const {error}=await q;if(error)throw error;notice("Reclamo guardado.");\n      } else if(action==="save-cash"){
         const amount=Number(values.importe);if(!values.concepto?.trim()||!Number.isFinite(amount)||amount<=0)throw new Error("Completá concepto e importe válido.");
         const {error}=await sb.from("caja_movimientos").insert({tipo:values.tipo,categoria:values.categoria||"General",concepto:values.concepto.trim(),importe:amount,medio:values.medio,sucursal:values.sucursal});if(error)throw error;notice("Movimiento de caja registrado.");
       } else if(action==="save-stock"){
@@ -372,6 +372,9 @@
   function openStockForm(item=null){const body="<div class=\"form-grid\">"+formField("Nombre *","nombre",item?.nombre||"")+formField("Categoría","categoria",item?.categoria||"Accesorios")+formField("SKU / código","sku",item?.sku||"")+formField("Cantidad inicial","cantidad",item?.cantidad??0,"number")+formField("Costo unitario","costo",item?.costo??0,"number")+formField("Precio de venta","precio",item?.precio??0,"number")+formField("Stock mínimo","minimo",item?.minimo??0,"number")+"</div>";openModal(item?"Editar artículo":"Nuevo artículo","INVENTARIO",body,actionButtons());$("#modal-form").dataset.action="save-stock";$("#modal-form").dataset.id=item?.id||"";}
   function openStockMove(itemId){const item=data.stockItems.find(x=>String(x.id)===String(itemId));if(!item)return;const body="<p class=\"muted\">"+esc(item.nombre)+" · Stock actual: "+item.cantidad+"</p><div class=\"form-grid\">"+selectField("Movimiento","tipo",["Entrada","Salida","Ajuste"],"Entrada")+formField("Cantidad *","cantidad","1","number")+formField("Costo unitario","costo",item.costo,"number")+"<div class=\"field span-2\"><label for=\"f-nota\">Nota</label><input id=\"f-nota\" name=\"nota\"></div></div>";openModal("Movimiento de stock","ARTÍCULO #"+item.id,body,actionButtons());$("#modal-form").dataset.action="stock-move";$("#modal-form").dataset.id=item.id;}
   function openSaleForm(){const active=data.stockItems.filter(x=>x.activo&&Number(x.cantidad)>0);if(!active.length)return notice("Primero cargá artículos con stock disponible.",true);const opts=active.map(x=>x.id+" · "+x.nombre+" · "+x.cantidad+" disponibles");const body="<div class=\"form-grid\">"+selectField("Artículo *","item_id",opts,opts[0],"span-2")+formField("Cantidad *","cantidad","1","number")+formField("Precio unitario","precio_unitario",active[0].precio,"number")+formField("Cliente (opcional)","cliente")+selectField("Sucursal","sucursal",Rules.BRANCHES,"E30")+selectField("Medio de pago","medio",Rules.PAYMENT_METHODS,"Efectivo")+"</div><p class=\"muted\">Al confirmar se descuenta el stock y se registra el ingreso en caja.</p>";openModal("Nueva venta","VENTAS",body,actionButtons("Cancelar","Registrar venta"));$("#modal-form").dataset.action="save-sale";$("#f-item_id").addEventListener("change",()=>{const id=$("#f-item_id").value.split(" · ")[0];const item=active.find(x=>String(x.id)===id);if(item)$("#f-precio_unitario").value=item.precio;});}
+  function renderClaims(){if(!$("#claims-list"))return;$("#claims-list").innerHTML=data.claims.map(x=>"<article class=\"order-row\"><div class=\"row-main\"><b>Reclamo #"+x.id+" · Orden #"+x.orden_id+"</b><small>"+esc(x.ordenes?.modelo||"Equipo")+" · "+esc(x.ordenes?.cliente||x.ordenes?.gremio||"Cliente")+" · "+date(x.creado)+"</small></div><span class=\"state-pill pending\">"+esc(x.estado)+"</span><div class=\"price-actions\"><button class=\"button\" data-claim-edit=\""+x.id+"\">Abrir</button></div></article>").join("")||"<div class=\"empty-state\">No hay reclamos cargados.</div>";}
+  function renderReports(){if(!$("#branch-report"))return;const start=monthStart();const orders=data.orders.filter(x=>new Date(x.creada)>=start);const sales=data.sales.filter(x=>new Date(x.creado)>=start);const revenue=orders.reduce((a,x)=>a+Number(x.total),0)+sales.reduce((a,x)=>a+Number(x.total),0);const cost=orders.reduce((a,x)=>a+Number(x.costo||0),0)+sales.reduce((a,x)=>a+Number(x.costo_total||0),0);$("#report-revenue").textContent=money(revenue);$("#report-cost").textContent=money(cost);$("#report-margin").textContent=money(revenue-cost);$("#branch-report").innerHTML=Rules.BRANCHES.map(b=>{const o=orders.filter(x=>x.negocio===b);const v=sales.filter(x=>x.sucursal===b);const r=o.reduce((a,x)=>a+Number(x.total),0)+v.reduce((a,x)=>a+Number(x.total),0);const c=o.reduce((a,x)=>a+Number(x.costo||0),0)+v.reduce((a,x)=>a+Number(x.costo_total||0),0);return "<article class=\"order-row\"><div class=\"row-main\"><b>"+b+"</b><small>"+o.length+" órdenes · "+v.length+" ventas</small></div><div class=\"row-main\"><small>Facturación</small><b>"+money(r)+"</b></div><div class=\"row-main\"><small>Costos cargados</small><b>"+money(c)+"</b></div><div class=\"money\"><b>"+money(r-c)+"</b><small>Margen estimado</small></div></article>";}).join("");}
+  function openClaimForm(claim=null){const orderOpts=data.orders.filter(x=>x.estado==="Entregado"||Number(x.garantia_dias)>0).map(x=>String(x.id)+" · "+x.modelo+" · "+(x.cliente||x.gremio||"Cliente"));const body="<div class=\"form-grid\">"+selectField("Orden *","orden_id",orderOpts,claim?String(claim.orden_id)+" · "+(claim.ordenes?.modelo||""):"") +formField("Motivo del reclamo *","motivo",claim?.motivo||"","text","span-2")+selectField("Estado","estado",["Abierto","En revisión","Aprobado","Rechazado","Resuelto"],claim?.estado||"Abierto")+formField("Diagnóstico","diagnostico",claim?.diagnostico||"","text","span-2")+formField("Resolución","resolucion",claim?.resolucion||"","text","span-2")+"</div>";openModal(claim?"Reclamo #"+claim.id:"Nuevo reclamo","GARANTÍA",body,actionButtons());$("#modal-form").dataset.action="save-claim";$("#modal-form").dataset.id=claim?.id||"";}
   function bindEvents() {
     $$("[data-view]").forEach((button) => button.addEventListener("click", () => setView(button.dataset.view)));
     $("#login-form").addEventListener("submit", async (event) => {
@@ -401,7 +404,7 @@
     $("#new-price").addEventListener("click", () => openPriceForm());
     $("#cash-add").addEventListener("click",openCashForm);$("#cash-branch").addEventListener("change",renderCash);
     $("#stock-add").addEventListener("click",()=>openStockForm());$("#stock-search").addEventListener("input",e=>renderStock(e.target.value));
-    $("#sale-add").addEventListener("click",openSaleForm);
+    $("#sale-add").addEventListener("click",openSaleForm);$("#claim-add").addEventListener("click",()=>openClaimForm());
     $("#menu-toggle").addEventListener("click", () => $(".sidebar").classList.toggle("open"));
     $("#modal-form").addEventListener("submit", runAction);
     $("#modal").addEventListener("click", (event) => { if (event.target === $("#modal") || event.target.closest("[data-close]")) closeModal(); });
@@ -422,7 +425,7 @@
       else if (target.dataset.editPrice) openPriceForm(data.prices.find((row) => String(row.id) === target.dataset.editPrice));
       else if (target.dataset.togglePrice) togglePrice(target.dataset.togglePrice, target.dataset.active === "true");
       else if(target.dataset.stockMove)openStockMove(target.dataset.stockMove);
-      else if(target.dataset.stockEdit)openStockForm(data.stockItems.find(x=>String(x.id)===target.dataset.stockEdit));
+      else if(target.dataset.stockEdit)openStockForm(data.stockItems.find(x=>String(x.id)===target.dataset.stockEdit));\n      else if(target.dataset.claimEdit)openClaimForm(data.claims.find(x=>String(x.id)===target.dataset.claimEdit));
     });
     const queryOrders = () => { clearTimeout(data.queryTimer); data.queryTimer = setTimeout(async () => { try { const rows = await loadOrders({ search: $("#order-search").value }); data.orders = rows; renderOrders(rows); renderStats(); } catch (error) { notice(error.message, true); } }, 250); };
     $("#order-search").addEventListener("input", queryOrders); $("#branch-filter").addEventListener("change", () => renderOrders());

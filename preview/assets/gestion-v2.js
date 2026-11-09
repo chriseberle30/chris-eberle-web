@@ -546,6 +546,8 @@
     $("#order-search").addEventListener("input", queryOrders); $("#branch-filter").addEventListener("change", () => renderOrders());
     $("#state-filter").addEventListener("change", () => renderOrders());
     $("#client-search").addEventListener("input", (event) => renderClients(event.target.value));
+    $("#price-search").addEventListener("focus", () => document.body.classList.add("price-searching"));
+    $("#price-search").addEventListener("blur", () => document.body.classList.remove("price-searching"));
     $("#price-search").addEventListener("input", (event) => renderPrices(event.target.value)); $$(".filter-chip").forEach((chip) => chip.addEventListener("click", () => { $$(".filter-chip").forEach(x => x.classList.toggle("active", x === chip)); renderPrices($("#price-search").value); }));
     document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && $("#app").hidden === false) refresh(); });
   }

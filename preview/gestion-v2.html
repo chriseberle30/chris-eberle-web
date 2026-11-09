@@ -29,11 +29,13 @@
   <main id="loading-screen" class="loading-wrap"><div class="spinner"></div><p>Conectando con Gestión…</p></main>
   <div id="app" class="app-shell" hidden>
     <button id="sidebar-backdrop" class="sidebar-backdrop" type="button" aria-label="Cerrar menú" tabindex="-1"></button><aside class="sidebar" id="app-sidebar">
-      <a class="brand" href="#ordenes"><span class="brand-mark">E30</span><span><b>Gestión</b><small>Servicio técnico</small></span></a>
+      <a class="brand" href="#inicio"><span class="brand-mark">E30</span><span><b>Gestión</b><small>Servicio técnico</small></span></a>
       <div class="env-badge">ENTORNO DE PRUEBAS</div>
       <nav class="side-nav" aria-label="Navegación principal">
+        <button data-view="inicio" class="nav-item active"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg></span>Inicio</button>
         <p class="nav-group-label">OPERACIÓN</p>
         <button data-view="precios" class="nav-item active"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>Precios</button>
+        <button data-view="presupuestos" class="nav-item"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h8l4 4v14H5V3zM14 3v5h5M8 13h8M8 17h8"/></svg></span>Presupuestos</button>
         <button data-view="ordenes" class="nav-item"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></span>Órdenes</button>
         <button data-view="clientes" class="nav-item"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M10 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM20 8v6m3-3h-6"/></svg></span>Clientes</button>
         <button data-view="garantias" class="nav-item"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11ZM9 12l2 2 4-4"/></svg></span>Garantías</button>
@@ -49,6 +51,18 @@
     <div class="main-column">
       <header class="topbar"><button id="menu-toggle" class="icon-button mobile-only" aria-label="Abrir menú">☰</button><div><p class="eyebrow brand-identity">E30 · i30</p><h1 id="page-title">Precios de reparación</h1></div><div class="top-actions"><span id="user-label" class="user-chip"></span><button id="new-order" class="button primary">＋ Nueva orden</button></div></header>
       <main class="content">
+        <section id="view-inicio" class="view">
+          <div class="stats-row dashboard-stats">
+            <article class="stat-card"><span>Ingresos de hoy</span><b id="home-income">$0</b></article>
+            <article class="stat-card"><span>Órdenes activas</span><b id="home-active">0</b></article>
+            <article class="stat-card"><span>Listas para entregar</span><b id="home-ready">0</b></article>
+          </div>
+          <div class="dashboard-actions"><button class="button primary" id="home-new-order">＋ Nueva orden</button><button class="button" id="home-new-budget">＋ Nuevo presupuesto</button><button class="button" id="home-prices">Consultar precios</button></div>
+          <div class="panel table-panel dashboard-recent"><div class="panel-heading"><div><h2>Últimos movimientos</h2><p class="muted">Actividad reciente de órdenes y caja</p></div></div><div id="home-activity" class="orders-list"></div></div>
+        </section>
+        <section id="view-presupuestos" class="view" hidden>
+          <div class="panel table-panel"><div class="panel-heading"><div><h2>Presupuestos</h2><p class="muted">Módulo independiente de las órdenes de reparación</p></div><button class="button primary" id="budget-add">＋ Nuevo presupuesto</button></div><div id="budgets-list" class="orders-list"><div class="empty-state">El módulo de presupuestos se está preparando. Los presupuestos tendrán numeración, vigencia, historial e impresión independiente.</div></div></div>
+        </section>
         <section id="view-ordenes" class="view" hidden>
           <div class="stats-row"><article class="stat-card"><span>Órdenes activas</span><b id="stat-active">—</b></article><article class="stat-card"><span>Listas para entregar</span><b id="stat-ready">—</b></article><article class="stat-card"><span>Saldos pendientes</span><b id="stat-balance">—</b></article></div>
           <div class="toolbar"><div class="search-wrap"><span>⌕</span><input id="order-search" type="search" placeholder="Buscar por número, cliente, teléfono, equipo…" autocomplete="off"></div><select id="branch-filter" aria-label="Filtrar sucursal"><option value="">Todas las sucursales</option><option>E30</option><option>i30</option></select><select id="state-filter" aria-label="Filtrar estado"><option value="">Todos los estados</option></select></div>

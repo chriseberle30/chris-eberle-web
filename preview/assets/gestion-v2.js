@@ -126,7 +126,7 @@
   }
   function renderPrices(search = "") {
     const words = search.toLocaleLowerCase("es-AR").split(/\s+/).filter(Boolean);
-    const category = ($("#price-category")?.value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const category = (document.querySelector(".filter-chip.active")?.dataset.priceCategory || "").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "");
     const rows = data.prices.filter((price) => {
       const haystack = `${price.marca || ""} ${price.modelo || ""} ${price.servicio || ""}`.toLocaleLowerCase("es-AR").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
       if (!words.every((word) => haystack.includes(word))) return false;

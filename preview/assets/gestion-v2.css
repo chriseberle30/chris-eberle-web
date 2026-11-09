@@ -865,3 +865,4 @@ body{font-family:var(--ui);-webkit-font-smoothing:antialiased;background:#f4f5f9
 #view-precios .price-toolbar{flex-wrap:nowrap;gap:8px}
 #view-precios .price-toolbar .search-wrap{flex:1 1 0;flex-basis:0;min-width:0}
 @media(min-width:761px){#view-precios #prices-list .price-row{grid-template-columns:minmax(0,1fr) auto 40px auto}#view-precios #prices-list .price-actions{display:flex;grid-column:auto;padding:0}}
+.settings-panel{padding:22px}.settings-panel .form-grid{margin:18px 0}body.theme-dark{background:#10151e;color:#e6ebf2;--ink:#e6ebf2;--muted:#a4afbf;--line:#303b4b}body.theme-dark .topbar,body.theme-dark .stat-card,body.theme-dark .panel,body.theme-dark .order-row{background:#1b2533;color:#e6ebf2;border-color:#303b4b}body.theme-dark input,body.theme-dark select,body.theme-dark textarea{background:#111a26;color:#e6ebf2;border-color:#3b485b}

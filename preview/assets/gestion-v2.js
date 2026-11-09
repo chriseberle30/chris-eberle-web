@@ -505,7 +505,7 @@
     };
     $("#menu-toggle").addEventListener("click", () => toggleSidebar());
     $("#mobile-new-order").addEventListener("click", () => openOrderForm());
-    $("#mobile-more").addEventListener("click", () => toggleSidebar());
+    // El acceso «Más» ya no forma parte de la barra móvil.
     backdrop.addEventListener("click", () => toggleSidebar(false));
     document.addEventListener("keydown", (event) => { if (event.key === "Escape") toggleSidebar(false); });
     $("#modal-form").addEventListener("submit", runAction);

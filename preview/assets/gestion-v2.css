@@ -26,3 +26,7 @@
 .mobile-nav{grid-template-columns:repeat(7,minmax(0,1fr));overflow-x:auto}.mobile-nav button{min-width:48px;font-size:15px}.mobile-nav button span{font-size:9px}@media(max-width:760px){.mobile-nav button span{font-size:9px}.mobile-nav{gap:0}.toolbar{flex-wrap:wrap}.toolbar select{max-width:100%}}
 
 @media(max-width:760px){.mobile-nav{grid-template-columns:repeat(9,minmax(0,1fr))}}
+
+/* Navegación móvil simplificada: accesos de uso diario. */
+@media(max-width:760px){.mobile-nav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));justify-content:stretch;overflow:visible;gap:4px;padding:7px 8px calc(7px + env(safe-area-inset-bottom));}.mobile-nav button{min-width:0;width:100%;padding:5px 2px;font-size:18px;}.mobile-nav button span{font-size:10px}.mobile-nav button.active{background:#eef3ff;border-radius:10px}.mobile-nav button:focus-visible{outline:2px solid var(--blue);outline-offset:2px}}
+@media(max-width:760px){#view-precios .panel-heading{padding:13px 14px}#view-precios .price-row{grid-template-columns:minmax(0,1fr) auto;gap:8px 10px;padding:13px 14px}#view-precios .price-row .row-main:nth-child(2){grid-column:1/-1}#view-precios .price-row .money{text-align:left;font-size:12px}#view-precios .price-actions{grid-column:1/-1;justify-content:flex-start}}

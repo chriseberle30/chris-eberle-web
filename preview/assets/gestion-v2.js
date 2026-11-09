@@ -14,7 +14,7 @@
   const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
   const date = (value) => value ? new Date(value).toLocaleString("es-AR", { dateStyle: "short", timeStyle: "short" }) : "—";
   const stateClass = (state) => state === "Listo" ? "ready" : ["En reparación", "Esperando repuesto"].includes(state) ? "repair" : ["Pendiente", "Recibido"].includes(state) ? "pending" : "";
-  const data = { clients: [], orders: [], prices: [], trash: [], cash: [], stockItems: [], sales: [], claims: [], view: "ordenes", busy: false, queryTimer: null };
+  const data = { clients: [], orders: [], prices: [], trash: [], cash: [], stockItems: [], sales: [], claims: [], view: "precios", busy: false, queryTimer: null };
 
   function notice(message, error = false) {
     const box = $("#notice"); box.textContent = message; box.classList.toggle("error", error); box.hidden = false;
@@ -414,6 +414,7 @@
     $("#stock-add").addEventListener("click",()=>openStockForm());$("#stock-search").addEventListener("input",e=>renderStock(e.target.value));
     $("#sale-add").addEventListener("click",openSaleForm);$("#claim-add").addEventListener("click",()=>openClaimForm());
     $("#menu-toggle").addEventListener("click", () => $(".sidebar").classList.toggle("open"));
+    $("#mobile-more").addEventListener("click", () => $(".sidebar").classList.toggle("open"));
     $("#modal-form").addEventListener("submit", runAction);
     $("#modal").addEventListener("click", (event) => { if (event.target === $("#modal") || event.target.closest("[data-close]")) closeModal(); });
     document.addEventListener("click", (event) => {

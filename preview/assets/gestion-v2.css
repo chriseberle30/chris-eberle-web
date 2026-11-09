@@ -156,3 +156,66 @@ body{background:#f5f7fb;color:var(--ink);font-family:Inter,-apple-system,BlinkMa
  .mobile-nav{padding-top:5px;padding-bottom:calc(5px + env(safe-area-inset-bottom));min-height:58px}
  .mobile-nav button{min-height:45px;min-width:0;flex:1;border-radius:10px}
 }
+
+
+/* E30 visual refresh — mobile navigation and clearer daily workflow */
+:root{
+  --ink:#172033;
+  --muted:#748096;
+  --line:#e5eaf2;
+  --navy:#14104c;
+  --blue:#46648a;
+  --shadow:0 8px 28px rgba(20,28,55,.055);
+}
+body{background:#f6f7fa;color:var(--ink)}
+.sidebar{background:#14104c}
+.brand-mark{background:#46648a;box-shadow:none;border-radius:12px}
+.nav-item.active{background:#ffffff18;box-shadow:inset 3px 0 #8eb6ee}
+.button.primary{background:#46648a;border-color:#46648a;box-shadow:none}
+.button{border-radius:10px}
+.search-wrap:focus-within{border-color:#46648a;box-shadow:0 0 0 3px #46648a18}
+.price-intro{background:linear-gradient(120deg,#14104c,#263b67);box-shadow:0 10px 26px #14104c18}
+.price-intro h2{letter-spacing:-.035em}
+.panel,.stat-card{box-shadow:0 3px 16px rgba(20,28,55,.035);border-color:#e8ecf2}
+@media(max-width:760px){
+  body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+  .topbar{padding-inline:13px}
+  .top-actions>.button{display:none}
+  .mobile-nav{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    align-items:center;
+    min-height:66px;
+    padding:6px 10px calc(6px + env(safe-area-inset-bottom));
+    gap:6px;
+    background:rgba(255,255,255,.96);
+    border-top:1px solid #e7ebf2;
+    box-shadow:0 -8px 24px rgba(20,28,55,.045);
+    backdrop-filter:blur(16px);
+  }
+  .mobile-nav button{
+    min-width:0;
+    min-height:48px;
+    border-radius:12px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    gap:2px;
+    font-size:19px;
+    color:#7b879b;
+    padding:4px 2px;
+  }
+  .mobile-nav button span{font-size:10px;font-weight:600}
+  .mobile-nav button.active{background:#eef2f8;color:#14104c}
+  .mobile-nav .mobile-nav-primary{
+    background:#14104c;
+    color:#fff;
+    box-shadow:0 5px 14px #14104c25;
+  }
+  .mobile-nav .mobile-nav-primary span{color:#fff}
+  .mobile-nav .mobile-nav-primary:active{transform:scale(.97)}
+}
+@media(min-width:761px){
+  .mobile-nav{display:none}
+}

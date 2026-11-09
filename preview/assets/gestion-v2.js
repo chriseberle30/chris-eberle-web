@@ -12,7 +12,7 @@
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
   const money = (value) => new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(Number(value) || 0);
   const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
-  const date = (value) => value ? new Date(value).toLocaleString("es-AR", { dateStyle: "short", timeStyle: "short" }) : "—";
+  const date = (value) => value ? new Date(value).toLocaleString("es-AR", { dateStyle: "short", timeStyle: "short", hour12: false }) : "—";
   const stateClass = (state) => state === "Listo" ? "ready" : ["En reparación", "Esperando repuesto"].includes(state) ? "repair" : ["Pendiente", "Recibido"].includes(state) ? "pending" : "";
   const data = { clients: [], orders: [], prices: [], trash: [], cash: [], stockItems: [], sales: [], claims: [], view: "inicio", busy: false, queryTimer: null };
 
@@ -64,7 +64,7 @@
   }
   async function refresh() {
     try {
-      setConnected("", "Actualizando…");
+      refresh.last = Date.now(); setConnected("", "Actualizando…");
       const [orders, clients, prices, trash, cash, stockItems, sales, claims] = await Promise.all([
         loadOrders(),
         sb.from("clientes").select("id,nombre,telefono,email,notas,creada,actualizada").order("nombre").limit(1000),
@@ -160,7 +160,11 @@
       return collator.compare(a.marca || "iPhone", b.marca || "iPhone") || collator.compare(a.modelo || "", b.modelo || "") || collator.compare(a.servicio || "", b.servicio || "");
     });
     $("#price-count").textContent = `${rows.length} tarifas`;
-    $("#prices-list").innerHTML = rows.map((price) => `<article class="order-row price-row"><div class="row-main price-device"><b>${esc(`${price.marca || "iPhone"} ${price.modelo}`.trim())}</b><small>${esc(price.servicio)}${price.activo ? "" : " · En pausa"}</small></div><div class="money price-value"><b>${money(price.precio)}</b></div><div class="price-actions"><button class="button" data-copy-price="${price.id}">Copiar</button><button class="button" data-edit-price="${price.id}">Editar</button><button class="button ${price.activo ? "danger" : ""}" data-toggle-price="${price.id}" data-active="${price.activo}">${price.activo ? "Pausar" : "Activar"}</button></div></article>`).join("") || `<div class="empty-state">${data.prices.length ? "No encontramos precios con esa búsqueda o categoría." : 'Todavía no hay tarifas cargadas.<div class="empty-actions"><button class="button primary" data-empty-add-price>＋ Agregar tarifa</button><button class="button" data-empty-bulk-price>Carga masiva</button></div>'}</div>`;
+    $("#prices-list").innerHTML = rows.slice(0, renderPrices.limit || 80).map((price) => {
+      const brand = String(price.marca || "iPhone"), model = String(price.modelo || "");
+      const title = model.toLowerCase().startsWith(brand.toLowerCase()) ? model : `${brand} ${model}`.trim();
+      return `<article class="order-row price-row${price.activo ? "" : " paused"}"><div class="row-main price-device"><b>${esc(title)}</b><small>${esc(price.servicio)}${price.activo ? "" : " · En pausa"}</small></div><div class="money price-value"><b>${money(price.precio)}</b></div><button class="icon-copy" type="button" data-copy-price="${price.id}" aria-label="Copiar precio"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg></button><div class="price-actions"><button class="button" data-edit-price="${price.id}">Editar</button><button class="button ${price.activo ? "danger" : ""}" data-toggle-price="${price.id}" data-active="${price.activo}">${price.activo ? "Pausar" : "Activar"}</button></div></article>`;
+    }).join("") + (rows.length > (renderPrices.limit || 80) ? `<button class="button more-prices" type="button" data-more-prices="1">Mostrar más (${rows.length - (renderPrices.limit || 80)} restantes)</button>` : "") || `<div class="empty-state">${data.prices.length ? "No encontramos precios con esa búsqueda o categoría." : 'Todavía no hay tarifas cargadas.<div class="empty-actions"><button class="button primary" data-empty-add-price>＋ Agregar tarifa</button><button class="button" data-empty-bulk-price>Carga masiva</button></div>'}</div>`;
   }
   function openBulkPriceImport() {
     const body = '<p class="muted">Importá un CSV con columnas: marca, modelo, servicio, precio. La importación agrega tarifas; no modifica ni elimina las existentes.</p><div class="field"><label for="price-csv-file">Archivo CSV</label><input id="price-csv-file" type="file" accept=".csv,text/csv"></div>';
@@ -170,17 +174,17 @@
       if (!file) return notice("Seleccioná un archivo CSV.", true);
       try {
         const raw = await file.text();
-        const lines = raw.replace(/^\\uFEFF/, "").split(/\\r?\\n/).filter(Boolean);
-        const parse = (line) => line.split(",").map((cell) => cell.trim().replace(/^"|"$/g, "").replace(/""/g, '"'));
+        const lines = raw.replace(/^\uFEFF/, "").split(/\r?\n/).filter(Boolean);
+        const sep = (lines[0] || "").includes(";") && !(lines[0] || "").includes(",") ? ";" : ","; const parse = (line) => line.split(sep).map((cell) => cell.trim().replace(/^"|"$/g, "").replace(/""/g, '"'));
         const headers = parse(lines.shift()).map(x => x.toLowerCase());
         const indexes = ["marca","modelo","servicio","precio"].map(key => headers.indexOf(key));
         if (indexes.some(i => i < 0)) throw new Error("El CSV debe incluir las columnas marca, modelo, servicio y precio.");
         const rows = lines.map(line => { const cells=parse(line); return {marca:cells[indexes[0]]||"iPhone",modelo:cells[indexes[1]]||"",servicio:cells[indexes[2]]||"",precio:Number(String(cells[indexes[3]]||"").replace(/[$. ]/g,"").replace(",", ".")),activo:true}; }).filter(x=>x.modelo&&x.servicio&&Number.isFinite(x.precio)&&x.precio>=0);
-        if (!rows.length) throw new Error("No encontré filas válidas para importar.");
-        if (!window.confirm("Se agregarán "+rows.length+" tarifas. ¿Continuar?")) return;
-        const {error}=await sb.from("precios").insert(rows);
+        if (!rows.length) throw new Error("No encontré filas válidas para importar."); const known = new Set(data.prices.map(p => [p.marca || "iPhone", p.modelo, p.servicio].join("|").toLowerCase())); const fresh = rows.filter(r => !known.has([r.marca, r.modelo, r.servicio].join("|").toLowerCase())); if (!fresh.length) throw new Error("Todas las tarifas del archivo ya existían; no se agregó nada.");
+        if (!window.confirm("Se agregarán "+fresh.length+" tarifas nuevas"+(rows.length>fresh.length?" ("+(rows.length-fresh.length)+" repetidas se omiten)":"")+". ¿Continuar?")) return;
+        const {error}=await sb.from("precios").insert(fresh);
         if(error) throw error;
-        notice(rows.length+" tarifas importadas."); closeModal(); await refresh();
+        notice(fresh.length+" tarifas importadas."); closeModal(); await refresh();
       } catch(error) { notice("No se pudo importar: "+(error.message||error),true); }
     });
   }
@@ -346,6 +350,7 @@
           if (existing.error) throw existing.error;
           const paidAmount = (existing.data.pagos || []).reduce((sum, payment) => sum + Number(payment.importe || 0), 0);
           if (valid.total < paidAmount) throw new Error(`El total no puede quedar debajo de lo ya pagado (${money(paidAmount)}).`);
+          payload.entregada = payload.estado === "Entregado" ? (data.currentOrder?.entregada || new Date().toISOString()) : null;
           const result = await sb.from("ordenes").update(payload).eq("id", form.dataset.id);
           if (result.error) throw result.error;
         }
@@ -389,7 +394,7 @@
   async function updateOrderState(orderId) {
     const state = $("#detail-state").value;
     if (!Rules.ORDER_STATES.includes(state)) return notice("Elegí un estado válido.", true);
-    const patch = { estado: state, entregada: state === "Entregado" ? new Date().toISOString() : null };
+    const patch = { estado: state, entregada: state === "Entregado" ? (data.currentOrder?.entregada || new Date().toISOString()) : null };
     const { error } = await sb.from("ordenes").update(patch).eq("id", orderId);
     if (error) return notice(`No se pudo actualizar el estado: ${error.message}`, true);
     closeModal(); await refresh(); notice("Estado actualizado.");
@@ -547,9 +552,10 @@
     $("#modal-form").addEventListener("submit", runAction);
     $("#modal").addEventListener("click", (event) => { if (event.target === $("#modal") || event.target.closest("[data-close]")) closeModal(); });
     document.addEventListener("click", (event) => {
-      const target = event.target.closest("[data-empty-add-price],[data-empty-bulk-price],[data-order],[data-client],[data-edit-client],[data-client-new-order],[data-edit-order],[data-open-order],[data-payment],[data-trash],[data-restore],[data-ticket],[data-edit-price],[data-toggle-price],[data-copy-price],[data-update-state]");
+      const target = event.target.closest("[data-more-prices],[data-stock-move],[data-stock-edit],[data-claim-edit],[data-empty-add-price],[data-empty-bulk-price],[data-order],[data-client],[data-edit-client],[data-client-new-order],[data-edit-order],[data-open-order],[data-payment],[data-trash],[data-restore],[data-ticket],[data-edit-price],[data-toggle-price],[data-copy-price],[data-update-state]");
       if (!target) return;
-      if (target.dataset.emptyAddPrice) openPriceForm();
+      if (target.dataset.morePrices) { renderPrices.limit = (renderPrices.limit || 80) + 80; renderPrices($("#price-search").value); }
+      else if (target.dataset.emptyAddPrice) openPriceForm();
       else if (target.dataset.emptyBulkPrice) openBulkPriceImport();
       else if (target.dataset.order) openOrder(target.dataset.order);
       else if (target.dataset.client) openClient(target.dataset.client);
@@ -575,8 +581,9 @@
     $("#client-search").addEventListener("input", (event) => renderClients(event.target.value));
     $("#price-search").addEventListener("focus", () => document.body.classList.add("price-searching"));
     $("#price-search").addEventListener("blur", () => document.body.classList.remove("price-searching"));
-    $("#price-search").addEventListener("input", (event) => renderPrices(event.target.value)); $$(".filter-chip").forEach((chip) => chip.addEventListener("click", () => { $$(".filter-chip").forEach(x => x.classList.toggle("active", x === chip)); renderPrices($("#price-search").value); }));
-    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && $("#app").hidden === false) refresh(); });
+    $("#price-search").addEventListener("input", (event) => { renderPrices.limit = 80; renderPrices(event.target.value); }); $$(".filter-chip").forEach((chip) => chip.addEventListener("click", () => { $$(".filter-chip").forEach(x => x.classList.toggle("active", x === chip)); renderPrices.limit = 80; renderPrices($("#price-search").value); }));
+    document.addEventListener("click", (event) => { const row = event.target.closest(".price-row"); if (row && !event.target.closest("button")) row.classList.toggle("open"); });
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && $("#app").hidden === false && Date.now() - (refresh.last || 0) > 20000) refresh(); });
   }
   function initialize() {
     $("#state-filter").insertAdjacentHTML("beforeend", Rules.ORDER_STATES.map((state) => `<option>${esc(state)}</option>`).join(""));
@@ -593,4 +600,3 @@
   }
   initialize();
 })();
-

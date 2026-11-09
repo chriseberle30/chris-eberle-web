@@ -95,6 +95,15 @@
     $("#stat-ready").textContent = active.filter((order) => order.estado === "Listo").length;
     $("#stat-balance").textContent = money(active.reduce((sum, order) => sum + Rules.balance(order), 0));
   }
+  function formatPhone(value) {
+    const digits = String(value || "").replace(/\\D/g, "");
+    if (!digits) return "";
+    if (digits.startsWith("549") && digits.length >= 12) return "+54 9 " + digits.slice(3,5) + " " + digits.slice(5);
+    if (digits.startsWith("54") && digits.length >= 11) return "+54 " + digits.slice(2,4) + " " + digits.slice(4);
+    if (digits.startsWith("0") && digits.length >= 10) return digits.slice(0,2) + " " + digits.slice(2,6) + "-" + digits.slice(6);
+    if (digits.length === 10) return digits.slice(0,2) + " " + digits.slice(2,6) + "-" + digits.slice(6);
+    return digits;
+  }
   function renderOrders(rows = data.orders, target = "#orders-list") {
     const branch = $("#branch-filter")?.value || "";
     const state = $("#state-filter")?.value || "";
@@ -102,8 +111,10 @@
     $("#order-count").textContent = `${filtered.length} ${filtered.length === 1 ? "orden" : "órdenes"}`;
     $(target).innerHTML = filtered.map((order) => {
       const client = order.clientes?.nombre || order.cliente || order.gremio || "Cliente sin nombre";
+      const phone = formatPhone(order.telefono || order.clientes?.telefono || "");
+      const deviceWork = `${order.modelo || "Equipo sin modelo"} · ${order.falla || "Trabajo sin descripción"}`;
       const due = Rules.balance(order);
-      return `<article class="order-row" data-order="${order.id}"><b class="order-no">#${order.id}</b><div class="row-main"><b>${esc(client)}</b><small>${esc(order.telefono || order.clientes?.telefono || "Sin teléfono")} · ${esc(order.modelo || "Equipo sin modelo")}</small></div><div class="row-main hide-mobile"><b>${esc(order.falla || "Sin descripción")}</b><small>${date(order.creada)}</small></div><div><span class="state-pill ${stateClass(order.estado)}">${esc(order.estado)}</span><span class="branch-pill">${esc(order.negocio)}</span></div><div class="money"><b>${money(order.total)}</b>${due > 0 ? `<small>Debe ${money(due)}</small>` : "<small style=\"color:#17805f\">Saldo cubierto</small>"}</div></article>`;
+      return `<article class="order-row" data-order="${order.id}"><b class="order-no">#${order.id}</b><div class="row-main"><b>${esc(deviceWork)}</b><small>${esc(client)} · ${esc(phone || "Sin teléfono")} · ${date(order.creada)}</small></div><div class="row-main hide-mobile"><b>${esc(order.estado || "")}</b><small>${esc(order.negocio || "")}</small></div><div><span class="state-pill ${stateClass(order.estado)}">${esc(order.estado)}</span><span class="branch-pill">${esc(order.negocio)}</span></div><div class="money"><b>${money(order.total)}</b>${due > 0 ? `<small>Debe ${money(due)}</small>` : "<small style=\"color:#17805f\">Saldo cubierto</small>"}</div></article>`;
     }).join("") || `<div class="empty-state">${rows.length ? "No hay resultados con estos filtros." : "Todavía no hay órdenes para mostrar."}</div>`;
   }
   function renderClients(search = "") {
@@ -124,7 +135,7 @@
       return haystack.includes(category);
     });
     $("#price-count").textContent = `${rows.length} tarifas`;
-    $("#prices-list").innerHTML = rows.map((price) => `<article class="order-row price-row"><div class="row-main"><b>${esc(price.marca || "")}</b><small>${esc(price.modelo)}</small></div><div class="row-main"><b>${esc(price.servicio)}</b><small>${price.activo ? "Tarifa activa" : "En pausa"}</small></div><div class="money"><b>${money(price.precio)}</b></div><div class="price-actions"><button class="button" data-copy-price="${price.id}">Copiar</button><button class="button" data-edit-price="${price.id}">Editar</button><button class="button ${price.activo ? "danger" : ""}" data-toggle-price="${price.id}" data-active="${price.activo}">${price.activo ? "Pausar" : "Activar"}</button></div></article>`).join("") || `<div class="empty-state">${data.prices.length ? "No encontramos precios con esa búsqueda o categoría." : "Todavía no hay tarifas cargadas en este entorno de pruebas."}</div>`;
+    $("#prices-list").innerHTML = rows.map((price) => `<article class="order-row price-row"><div class="row-main"><b>${esc(price.marca || "")}</b><small>${esc(price.modelo)}</small></div><div class="row-main"><b>${esc(price.servicio)}</b><small>${price.activo ? "Tarifa activa" : "En pausa"}</small></div><div class="money"><b>${money(price.precio)}</b></div><div class="price-actions"><button class="button" data-copy-price="${price.id}">Copiar</button><button class="button" data-edit-price="${price.id}">Editar</button><button class="button ${price.activo ? "danger" : ""}" data-toggle-price="${price.id}" data-active="${price.activo}">${price.activo ? "Pausar" : "Activar"}</button></div></article>`).join("") || `<div class="empty-state">${data.prices.length ? "No encontramos precios con esa búsqueda o categoría." : `Todavía no hay tarifas cargadas.<div class="empty-actions"><button class="button primary" data-empty-add-price>＋ Agregar tarifa</button><button class="button" data-empty-bulk-price> Carga masiva</button></div>`}</div>`;
   }
   function renderTrash() {
     $("#trash-list").innerHTML = data.trash.map((order) => `<article class="order-row"><b class="order-no">#${order.id}</b><div class="row-main"><b>${esc(order.cliente || order.gremio || "Cliente")}</b><small>${esc(order.modelo || "")} · Eliminada ${date(order.borrada)}</small></div><div><span class="branch-pill">${esc(order.negocio)}</span></div><button class="button" data-restore="${order.id}">Restaurar</button></article>`).join("") || `<div class="empty-state">La papelera está vacía.</div>`;
@@ -459,7 +470,7 @@
     $("#modal-form").addEventListener("submit", runAction);
     $("#modal").addEventListener("click", (event) => { if (event.target === $("#modal") || event.target.closest("[data-close]")) closeModal(); });
     document.addEventListener("click", (event) => {
-      const target = event.target.closest("[data-order],[data-client],[data-edit-client],[data-client-new-order],[data-edit-order],[data-open-order],[data-payment],[data-trash],[data-restore],[data-ticket],[data-edit-price],[data-toggle-price],[data-copy-price],[data-update-state]");
+      const target = event.target.closest("[data-empty-add-price],[data-empty-bulk-price],[data-order],[data-client],[data-edit-client],[data-client-new-order],[data-edit-order],[data-open-order],[data-payment],[data-trash],[data-restore],[data-ticket],[data-edit-price],[data-toggle-price],[data-copy-price],[data-update-state]");
       if (!target) return;
       if (target.dataset.order) openOrder(target.dataset.order);
       else if (target.dataset.client) openClient(target.dataset.client);
@@ -483,7 +494,7 @@
     $("#order-search").addEventListener("input", queryOrders); $("#branch-filter").addEventListener("change", () => renderOrders());
     $("#state-filter").addEventListener("change", () => renderOrders());
     $("#client-search").addEventListener("input", (event) => renderClients(event.target.value));
-    $("#price-search").addEventListener("input", (event) => renderPrices(event.target.value)); $("#price-category").addEventListener("change", () => renderPrices($("#price-search").value));
+    $("#price-search").addEventListener("input", (event) => renderPrices(event.target.value)); $(".filter-chip").forEach((chip) => chip.addEventListener("click", () => { $(".filter-chip").forEach(x => x.classList.toggle("active", x === chip)); renderPrices($("#price-search").value); }));
     document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && $("#app").hidden === false) refresh(); });
   }
   function initialize() {

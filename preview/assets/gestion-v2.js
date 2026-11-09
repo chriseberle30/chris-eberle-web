@@ -147,10 +147,10 @@
     }).join("") || `<div class="empty-state">No hay clientes. Creá uno para asociarlo a una orden.</div>`;
   }
   function renderPrices(search = "") {
-    const words = search.toLocaleLowerCase("es-AR").split(/\\s+/).filter(Boolean);
-    const category = (document.querySelector(".filter-chip.active")?.dataset.priceCategory || "").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "");
+    const words = search.toLocaleLowerCase("es-AR").split(/\s+/).filter(Boolean);
+    const category = (document.querySelector(".filter-chip.active")?.dataset.priceCategory || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     const rows = data.prices.filter((price) => {
-      const haystack = `${price.marca || ""} ${price.modelo || ""} ${price.servicio || ""}`.toLocaleLowerCase("es-AR").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "");
+      const haystack = `${price.marca || ""} ${price.modelo || ""} ${price.servicio || ""}`.toLocaleLowerCase("es-AR").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
       if (!words.every((word) => haystack.includes(word))) return false;
       if (!category) return true;
       if (category === "otro") return !/(pantalla|display|bater|camara|carga|pin)/i.test(haystack);

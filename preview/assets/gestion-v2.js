@@ -192,7 +192,8 @@
     $$(".view").forEach((section) => { section.hidden = section.id !== `view-${view}`; });
     $$('[data-view]').forEach((button) => button.classList.toggle("active", button.dataset.view === view));
     const titles = { inicio: "Inicio", presupuestos: "Presupuestos", ordenes: "Órdenes de reparación", clientes: "Clientes", precios: "Precios de reparación", caja: "Caja y movimientos", stock: "Inventario y accesorios", ventas: "Ventas", garantias: "Garantías y reclamos", reportes: "Reportes del negocio", papelera: "Papelera de órdenes" };
-    $("#page-title").textContent = titles[view]; $(".sidebar").classList.remove("open"); $("#sidebar-backdrop").classList.remove("visible"); $("#menu-toggle").setAttribute("aria-expanded","false"); $("#menu-toggle").setAttribute("aria-label","Abrir menú"); $("#menu-toggle").textContent="☰";
+    $("#new-order").hidden = view === "inicio";
+        $("#page-title").textContent = titles[view]; $(".sidebar").classList.remove("open"); $("#sidebar-backdrop").classList.remove("visible"); $("#menu-toggle").setAttribute("aria-expanded","false"); $("#menu-toggle").setAttribute("aria-label","Abrir menú"); $("#menu-toggle").textContent="☰";
     if (view === "inicio") renderDashboard();
     if (view === "ordenes") loadOrders({ search: $("#order-search").value }).then((rows) => { data.orders = rows; renderOrders(rows); renderStats(); }).catch((error) => notice(error.message, true));
     if (["caja","stock","ventas","garantias","reportes"].includes(view)) refresh().catch((error) => notice(error.message,true));
@@ -204,37 +205,46 @@
   }
   function openOrderForm(order = null) {
     const isEditing = Boolean(order?.id);
-    const clientOptions = data.clients.map((client) => `<option value="${esc(client.id)}" ${client.id === order?.cliente_id ? "selected" : ""}>${esc(client.nombre)}${client.telefono ? ` · ${esc(client.telefono)}` : ""}</option>`).join("");
-    const body = `<div class="form-grid">
-      ${!isEditing ? selectField("Tipo de trabajo", "tipo", ["Particular", "Gremio"], "Particular", "span-2") : ""}
-      ${selectField("Sucursal *", "negocio", Rules.BRANCHES, order?.negocio || "E30")}
-      ${selectField("Estado", "estado", Rules.ORDER_STATES, order?.estado || "Recibido")}
-      <div class="field span-2" id="client-picker-wrap"><label for="f-cliente_id">Cliente</label>
+    const clientOptions = data.clients.map((client) => `<option value="${esc(client.id)}" ${String(client.id) === String(order?.cliente_id) ? "selected" : ""}>${esc(client.nombre)}${client.telefono ? ` · ${esc(client.telefono)}` : ""}</option>`).join("");
+    const body = `<div class="form-grid order-form-grid">
+      ${!isEditing ? selectField("Tipo de trabajo", "tipo", ["Particular", "Gremio"], "Particular") : ""}
+      ${selectField("Sucursal", "negocio", Rules.BRANCHES, order?.negocio || "E30")}
+      ${isEditing ? selectField("Estado", "estado", Rules.ORDER_STATES, order?.estado || "Recibido", "span-2") : ""}
+      <div class="field span-2" id="client-picker-wrap"><label for="f-cliente_id">Cliente *</label>
         <select id="f-cliente_id" name="cliente_id"><option value="">Elegí un cliente existente</option>${clientOptions}</select>
-        <button type="button" class="button" id="quick-client-toggle" style="margin-top:8px">＋ Crear cliente acá</button>
+        <button type="button" class="button quick-client-button" id="quick-client-toggle">＋ Alta rápida de cliente</button>
       </div>
       <div class="field span-2" id="quick-client-fields" hidden>
-        <label>Alta rápida de cliente</label>
+        <label>Nuevo cliente</label>
         ${formField("Nombre / comercio *", "nuevo_nombre")}
         ${formField("Teléfono", "nuevo_telefono", "", "tel")}
         ${formField("Email (opcional)", "nuevo_email", "", "email")}
         <button type="button" class="button" id="quick-client-cancel">Cancelar alta rápida</button>
       </div>
-      <div class="field span-2" id="guild-name-wrap" hidden>${formField("Técnico / comercio *", "gremio")}</div>
-      ${formField("Modelo del equipo *", "modelo", order?.modelo || "", "text")}
-      ${formField("Marca", "marca", order?.marca || "iPhone", "text")}
-      ${formField("Total acordado", "total", order?.total ?? 0, "number")}${formField("Costo estimado / repuestos", "costo", order?.costo ?? 0, "number")}
-      <div class="field"><label for="f-falla">Falla / trabajo solicitado *</label><textarea id="f-falla" name="falla" required>${esc(order?.falla || "")}</textarea></div>
-      <div class="field span-2"><label for="f-notas">Notas internas</label><textarea id="f-notas" name="notas">${esc(order?.notas || "")}</textarea></div>
-      ${formField("IMEI / serie", "imei", order?.imei || "")}${selectField("Garantía", "garantia_dias", ["A definir", "Sin garantía", "30", "60", "90", "180"], order?.garantia_dias == null ? "A definir" : String(order.garantia_dias))}<div class="field span-2"><label for="f-garantia_condiciones">Condiciones de garantía</label><textarea id="f-garantia_condiciones" name="garantia_condiciones">${esc(order?.garantia_condiciones || "")}</textarea></div>${formField("Trabajo realizado (para entrega)", "trabajo_realizado", order?.trabajo_realizado || "")}
-      ${!isEditing ? `${formField("Seña inicial (opcional)", "sena", "0", "number")}${selectField("Medio de la seña", "medio", Rules.PAYMENT_METHODS, "Efectivo")}` : ""}
+      <div class="field span-2" id="guild-name-wrap" hidden>${formField("Técnico / comercio *", "gremio", order?.gremio || "")}</div>
+      ${formField("Modelo del equipo *", "modelo", order?.modelo || "", "text", "span-2")}
+      ${formField("Marca", "marca", order?.marca || "iPhone")}
+      ${formField("Total acordado ($)", "total", order?.total ?? "", "number")}
+      <div class="field span-2"><label for="f-falla">Falla / trabajo solicitado *</label><textarea id="f-falla" name="falla" required>${esc(order?.falla || "")}</textarea></div>
+      ${!isEditing ? `${formField("Seña inicial ($)", "sena", "0", "number")}${selectField("Medio de la seña", "medio", Rules.PAYMENT_METHODS, "Efectivo")}` : ""}
+      <details class="order-advanced span-2">
+        <summary>Datos adicionales <span>Opcionales</span></summary>
+        <div class="form-grid">
+          ${formField("Costo estimado / repuestos ($)", "costo", order?.costo ?? 0, "number")}
+          ${formField("IMEI / número de serie", "imei", order?.imei || "")}
+          ${selectField("Garantía", "garantia_dias", ["A definir", "Sin garantía", "30", "60", "90", "180"], order?.garantia_dias == null ? "A definir" : String(order.garantia_dias))}
+          <div class="field span-2"><label for="f-garantia_condiciones">Condiciones de garantía</label><textarea id="f-garantia_condiciones" name="garantia_condiciones">${esc(order?.garantia_condiciones || "")}</textarea></div>
+          <div class="field span-2"><label for="f-notas">Notas internas</label><textarea id="f-notas" name="notas">${esc(order?.notas || "")}</textarea></div>
+          <div class="field span-2"><label for="f-trabajo_realizado">Trabajo realizado (para la entrega)</label><textarea id="f-trabajo_realizado" name="trabajo_realizado">${esc(order?.trabajo_realizado || "")}</textarea></div>
+        </div>
+      </details>
     </div>`;
-    openModal(isEditing ? `Editar orden #${order.id}` : "Nueva orden de reparación", "ORDEN DE TRABAJO", body, actionButtons("Cancelar", isEditing ? "Guardar cambios" : "Crear orden"));
+    openModal(isEditing ? `Editar orden #${order.id}` : "Nueva orden", "ORDEN DE TRABAJO", body, actionButtons("Cancelar", isEditing ? "Guardar cambios" : "Crear orden"));
     $("#modal-form").dataset.action = isEditing ? "update-order" : "create-order";
     $("#modal-form").dataset.id = isEditing ? order.id : "";
     const type = $("#f-tipo");
     const toggleType = () => {
-      const guild = type?.value === "Gremio";
+      const guild = (type?.value || order?.tipo || "Particular") === "Gremio";
       $("#guild-name-wrap").hidden = !guild;
       $("#f-gremio")?.toggleAttribute("required", guild);
       $("#client-picker-wrap").hidden = guild;
@@ -246,7 +256,6 @@
     $("#quick-client-toggle")?.addEventListener("click", () => {
       $("#quick-client-fields").hidden = false;
       $("#quick-client-toggle").hidden = true;
-      // Si se da de alta en línea, no exigir también elegir un cliente existente.
       $("#f-cliente_id").required = false;
       $("#f-cliente_id").disabled = true;
       $("#f-nuevo_nombre").required = true;
@@ -256,7 +265,7 @@
       $("#quick-client-fields").hidden = true;
       $("#quick-client-toggle").hidden = false;
       $("#f-cliente_id").disabled = false;
-      $("#f-cliente_id").required = true;
+      $("#f-cliente_id").required = !((type?.value || order?.tipo || "Particular") === "Gremio");
       $("#f-nuevo_nombre").required = false;
     });
   }
@@ -495,7 +504,6 @@
     $("#home-new-order").addEventListener("click", () => openOrderForm());
     $("#home-prices").addEventListener("click", () => setView("precios"));
     $("#home-view-orders").addEventListener("click", () => setView("ordenes"));
-    $("#home-orders").addEventListener("click", () => setView("ordenes"));
     $("#budget-add").addEventListener("click", () => notice("El formulario de presupuestos se incorpora en la siguiente etapa."));
     $("#new-client").addEventListener("click", () => openClientForm());
     $("#new-price").addEventListener("click", () => openPriceForm());

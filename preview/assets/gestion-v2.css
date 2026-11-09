@@ -475,3 +475,47 @@ h1,h2,h3,.stat-card b,.brand b{font-family:Inter,-apple-system,BlinkMacSystemFon
 @media(prefers-reduced-motion:reduce){
  *,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation-duration:.01ms!important;animation-iteration-count:1!important}
 }
+
+
+/* E30 dashboard refinement — compact, deliberate mobile hierarchy */
+.dashboard-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:0 0 16px}
+.dashboard-stats .stat-card{min-width:0;min-height:0;height:112px;padding:15px 16px;display:flex;flex-direction:column;justify-content:space-between}
+.dashboard-stats .stat-card span{display:flex;align-items:center;gap:7px;font-size:11px;line-height:1.25;color:#7c879d;min-height:0}
+.dashboard-stats .stat-card span svg{width:17px;height:17px;flex:0 0 17px;fill:none;stroke:#46648a;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.dashboard-stats .stat-card b{font-size:25px;line-height:1.05;margin:0}
+.dashboard-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 20px}
+.dashboard-actions button{min-height:46px;justify-content:center}
+.dashboard-actions button:first-child{grid-column:1/-1;min-height:52px;font-size:14px}
+.dashboard-recent{margin-top:0}
+.dashboard-recent .panel-heading{padding:18px 20px}
+.dashboard-recent .orders-list{min-height:0}
+.dashboard-recent .home-activity-row{grid-template-columns:38px minmax(0,1fr) auto;gap:11px;padding:14px 18px}
+.dashboard-recent .home-activity-icon{width:36px;height:36px;border-radius:11px;background:#f0f2f8;display:grid;place-items:center;color:#14104c}
+.dashboard-recent .row-main b{font-size:13px;line-height:1.35}
+.dashboard-recent .row-main small{font-size:11px;line-height:1.45}
+.dashboard-recent .branch-pill{grid-column:auto;grid-row:auto;background:#eef2fa;color:#46648a;padding:6px 9px}
+@media(max-width:760px){
+ .content{padding:15px 13px 24px}
+ .topbar{height:68px}
+ .topbar h1{font-size:19px}
+ .dashboard-stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-bottom:12px}
+ .dashboard-stats .stat-card{height:94px;padding:11px 9px;border-radius:13px}
+ .dashboard-stats .stat-card span{display:block;font-size:9px;line-height:1.25;min-height:25px}
+ .dashboard-stats .stat-card span svg{display:block;width:16px;height:16px;margin-bottom:5px}
+ .dashboard-stats .stat-card b{font-size:19px;letter-spacing:-.04em}
+ .dashboard-actions{gap:8px;margin-bottom:15px}
+ .dashboard-actions button{min-height:43px;padding:8px;font-size:11px}
+ .dashboard-actions button:first-child{min-height:48px;font-size:13px}
+ .dashboard-recent .panel-heading{padding:15px}
+ .dashboard-recent .home-activity-row{grid-template-columns:32px minmax(0,1fr) auto;gap:8px;padding:12px 10px}
+ .dashboard-recent .home-activity-icon{width:30px;height:30px;border-radius:9px}
+ .dashboard-recent .row-main b{font-size:11px}
+ .dashboard-recent .row-main small{font-size:9px}
+ .dashboard-recent .branch-pill{font-size:9px;padding:5px 7px}
+}
+@media(max-width:370px){
+ .dashboard-stats{gap:5px}
+ .dashboard-stats .stat-card{padding:9px 7px}
+ .dashboard-stats .stat-card span{font-size:8px}
+ .dashboard-stats .stat-card b{font-size:17px}
+}

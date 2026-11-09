@@ -30,3 +30,85 @@
 /* Navegación móvil simplificada: accesos de uso diario. */
 @media(max-width:760px){.mobile-nav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));justify-content:stretch;overflow:visible;gap:4px;padding:7px 8px calc(7px + env(safe-area-inset-bottom));}.mobile-nav button{min-width:0;width:100%;padding:5px 2px;font-size:18px;}.mobile-nav button span{font-size:10px}.mobile-nav button.active{background:#eef3ff;border-radius:10px}.mobile-nav button:focus-visible{outline:2px solid var(--blue);outline-offset:2px}}
 @media(max-width:760px){#view-precios .panel-heading{padding:13px 14px}#view-precios .price-row{grid-template-columns:minmax(0,1fr) auto;gap:8px 10px;padding:13px 14px}#view-precios .price-row .row-main:nth-child(2){grid-column:1/-1}#view-precios .price-row .money{text-align:left;font-size:12px}#view-precios .price-actions{grid-column:1/-1;justify-content:flex-start}}
+
+/* E30 Pro UI refresh — mobile-first, cleaner hierarchy */
+:root{--blue:#4268ed;--ink:#172033;--muted:#748096;--line:#e6eaf1;--shadow:0 8px 30px rgba(24,39,75,.055)}
+body{background:#f5f7fb;color:var(--ink);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.sidebar{background:#17263f}
+.brand-mark{background:#4268ed;border-radius:15px;box-shadow:0 8px 18px #4268ed30}
+.nav-item{border-radius:12px;margin:3px 10px;width:calc(100% - 20px);padding:12px 14px;transition:background .18s,color .18s}
+.nav-item.active{background:#ffffff17;color:#fff;box-shadow:inset 3px 0 #6e91ff}
+.topbar{height:78px;padding:0 30px;background:rgba(255,255,255,.92);border-bottom-color:#e9edf4}
+.topbar h1{font-size:21px;letter-spacing:-.035em}
+.content{padding:30px 32px 64px}
+.panel,.stat-card{border:1px solid #e8ecf3;border-radius:16px;box-shadow:0 5px 22px rgba(30,48,80,.035)}
+.panel-heading{padding:20px 22px}
+.panel-heading h2{font-size:17px;letter-spacing:-.02em}
+.button{border-radius:11px;min-height:40px;font-weight:650}
+.button.primary{background:#4268ed;border-color:#4268ed;box-shadow:0 5px 12px #4268ed20}
+.search-wrap{height:48px;border-radius:12px;border-color:#e0e6ef;padding:0 15px}
+.search-wrap input{font-size:14px}
+.toolbar select{height:44px;border-radius:11px;border-color:#e0e6ef;padding:0 13px}
+.order-row{padding:16px 20px;border-bottom-color:#f0f2f6}
+.order-row:hover{background:#f8faff}
+.state-pill,.branch-pill{font-size:10px;padding:6px 9px}
+.price-intro{display:flex;align-items:center;justify-content:space-between;margin:4px 0 18px;padding:21px 23px;border-radius:17px;background:linear-gradient(120deg,#17263f,#243e68);color:#fff;box-shadow:0 10px 25px #182a4920}
+.price-intro .eyebrow{color:#aebfe0;letter-spacing:.16em}
+.price-intro h2{font-size:21px;margin:0 0 5px;color:#fff}
+.price-intro .muted{color:#c5d1e5}
+.price-shortcut{font-size:11px;letter-spacing:.13em;color:#c7d6f1;border:1px solid #ffffff30;padding:8px 11px;border-radius:99px}
+.price-toolbar{align-items:stretch}
+.price-toolbar .search-wrap{min-width:220px}
+.price-toolbar select{min-width:155px}
+.price-row{grid-template-columns:minmax(100px,.8fr) minmax(150px,1.2fr) minmax(115px,.7fr) auto;gap:15px}
+.price-row .money{text-align:left}
+.price-row .money b{font-size:17px;letter-spacing:-.025em;color:#17263f}
+.price-actions{gap:6px}
+.price-actions .button{border-radius:9px}
+.stat-card{padding:19px 21px}
+.stat-card b{letter-spacing:-.04em}
+.client-card{border-radius:14px;border-color:#e8ecf3;box-shadow:0 4px 18px rgba(30,48,80,.03)}
+.modal{border-radius:18px}
+@media(max-width:760px){
+ body{padding-bottom:76px}
+ .topbar{height:68px;padding:0 13px}
+ .topbar h1{font-size:16px}
+ .content{padding:14px 12px 26px}
+ .price-intro{padding:17px 16px;margin:2px 0 12px;border-radius:14px}
+ .price-intro h2{font-size:17px}
+ .price-shortcut{font-size:9px;padding:6px 8px}
+ .price-toolbar{gap:8px}
+ .price-toolbar .search-wrap{flex-basis:100%;height:46px}
+ .price-toolbar select{flex:1;min-width:0;height:42px;font-size:12px}
+ .price-toolbar>.button{height:42px}
+ .panel-heading{padding:14px 15px}
+ .price-row{grid-template-columns:minmax(0,1fr) auto;gap:7px 10px;padding:14px 13px}
+ .price-row .row-main:nth-child(2){grid-column:1/-1}
+ .price-row .money{grid-column:1;grid-row:3;text-align:left}
+ .price-row .money b{font-size:18px}
+ .price-row .price-actions{grid-column:2;grid-row:3;justify-content:flex-end;flex-wrap:wrap}
+ .price-actions .button{font-size:10px;padding:7px 8px;min-height:34px}
+ .order-row{border-radius:0}
+ .stats-row{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+ .stat-card{padding:12px 9px;border-radius:12px}
+ .stat-card span{font-size:10px;min-height:28px}
+ .stat-card b{font-size:17px}
+ .mobile-nav{grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;padding:7px 8px calc(7px + env(safe-area-inset-bottom));}
+ .mobile-nav button{min-width:0;border-radius:11px;padding:5px 2px;font-size:18px}
+ .mobile-nav button span{font-size:10px}
+ .mobile-nav button.active{background:#eef2ff}
+}
+
+/* Mobile order cards: readable hierarchy without cramped columns */
+@media(max-width:760px){
+ #orders-list .order-row[data-order]{grid-template-columns:42px minmax(0,1fr) auto;gap:7px 9px;padding:14px 12px;align-items:center}
+ #orders-list .order-row[data-order]>.order-no{grid-column:1;grid-row:1}
+ #orders-list .order-row[data-order]>.row-main:not(.hide-mobile){grid-column:2;grid-row:1}
+ #orders-list .order-row[data-order]>.hide-mobile{display:none}
+ #orders-list .order-row[data-order]>div:not(.row-main):not(.money){grid-column:2;grid-row:2;display:flex;gap:5px;flex-wrap:wrap}
+ #orders-list .order-row[data-order]>.money{grid-column:3;grid-row:1 / span 2;text-align:right;min-width:88px}
+ #orders-list .order-row[data-order]>.money b{font-size:13px}
+ #orders-list .order-row[data-order]>.money small{font-size:10px}
+ #orders-list .order-row[data-order] .row-main b{font-size:13px}
+ #orders-list .order-row[data-order] .row-main small{font-size:10px}
+}

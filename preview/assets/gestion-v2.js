@@ -115,9 +115,16 @@
   }
   function renderPrices(search = "") {
     const words = search.toLocaleLowerCase("es-AR").split(/\s+/).filter(Boolean);
-    const rows = data.prices.filter((price) => words.every((word) => `${price.marca} ${price.modelo} ${price.servicio}`.toLocaleLowerCase("es-AR").includes(word)));
+    const category = $("#price-category")?.value || "";
+    const rows = data.prices.filter((price) => {
+      const haystack = `${price.marca || ""} ${price.modelo || ""} ${price.servicio || ""}`.toLocaleLowerCase("es-AR");
+      if (!words.every((word) => haystack.includes(word))) return false;
+      if (!category) return true;
+      if (category === "otro") return !/(pantalla|display|bater|cámara|camara|carga|pin)/i.test(haystack);
+      return haystack.includes(category);
+    });
     $("#price-count").textContent = `${rows.length} tarifas`;
-    $("#prices-list").innerHTML = rows.map((price) => `<article class="order-row price-row"><div class="row-main"><b>${esc(price.marca || "")}</b><small>${esc(price.modelo)}</small></div><div class="row-main"><b>${esc(price.servicio)}</b><small>${price.activo ? "Tarifa activa" : "En pausa"}</small></div><div class="money"><b>${money(price.precio)}</b></div><div class="price-actions"><button class="button" data-edit-price="${price.id}">Editar</button><button class="button ${price.activo ? "danger" : ""}" data-toggle-price="${price.id}" data-active="${price.activo}">${price.activo ? "Pausar" : "Activar"}</button></div></article>`).join("") || `<div class="empty-state">No hay precios que coincidan.</div>`;
+    $("#prices-list").innerHTML = rows.map((price) => `<article class="order-row price-row"><div class="row-main"><b>${esc(price.marca || "")}</b><small>${esc(price.modelo)}</small></div><div class="row-main"><b>${esc(price.servicio)}</b><small>${price.activo ? "Tarifa activa" : "En pausa"}</small></div><div class="money"><b>${money(price.precio)}</b></div><div class="price-actions"><button class="button" data-copy-price="${price.id}">Copiar</button><button class="button" data-edit-price="${price.id}">Editar</button><button class="button ${price.activo ? "danger" : ""}" data-toggle-price="${price.id}" data-active="${price.activo}">${price.activo ? "Pausar" : "Activar"}</button></div></article>`).join("") || `<div class="empty-state">No hay precios que coincidan.</div>`;
   }
   function renderTrash() {
     $("#trash-list").innerHTML = data.trash.map((order) => `<article class="order-row"><b class="order-no">#${order.id}</b><div class="row-main"><b>${esc(order.cliente || order.gremio || "Cliente")}</b><small>${esc(order.modelo || "")} · Eliminada ${date(order.borrada)}</small></div><div><span class="branch-pill">${esc(order.negocio)}</span></div><button class="button" data-restore="${order.id}">Restaurar</button></article>`).join("") || `<div class="empty-state">La papelera está vacía.</div>`;
@@ -381,7 +388,28 @@
   function openStockMove(itemId){const item=data.stockItems.find(x=>String(x.id)===String(itemId));if(!item)return;const body="<p class=\"muted\">"+esc(item.nombre)+" · Stock actual: "+item.cantidad+"</p><div class=\"form-grid\">"+selectField("Movimiento","tipo",["Entrada","Salida","Ajuste"],"Entrada")+formField("Cantidad *","cantidad","1","number")+formField("Costo unitario","costo",item.costo,"number")+"<div class=\"field span-2\"><label for=\"f-nota\">Nota</label><input id=\"f-nota\" name=\"nota\"></div></div>";openModal("Movimiento de stock","ARTÍCULO #"+item.id,body,actionButtons());$("#modal-form").dataset.action="stock-move";$("#modal-form").dataset.id=item.id;}
   function openSaleForm(){const active=data.stockItems.filter(x=>x.activo&&Number(x.cantidad)>0);if(!active.length)return notice("Primero cargá artículos con stock disponible.",true);const opts=active.map(x=>x.id+" · "+x.nombre+" · "+x.cantidad+" disponibles");const body="<div class=\"form-grid\">"+selectField("Artículo *","item_id",opts,opts[0],"span-2")+formField("Cantidad *","cantidad","1","number")+formField("Precio unitario","precio_unitario",active[0].precio,"number")+formField("Cliente (opcional)","cliente")+selectField("Sucursal","sucursal",Rules.BRANCHES,"E30")+selectField("Medio de pago","medio",Rules.PAYMENT_METHODS,"Efectivo")+"</div><p class=\"muted\">Al confirmar se descuenta el stock y se registra el ingreso en caja.</p>";openModal("Nueva venta","VENTAS",body,actionButtons("Cancelar","Registrar venta"));$("#modal-form").dataset.action="save-sale";$("#f-item_id").addEventListener("change",()=>{const id=$("#f-item_id").value.split(" · ")[0];const item=active.find(x=>String(x.id)===id);if(item)$("#f-precio_unitario").value=item.precio;});}
   function renderClaims(){if(!$("#claims-list"))return;$("#claims-list").innerHTML=data.claims.map(x=>"<article class=\"order-row\"><div class=\"row-main\"><b>Reclamo #"+x.id+" · Orden #"+x.orden_id+"</b><small>"+esc(x.ordenes?.modelo||"Equipo")+" · "+esc(x.ordenes?.cliente||x.ordenes?.gremio||"Cliente")+" · "+date(x.creado)+"</small></div><span class=\"state-pill pending\">"+esc(x.estado)+"</span><div class=\"price-actions\"><button class=\"button\" data-claim-edit=\""+x.id+"\">Abrir</button></div></article>").join("")||"<div class=\"empty-state\">No hay reclamos cargados.</div>";}
-  function renderReports(){if(!$("#branch-report"))return;const start=monthStart();const orders=data.orders.filter(x=>new Date(x.creada)>=start);const sales=data.sales.filter(x=>new Date(x.creado)>=start);const revenue=orders.reduce((a,x)=>a+Number(x.total),0)+sales.reduce((a,x)=>a+Number(x.total),0);const cost=orders.reduce((a,x)=>a+Number(x.costo||0),0)+sales.reduce((a,x)=>a+Number(x.costo_total||0),0);$("#report-revenue").textContent=money(revenue);$("#report-cost").textContent=money(cost);$("#report-margin").textContent=money(revenue-cost);$("#branch-report").innerHTML=Rules.BRANCHES.map(b=>{const o=orders.filter(x=>x.negocio===b);const v=sales.filter(x=>x.sucursal===b);const r=o.reduce((a,x)=>a+Number(x.total),0)+v.reduce((a,x)=>a+Number(x.total),0);const c=o.reduce((a,x)=>a+Number(x.costo||0),0)+v.reduce((a,x)=>a+Number(x.costo_total||0),0);return "<article class=\"order-row\"><div class=\"row-main\"><b>"+b+"</b><small>"+o.length+" órdenes · "+v.length+" ventas</small></div><div class=\"row-main\"><small>Facturación</small><b>"+money(r)+"</b></div><div class=\"row-main\"><small>Costos cargados</small><b>"+money(c)+"</b></div><div class=\"money\"><b>"+money(r-c)+"</b><small>Margen estimado</small></div></article>";}).join("");}
+  undefined
+  function renderReports() {
+    if (!$("#branch-report")) return;
+    const start = monthStart();
+    const orders = data.orders.filter((x) => new Date(x.creada) >= start);
+    const paidOrders = data.orders.flatMap((order) => (order.pagos || []).filter((p) => new Date(p.creado) >= start).map((p) => ({ ...p, negocio: order.negocio })));
+    const sales = data.sales.filter((x) => new Date(x.creado) >= start);
+    const collected = paidOrders.reduce((sum, row) => sum + Number(row.importe || 0), 0);
+    const cost = orders.reduce((sum, row) => sum + Number(row.costo || 0), 0);
+    $("#report-revenue").textContent = money(collected);
+    $("#report-cost").textContent = money(cost);
+    $("#report-margin").textContent = money(collected - cost);
+    $("#branch-report").innerHTML = Rules.BRANCHES.map((branch) => {
+      const branchOrders = orders.filter((x) => x.negocio === branch);
+      const branchPayments = paidOrders.filter((x) => x.negocio === branch);
+      const branchSales = sales.filter((x) => x.sucursal === branch);
+      const paid = branchPayments.reduce((sum, row) => sum + Number(row.importe || 0), 0);
+      const sold = branchSales.reduce((sum, row) => sum + Number(row.total || 0), 0);
+      const costs = branchOrders.reduce((sum, row) => sum + Number(row.costo || 0), 0);
+      return `<article class="order-row"><div class="row-main"><b>${branch}</b><small>${branchOrders.length} órdenes · ${branchSales.length} ventas</small></div><div class="row-main"><small>Cobros de órdenes</small><b>${money(paid)}</b></div><div class="row-main"><small>Ventas accesorios</small><b>${money(sold)}</b></div><div class="row-main"><small>Costos de órdenes creadas</small><b>${money(costs)}</b></div></article>`;
+    }).join("");
+  }
   function openClaimForm(claim=null){const orderOpts=data.orders.filter(x=>x.estado==="Entregado"||Number(x.garantia_dias)>0).map(x=>String(x.id)+" · "+x.modelo+" · "+(x.cliente||x.gremio||"Cliente"));const body="<div class=\"form-grid\">"+selectField("Orden *","orden_id",orderOpts,claim?String(claim.orden_id)+" · "+(claim.ordenes?.modelo||""):"") +formField("Motivo del reclamo *","motivo",claim?.motivo||"","text","span-2")+selectField("Estado","estado",["Abierto","En revisión","Aprobado","Rechazado","Resuelto"],claim?.estado||"Abierto")+formField("Diagnóstico","diagnostico",claim?.diagnostico||"","text","span-2")+formField("Resolución","resolucion",claim?.resolucion||"","text","span-2")+"</div>";openModal(claim?"Reclamo #"+claim.id:"Nuevo reclamo","GARANTÍA",body,actionButtons());$("#modal-form").dataset.action="save-claim";$("#modal-form").dataset.id=claim?.id||"";}
   function bindEvents() {
     $$("[data-view]").forEach((button) => button.addEventListener("click", () => setView(button.dataset.view)));
@@ -418,7 +446,7 @@
     $("#modal-form").addEventListener("submit", runAction);
     $("#modal").addEventListener("click", (event) => { if (event.target === $("#modal") || event.target.closest("[data-close]")) closeModal(); });
     document.addEventListener("click", (event) => {
-      const target = event.target.closest("[data-order],[data-client],[data-edit-client],[data-client-new-order],[data-edit-order],[data-open-order],[data-payment],[data-trash],[data-restore],[data-ticket],[data-edit-price],[data-toggle-price],[data-update-state]");
+      const target = event.target.closest("[data-order],[data-client],[data-edit-client],[data-client-new-order],[data-edit-order],[data-open-order],[data-payment],[data-trash],[data-restore],[data-ticket],[data-edit-price],[data-toggle-price],[data-copy-price],[data-update-state]");
       if (!target) return;
       if (target.dataset.order) openOrder(target.dataset.order);
       else if (target.dataset.client) openClient(target.dataset.client);
@@ -432,6 +460,7 @@
       else if (target.dataset.ticket) printTicket(target.dataset.ticket, target.dataset.ticketType || "recepcion");
       else if (target.dataset.updateState) updateOrderState(target.dataset.updateState);
       else if (target.dataset.editPrice) openPriceForm(data.prices.find((row) => String(row.id) === target.dataset.editPrice));
+      else if (target.dataset.copyPrice) { const price=data.prices.find((row)=>String(row.id)===target.dataset.copyPrice); if(price){const value=`${price.marca||""} ${price.modelo} · ${price.servicio}: ${money(price.precio)}`.trim(); if(navigator.clipboard?.writeText){navigator.clipboard.writeText(value).then(()=>notice("Precio copiado."),()=>notice("No se pudo copiar el precio.",true));}else{notice("Tu navegador no permite copiar desde esta página.",true);}} }
       else if (target.dataset.togglePrice) togglePrice(target.dataset.togglePrice, target.dataset.active === "true");
       else if(target.dataset.stockMove)openStockMove(target.dataset.stockMove);
       else if(target.dataset.stockEdit)openStockForm(data.stockItems.find(x=>String(x.id)===target.dataset.stockEdit));
@@ -441,7 +470,7 @@
     $("#order-search").addEventListener("input", queryOrders); $("#branch-filter").addEventListener("change", () => renderOrders());
     $("#state-filter").addEventListener("change", () => renderOrders());
     $("#client-search").addEventListener("input", (event) => renderClients(event.target.value));
-    $("#price-search").addEventListener("input", (event) => renderPrices(event.target.value));
+    $("#price-search").addEventListener("input", (event) => renderPrices(event.target.value)); $("#price-category").addEventListener("change", () => renderPrices($("#price-search").value)); $("#price-category").addEventListener("change", () => renderPrices($("#price-search").value));
     document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && $("#app").hidden === false) refresh(); });
   }
   function initialize() {

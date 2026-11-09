@@ -115,12 +115,12 @@
   }
   function renderPrices(search = "") {
     const words = search.toLocaleLowerCase("es-AR").split(/\s+/).filter(Boolean);
-    const category = ($("#price-category")?.value || "").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "");
+    const category = ($("#price-category")?.value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     const rows = data.prices.filter((price) => {
-      const haystack = `${price.marca || ""} ${price.modelo || ""} ${price.servicio || ""}`.toLocaleLowerCase("es-AR").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "");
+      const haystack = `${price.marca || ""} ${price.modelo || ""} ${price.servicio || ""}`.toLocaleLowerCase("es-AR").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
       if (!words.every((word) => haystack.includes(word))) return false;
       if (!category) return true;
-      if (category === "otro") return !/(pantalla|display|bater|cámara|camara|carga|pin)/i.test(haystack);
+      if (category === "otro") return !/(pantalla|display|bater|camara|carga|pin)/i.test(haystack);
       return haystack.includes(category);
     });
     $("#price-count").textContent = `${rows.length} tarifas`;

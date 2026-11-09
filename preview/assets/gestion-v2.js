@@ -452,6 +452,7 @@
       $("#menu-toggle").textContent = open ? "×" : "☰";
     };
     $("#menu-toggle").addEventListener("click", () => toggleSidebar());
+    $("#mobile-new-order").addEventListener("click", () => openOrderForm());
     $("#mobile-more").addEventListener("click", () => toggleSidebar());
     backdrop.addEventListener("click", () => toggleSidebar(false));
     document.addEventListener("keydown", (event) => { if (event.key === "Escape") toggleSidebar(false); });

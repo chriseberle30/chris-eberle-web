@@ -488,7 +488,8 @@
   function initialize() {
     $("#state-filter").insertAdjacentHTML("beforeend", Rules.ORDER_STATES.map((state) => `<option>${esc(state)}</option>`).join(""));
     bindEvents();
-    sb.auth.onAuthStateChange((_event, session) => {
+    sb.auth.onAuthStateChange((event, session) => {
+      if (event === "INITIAL_SESSION") return; // getSession() below owns the first load; avoid duplicate initial refresh.
       if (session) { showApp(session); setTimeout(() => refresh(), 0); } else showLogin();
     });
     sb.auth.getSession().then(({ data: sessionData, error }) => {

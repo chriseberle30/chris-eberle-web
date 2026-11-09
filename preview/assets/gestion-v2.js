@@ -14,7 +14,7 @@
   const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
   const date = (value) => value ? new Date(value).toLocaleString("es-AR", { dateStyle: "short", timeStyle: "short" }) : "—";
   const stateClass = (state) => state === "Listo" ? "ready" : ["En reparación", "Esperando repuesto"].includes(state) ? "repair" : ["Pendiente", "Recibido"].includes(state) ? "pending" : "";
-  const data = { clients: [], orders: [], prices: [], trash: [], cash: [], stockItems: [], sales: [], claims: [], view: "precios", busy: false, queryTimer: null };
+  const data = { clients: [], orders: [], prices: [], trash: [], cash: [], stockItems: [], sales: [], claims: [], view: "inicio", busy: false, queryTimer: null };
 
   function notice(message, error = false) {
     const box = $("#notice"); box.textContent = message; box.classList.toggle("error", error); box.hidden = false;
@@ -80,7 +80,7 @@
       if (cash.error) throw cash.error; if (stockItems.error) throw stockItems.error; if (sales.error) throw sales.error; if (claims.error) throw claims.error;
       data.orders = orders; data.clients = clients.data || []; data.prices = prices.data || []; data.trash = trash;
       data.cash = cash.data || []; data.stockItems = stockItems.data || []; data.sales = sales.data || []; data.claims = claims.data || [];
-      setConnected("ok", "Conectado a pruebas"); renderCurrent(); renderStats(); renderCash(); renderStock(); renderSales(); renderClaims(); renderReports();
+      setConnected("ok", "Conectado a pruebas"); renderCurrent(); renderStats(); renderDashboard(); renderCash(); renderStock(); renderSales(); renderClaims(); renderReports();
     } catch (error) {
       setConnected("bad", "Revisar configuración");
       const message = /clientes|schema cache|relation/i.test(error.message || "")
@@ -88,6 +88,20 @@
         : `No se pudieron cargar los datos: ${error.message || error}`;
       notice(message, true);
     }
+  }
+  function renderDashboard() {
+    if (!$("#home-activity")) return;
+    const today = new Date(); today.setHours(0,0,0,0);
+    const income = data.cash.filter(x => x.tipo === "Ingreso" && new Date(x.creado) >= today).reduce((sum,x) => sum + Number(x.importe || 0),0);
+    const active = data.orders.filter(x => !["Entregado","Cancelado"].includes(x.estado));
+    $("#home-income").textContent = money(income);
+    $("#home-active").textContent = active.length;
+    $("#home-ready").textContent = active.filter(x => x.estado === "Listo").length;
+    const activities = [
+      ...data.orders.map(x => ({at:x.creada, kind:"Orden", title:`#${x.id} · ${x.modelo || "Equipo"} · ${x.falla || "Trabajo"}`, detail:`${x.cliente || x.gremio || "Cliente"} · ${x.negocio || ""}`, icon:"▣"})),
+      ...data.cash.map(x => ({at:x.creado, kind:x.tipo === "Ingreso" ? "Ingreso" : "Egreso", title:x.concepto || "Movimiento de caja", detail:`${x.categoria || ""} · ${x.sucursal || ""}`, amount:(x.tipo === "Ingreso" ? "+" : "−") + money(x.importe), icon:"＄"}))
+    ].filter(x => x.at).sort((a,b)=>new Date(b.at)-new Date(a.at)).slice(0,12);
+    $("#home-activity").innerHTML = activities.map(x => `<article class="order-row home-activity-row"><span class="home-activity-icon">${x.icon}</span><div class="row-main"><b>${esc(x.title)}</b><small>${esc(x.detail)} · ${date(x.at)}</small></div><span class="branch-pill">${esc(x.kind)}</span>${x.amount ? `<b class="money">${esc(x.amount)}</b>` : ""}</article>`).join("") || '<div class="empty-state">Todavía no hay movimientos registrados.</div>';
   }
   function renderStats() {
     const active = data.orders.filter((order) => !["Entregado", "Cancelado"].includes(order.estado));
@@ -163,14 +177,15 @@
     $("#trash-list").innerHTML = data.trash.map((order) => `<article class="order-row"><b class="order-no">#${order.id}</b><div class="row-main"><b>${esc(order.cliente || order.gremio || "Cliente")}</b><small>${esc(order.modelo || "")} · Eliminada ${date(order.borrada)}</small></div><div><span class="branch-pill">${esc(order.negocio)}</span></div><button class="button" data-restore="${order.id}">Restaurar</button></article>`).join("") || `<div class="empty-state">La papelera está vacía.</div>`;
   }
   function renderCurrent() {
-    renderOrders(); renderClients($("#client-search").value); renderPrices($("#price-search").value); renderTrash(); renderCash(); renderStock(); renderSales(); renderClaims(); renderReports();
+    renderOrders(); renderClients($("#client-search").value); renderDashboard(); renderPrices($("#price-search").value); renderTrash(); renderCash(); renderStock(); renderSales(); renderClaims(); renderReports();
   }
   function setView(view) {
     data.view = view;
     $$(".view").forEach((section) => { section.hidden = section.id !== `view-${view}`; });
     $$('[data-view]').forEach((button) => button.classList.toggle("active", button.dataset.view === view));
-    const titles = { ordenes: "Órdenes de reparación", clientes: "Clientes", precios: "Precios de reparación", caja: "Caja y movimientos", stock: "Inventario y accesorios", ventas: "Ventas", garantias: "Garantías y reclamos", reportes: "Reportes del negocio", papelera: "Papelera de órdenes" };
+    const titles = { inicio: "Inicio", presupuestos: "Presupuestos", ordenes: "Órdenes de reparación", clientes: "Clientes", precios: "Precios de reparación", caja: "Caja y movimientos", stock: "Inventario y accesorios", ventas: "Ventas", garantias: "Garantías y reclamos", reportes: "Reportes del negocio", papelera: "Papelera de órdenes" };
     $("#page-title").textContent = titles[view]; $(".sidebar").classList.remove("open"); $("#sidebar-backdrop").classList.remove("visible"); $("#menu-toggle").setAttribute("aria-expanded","false"); $("#menu-toggle").setAttribute("aria-label","Abrir menú"); $("#menu-toggle").textContent="☰";
+    if (view === "inicio") renderDashboard();
     if (view === "ordenes") loadOrders({ search: $("#order-search").value }).then((rows) => { data.orders = rows; renderOrders(rows); renderStats(); }).catch((error) => notice(error.message, true));
     if (["caja","stock","ventas","garantias","reportes"].includes(view)) refresh().catch((error) => notice(error.message,true));
   }
@@ -469,6 +484,10 @@
     });
     $("#sign-out").addEventListener("click", async () => { await sb.auth.signOut(); });
     $("#new-order").addEventListener("click", () => openOrderForm());
+    $("#home-new-order").addEventListener("click", () => openOrderForm());
+    $("#home-prices").addEventListener("click", () => setView("precios"));
+    $("#home-new-budget").addEventListener("click", () => setView("presupuestos"));
+    $("#budget-add").addEventListener("click", () => notice("El formulario de presupuestos se incorpora en la siguiente etapa."));
     $("#new-client").addEventListener("click", () => openClientForm());
     $("#new-price").addEventListener("click", () => openPriceForm());
     $("#cash-add").addEventListener("click",openCashForm);$("#cash-branch").addEventListener("change",renderCash);

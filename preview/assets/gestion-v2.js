@@ -96,7 +96,7 @@
     $("#stat-balance").textContent = money(active.reduce((sum, order) => sum + Rules.balance(order), 0));
   }
   function formatPhone(value) {
-    const digits = String(value || "").replace(/\\D/g, "");
+    const digits = String(value || "").replace(/\D/g, "");
     if (!digits) return "";
     if (digits.startsWith("549") && digits.length >= 12) return "+54 9 " + digits.slice(3,5) + " " + digits.slice(5);
     if (digits.startsWith("54") && digits.length >= 11) return "+54 " + digits.slice(2,4) + " " + digits.slice(4);
@@ -135,7 +135,7 @@
       return haystack.includes(category);
     });
     $("#price-count").textContent = `${rows.length} tarifas`;
-    $("#prices-list").innerHTML = rows.map((price) => `<article class="order-row price-row"><div class="row-main"><b>${esc(price.marca || "")}</b><small>${esc(price.modelo)}</small></div><div class="row-main"><b>${esc(price.servicio)}</b><small>${price.activo ? "Tarifa activa" : "En pausa"}</small></div><div class="money"><b>${money(price.precio)}</b></div><div class="price-actions"><button class="button" data-copy-price="${price.id}">Copiar</button><button class="button" data-edit-price="${price.id}">Editar</button><button class="button ${price.activo ? "danger" : ""}" data-toggle-price="${price.id}" data-active="${price.activo}">${price.activo ? "Pausar" : "Activar"}</button></div></article>`).join("") || `<div class="empty-state">${data.prices.length ? "No encontramos precios con esa búsqueda o categoría." : "Todavía no hay tarifas cargadas.<div class=\\"empty-actions\\"><button class=\\"button primary\\" data-empty-add-price>＋ Agregar tarifa</button><button class=\\"button\\" data-empty-bulk-price>Carga masiva</button></div>"}</div>`;
+    $("#prices-list").innerHTML = rows.map((price) => `<article class="order-row price-row"><div class="row-main"><b>${esc(price.marca || "")}</b><small>${esc(price.modelo)}</small></div><div class="row-main"><b>${esc(price.servicio)}</b><small>${price.activo ? "Tarifa activa" : "En pausa"}</small></div><div class="money"><b>${money(price.precio)}</b></div><div class="price-actions"><button class="button" data-copy-price="${price.id}">Copiar</button><button class="button" data-edit-price="${price.id}">Editar</button><button class="button ${price.activo ? "danger" : ""}" data-toggle-price="${price.id}" data-active="${price.activo}">${price.activo ? "Pausar" : "Activar"}</button></div></article>`).join("") || `<div class="empty-state">${data.prices.length ? "No encontramos precios con esa búsqueda o categoría." : 'Todavía no hay tarifas cargadas.<div class="empty-actions"><button class="button primary" data-empty-add-price>＋ Agregar tarifa</button><button class="button" data-empty-bulk-price>Carga masiva</button></div>'}</div>`;
   }
   function openBulkPriceImport() {
     const body = '<p class="muted">Importá un CSV con columnas: marca, modelo, servicio, precio. La importación agrega tarifas; no modifica ni elimina las existentes.</p><div class="field"><label for="price-csv-file">Archivo CSV</label><input id="price-csv-file" type="file" accept=".csv,text/csv"></div>';

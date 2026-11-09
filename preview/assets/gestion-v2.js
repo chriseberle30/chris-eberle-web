@@ -149,6 +149,7 @@
   function renderPrices(search = "") {
     const words = search.toLocaleLowerCase("es-AR").split(/\s+/).filter(Boolean);
     const category = (document.querySelector(".filter-chip.active")?.dataset.priceCategory || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const collator = new Intl.Collator("es-AR", { numeric: true, sensitivity: "base" });
     const rows = data.prices.filter((price) => {
       const haystack = `${price.marca || ""} ${price.modelo || ""} ${price.servicio || ""}`.toLocaleLowerCase("es-AR").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
       if (!words.every((word) => haystack.includes(word))) return false;
@@ -156,7 +157,6 @@
       if (category === "otro") return !/(pantalla|display|bater|camara|carga|pin)/i.test(haystack);
       return haystack.includes(category);
     }).sort((a,b) => {
-      const collator = new Intl.Collator("es-AR", { numeric: true, sensitivity: "base" });
       return collator.compare(a.marca || "iPhone", b.marca || "iPhone") || collator.compare(a.modelo || "", b.modelo || "") || collator.compare(a.servicio || "", b.servicio || "");
     });
     $("#price-count").textContent = `${rows.length} tarifas`;

@@ -219,3 +219,30 @@ body{background:#f6f7fa;color:var(--ink)}
 @media(min-width:761px){
   .mobile-nav{display:none}
 }
+
+/* Claude review pass: legible navigation, quick price lookup and consistent actions */
+.brand-identity{letter-spacing:.16em!important;color:#8290a3}
+.topbar h1,.panel-heading h2,.price-row .row-main b{letter-spacing:normal}
+.nav-group-label{margin:13px 12px 4px;color:#91a2bd;font-size:9px;font-weight:800;letter-spacing:.16em}
+.nav-divider{height:1px;background:#ffffff20;margin:9px 8px 2px}
+.nav-item span{display:inline-flex;width:20px;height:20px;align-items:center;justify-content:center}
+.nav-item span svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.price-intro{display:none!important}
+.price-toolbar{margin-top:0;align-items:center}
+.price-toolbar .search-wrap{min-height:46px}
+.price-chips{display:flex;gap:8px;overflow-x:auto;padding:0 0 13px;margin:0 0 4px;scrollbar-width:none}
+.price-chips::-webkit-scrollbar{display:none}
+.filter-chip{flex:0 0 auto;border:1px solid #e1e6ef;background:#fff;color:#5e6b80;border-radius:999px;padding:8px 13px;font-size:12px;font-weight:700}
+.filter-chip.active{background:#14104c;color:#fff;border-color:#14104c}
+.button.primary,.mobile-nav .mobile-nav-primary{background:#14104c;border-color:#14104c}
+.empty-actions{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:14px}
+.empty-actions .button{font-size:12px}
+#orders-list .order-row[data-order] .row-main b{line-height:1.35}
+@media(max-width:760px){
+ .price-toolbar{flex-wrap:wrap}
+ .price-toolbar .search-wrap{flex:1 1 100%;min-width:0}
+ .price-toolbar>.button{flex:0 0 auto}
+ .price-chips{margin-bottom:7px;padding-bottom:10px}
+ .filter-chip{padding:8px 12px;font-size:11px}
+ .nav-group-label{margin:11px 12px 3px}
+}

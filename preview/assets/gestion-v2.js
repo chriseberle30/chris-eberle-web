@@ -494,7 +494,9 @@
     document.addEventListener("click", (event) => {
       const target = event.target.closest("[data-empty-add-price],[data-empty-bulk-price],[data-order],[data-client],[data-edit-client],[data-client-new-order],[data-edit-order],[data-open-order],[data-payment],[data-trash],[data-restore],[data-ticket],[data-edit-price],[data-toggle-price],[data-copy-price],[data-update-state]");
       if (!target) return;
-      if (target.dataset.order) openOrder(target.dataset.order);
+      if (target.dataset.emptyAddPrice) openPriceForm();
+      else if (target.dataset.emptyBulkPrice) openBulkPriceImport();
+      else if (target.dataset.order) openOrder(target.dataset.order);
       else if (target.dataset.client) openClient(target.dataset.client);
       else if (target.dataset.editClient) openClientForm(data.clients.find((row) => String(row.id) === target.dataset.editClient));
       else if (target.dataset.clientNewOrder) { const client = data.clients.find((row) => row.id === target.dataset.clientNewOrder); closeModal(); openOrderForm({ cliente_id: client?.id }); }
@@ -516,7 +518,7 @@
     $("#order-search").addEventListener("input", queryOrders); $("#branch-filter").addEventListener("change", () => renderOrders());
     $("#state-filter").addEventListener("change", () => renderOrders());
     $("#client-search").addEventListener("input", (event) => renderClients(event.target.value));
-    $("#price-search").addEventListener("input", (event) => renderPrices(event.target.value)); $(".filter-chip").forEach((chip) => chip.addEventListener("click", () => { $(".filter-chip").forEach(x => x.classList.toggle("active", x === chip)); renderPrices($("#price-search").value); }));
+    $("#price-search").addEventListener("input", (event) => renderPrices(event.target.value)); $$(".filter-chip").forEach((chip) => chip.addEventListener("click", () => { $$(".filter-chip").forEach(x => x.classList.toggle("active", x === chip)); renderPrices($("#price-search").value); }));
     document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && $("#app").hidden === false) refresh(); });
   }
   function initialize() {

@@ -210,6 +210,8 @@
     openModal(client ? "Editar cliente" : "Nuevo cliente", "CLIENTES", body, actionButtons());
     $("#modal-form").dataset.action = "save-client"; $("#modal-form").dataset.id = client?.id || "";
   }
+  function getE30Settings(){try{return JSON.parse(localStorage.getItem("e30_settings")||"{}")}catch(e){return {}}}
+  function saveE30Settings(){const s={e30Name:$("#cfg-e30-name").value,i30Name:$("#cfg-i30-name").value,e30Address:$("#cfg-e30-address").value,i30Address:$("#cfg-i30-address").value,phone:$("#cfg-phone").value,warrantyDays:Number($("#cfg-warranty-days").value||30),warrantyTerms:$("#cfg-warranty-terms").value};localStorage.setItem("e30_settings",JSON.stringify(s));notice("Configuración guardada en este dispositivo.");}
   function openOrderForm(order = null) {
     const isEditing = Boolean(order?.id);
     const clientOptions = data.clients.map((client) => `<option value="${esc(client.id)}" ${String(client.id) === String(order?.cliente_id) ? "selected" : ""}>${esc(client.nombre)}${client.telefono ? ` · ${esc(client.telefono)}` : ""}</option>`).join("");
@@ -237,10 +239,10 @@
       <details class="order-advanced span-2">
         <summary>Datos adicionales <span>Opcionales</span></summary>
         <div class="form-grid">
-          ${formField("Costo estimado / repuestos ($)", "costo", order?.costo ?? 0, "number")}
+          
           ${formField("IMEI / número de serie", "imei", order?.imei || "")}
           ${selectField("Garantía", "garantia_dias", ["A definir", "Sin garantía", "30", "60", "90", "180"], order?.garantia_dias == null ? "A definir" : String(order.garantia_dias))}
-          <div class="field span-2"><label for="f-garantia_condiciones">Condiciones de garantía</label><textarea id="f-garantia_condiciones" name="garantia_condiciones">${esc(order?.garantia_condiciones || "")}</textarea></div>
+          <div class="field span-2"><label for="f-estado_ingreso">Estado físico al ingresar *</label><textarea id="f-estado_ingreso" name="estado_ingreso" required placeholder="Golpes, rayas, pantalla, tapa, cámaras...">${esc(order?.estado_ingreso || "")}</textarea></div>
           <div class="field span-2"><label for="f-notas">Notas internas</label><textarea id="f-notas" name="notas">${esc(order?.notas || "")}</textarea></div>
           <div class="field span-2"><label for="f-trabajo_realizado">Trabajo realizado (para la entrega)</label><textarea id="f-trabajo_realizado" name="trabajo_realizado">${esc(order?.trabajo_realizado || "")}</textarea></div>
         </div>
@@ -338,9 +340,9 @@
         }
         if (tipo === "Particular" && !client) throw new Error("Elegí un cliente o crealo desde esta misma pantalla.");
         if (tipo === "Gremio" && !values.gremio?.trim()) throw new Error("Ingresá el nombre del técnico o comercio.");
-        const orderCost = Number(values.costo || 0); if (!Number.isFinite(orderCost) || orderCost < 0) throw new Error("El costo debe ser cero o mayor.");
+        if(!values.estado_ingreso?.trim())throw new Error("Describí el estado físico del equipo al ingresar.");
         const valid = Rules.validateOrder({ ...values, sena: action === "create-order" ? values.sena : 0 });
-        const payload = { cliente_id: tipo === "Particular" ? client.id : null, cliente: tipo === "Particular" ? client.nombre : values.gremio.trim(), telefono: tipo === "Particular" ? client.telefono : values.nuevo_telefono || null, negocio: valid.negocio, tipo, gremio: tipo === "Gremio" ? values.gremio.trim() : null, marca: values.marca || "iPhone", modelo: valid.modelo, falla: valid.falla, estado: values.estado || "Recibido", total: valid.total, costo: orderCost, notas: values.notas || null, imei: values.imei || null, garantia_dias: values.garantia_dias === "A definir" || !values.garantia_dias ? null : values.garantia_dias === "Sin garantía" ? 0 : Number(values.garantia_dias), garantia_condiciones: values.garantia_condiciones || null, trabajo_realizado: values.trabajo_realizado || null };
+        const payload = { cliente_id: tipo === "Particular" ? client.id : null, cliente: tipo === "Particular" ? client.nombre : values.gremio.trim(), telefono: tipo === "Particular" ? client.telefono : values.nuevo_telefono || null, negocio: valid.negocio, tipo, gremio: tipo === "Gremio" ? values.gremio.trim() : null, marca: values.marca || "iPhone", modelo: valid.modelo, falla: valid.falla, estado: values.estado || "Recibido", total: valid.total, costo: orderCost, notas: values.notas || null, estado_ingreso: values.estado_ingreso.trim(), imei: values.imei || null, garantia_dias: values.garantia_dias === "A definir" || !values.garantia_dias ? null : values.garantia_dias === "Sin garantía" ? 0 : Number(values.garantia_dias), garantia_condiciones: getE30Settings().warrantyTerms || "La garantía cubre el trabajo realizado y el repuesto instalado. No cubre golpes, humedad ni manipulación de terceros.", trabajo_realizado: values.trabajo_realizado || null };
         if (action === "create-order") {
           const result = await sb.rpc("e30_crear_orden", { p_orden: payload, p_sena: valid.sena, p_medio: values.medio || "Efectivo" });
           if (result.error) throw result.error;
@@ -428,7 +430,7 @@
     const client = order.clientes?.nombre || order.cliente || order.gremio || "—";
     const paid = (payments || []).reduce((sum, p) => sum + Number(p.importe || 0), 0);
     const due = Math.max(0, Number(order.total || 0) - paid);
-    const brand = order.negocio === "i30" ? "i30 | iPhone Service" : "E30 | Técnico de celulares";
+    const settings=getE30Settings(); const brand = order.negocio === "i30" ? (settings.i30Name||"i30 | iPhone Service") : (settings.e30Name||"E30 | Técnico de celulares");
     const warrantyEnd = order.entregada && order.garantia_dias > 0
       ? new Date(new Date(order.entregada).getTime() + Number(order.garantia_dias) * 86400000).toLocaleDateString("es-AR") : "No corresponde / pendiente";
     const isDelivery = type === "entrega";
@@ -442,7 +444,7 @@
       ${trackingUrl ? `<div class="ticket-tracking"><div id="tracking-qr"></div><b>Seguimiento de reparación</b><small>Escaneá el QR para consultar el estado</small></div><hr>` : ""}
       <b>CLIENTE</b><p>${esc(client)}<br>${esc(order.telefono || order.clientes?.telefono || "—")}</p>
       <b>EQUIPO</b><p>${esc(order.marca || "")} ${esc(order.modelo || "")}<br>IMEI: ${esc(order.imei || "—")}</p>
-      <b>${isDelivery ? "TRABAJO REALIZADO" : "FALLA INFORMADA"}</b><p>${esc(isDelivery ? (order.trabajo_realizado || order.falla || "—") : (order.falla || "—"))}</p>
+      ${!isDelivery ? `<b>ESTADO DE INGRESO</b><p>${esc(order.estado_ingreso||"No informado")}</p>` : ""}<b>${isDelivery ? "TRABAJO REALIZADO" : "FALLA INFORMADA"}</b><p>${esc(isDelivery ? (order.trabajo_realizado || order.falla || "—") : (order.falla || "—"))}</p>
       <hr><b>RESUMEN DE CUENTA</b><p>Total: ${money(order.total)}<br>Pagado: ${money(paid)}<br><b>Saldo: ${money(due)}</b></p>
       ${isDelivery ? `<b>PAGOS</b><p>${paymentLines || "Sin pagos registrados"}</p>` : ""}
       <hr><b>GARANTÍA Y CONDICIONES</b><p>${terms}<br>${esc(order.garantia_condiciones || "Conserve este comprobante para cualquier consulta.")}${isDelivery && order.garantia_dias > 0 ? `<br>Vencimiento estimado: ${warrantyEnd}` : ""}</p>
@@ -549,7 +551,7 @@
     // El acceso «Más» ya no forma parte de la barra móvil.
     backdrop.addEventListener("click", () => toggleSidebar(false));
     document.addEventListener("keydown", (event) => { if (event.key === "Escape") toggleSidebar(false); });
-    $("#modal-form").addEventListener("submit", runAction);
+    $("#modal-form").addEventListener("submit", runAction); $("#cfg-save").addEventListener("click",saveE30Settings); $("#theme-toggle").addEventListener("click",()=>{document.body.classList.toggle("theme-dark");localStorage.setItem("e30_theme",document.body.classList.contains("theme-dark")?"dark":"light");});
     $("#modal").addEventListener("click", (event) => { if (event.target === $("#modal") || event.target.closest("[data-close]")) closeModal(); });
     document.addEventListener("click", (event) => {
       const target = event.target.closest("[data-more-prices],[data-stock-move],[data-stock-edit],[data-claim-edit],[data-empty-add-price],[data-empty-bulk-price],[data-order],[data-client],[data-edit-client],[data-client-new-order],[data-edit-order],[data-open-order],[data-payment],[data-trash],[data-restore],[data-ticket],[data-edit-price],[data-toggle-price],[data-copy-price],[data-update-state]");
@@ -587,7 +589,8 @@
   }
   function initialize() {
     $("#state-filter").insertAdjacentHTML("beforeend", Rules.ORDER_STATES.map((state) => `<option>${esc(state)}</option>`).join(""));
-    bindEvents();
+    bindEvents(); if(localStorage.getItem("e30_theme")==="dark")document.body.classList.add("theme-dark");
+    const saved=getE30Settings(); for(const [id,key] of [["cfg-e30-name","e30Name"],["cfg-i30-name","i30Name"],["cfg-e30-address","e30Address"],["cfg-i30-address","i30Address"],["cfg-phone","phone"],["cfg-warranty-days","warrantyDays"],["cfg-warranty-terms","warrantyTerms"]])if(saved[key]!=null)$("#"+id).value=saved[key];
     sb.auth.onAuthStateChange((event, session) => {
       if (event === "INITIAL_SESSION") return; // getSession() below owns the first load; avoid duplicate initial refresh.
       if (session) { showApp(session); setTimeout(() => refresh(), 0); } else showLogin();

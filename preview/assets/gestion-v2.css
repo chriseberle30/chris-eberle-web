@@ -98,3 +98,17 @@ body{background:#f5f7fb;color:var(--ink);font-family:Inter,-apple-system,BlinkMa
  .mobile-nav button span{font-size:10px}
  .mobile-nav button.active{background:#eef2ff}
 }
+
+/* Mobile order cards: readable hierarchy without cramped columns */
+@media(max-width:760px){
+ #orders-list .order-row[data-order]{grid-template-columns:42px minmax(0,1fr) auto;gap:7px 9px;padding:14px 12px;align-items:center}
+ #orders-list .order-row[data-order]>.order-no{grid-column:1;grid-row:1}
+ #orders-list .order-row[data-order]>.row-main:not(.hide-mobile){grid-column:2;grid-row:1}
+ #orders-list .order-row[data-order]>.hide-mobile{display:none}
+ #orders-list .order-row[data-order]>div:not(.row-main):not(.money){grid-column:2;grid-row:2;display:flex;gap:5px;flex-wrap:wrap}
+ #orders-list .order-row[data-order]>.money{grid-column:3;grid-row:1 / span 2;text-align:right;min-width:88px}
+ #orders-list .order-row[data-order]>.money b{font-size:13px}
+ #orders-list .order-row[data-order]>.money small{font-size:10px}
+ #orders-list .order-row[data-order] .row-main b{font-size:13px}
+ #orders-list .order-row[data-order] .row-main small{font-size:10px}
+}

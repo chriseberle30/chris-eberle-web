@@ -785,3 +785,20 @@ body.price-searching #view-precios #prices-list .price-row{scroll-margin-top:68p
  #view-caja .cash-row .branch-pill,#view-ventas .sales-row .branch-pill{grid-column:1;grid-row:2;justify-self:start}
  #view-caja .cash-row .row-main,#view-ventas .sales-row .row-main{grid-column:1/-1}
 }
+
+
+/* Price cards: one compact two-line item, one prominent price, one action row */
+#view-precios #prices-list .price-row{grid-template-columns:minmax(0,1fr) auto auto;grid-template-areas:none;gap:12px;padding:14px 17px}
+#view-precios #prices-list .price-device{grid-area:auto;min-width:0}
+#view-precios #prices-list .price-device b{font-size:13px;font-weight:750;line-height:1.35}
+#view-precios #prices-list .price-device small{font-size:11px;color:#7f899e;margin-top:4px}
+#view-precios #prices-list .price-value{grid-area:auto;text-align:right;white-space:nowrap}
+#view-precios #prices-list .price-value b{font-size:18px;color:#14104c;font-weight:800}
+#view-precios #prices-list .price-actions{grid-area:auto;flex-wrap:nowrap}
+@media(max-width:760px){
+ #view-precios #prices-list .price-row{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"device value" "actions actions";gap:8px 10px;padding:12px 13px}
+ #view-precios #prices-list .price-device{grid-area:device}
+ #view-precios #prices-list .price-value{grid-area:value;text-align:right}
+ #view-precios #prices-list .price-value b{font-size:18px}
+ #view-precios #prices-list .price-actions{grid-area:actions;justify-content:flex-start;flex-wrap:wrap;padding-top:7px;border-top:1px solid #eff1f5}
+}

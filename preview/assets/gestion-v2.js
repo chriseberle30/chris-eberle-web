@@ -249,6 +249,9 @@
       $("#f-gremio")?.toggleAttribute("required", guild);
       $("#client-picker-wrap").hidden = guild;
       $("#quick-client-fields").hidden = true;
+      $("#quick-client-toggle").hidden = false;
+      $("#f-cliente_id").disabled = false;
+      $("#f-nuevo_nombre").required = false;
       $("#f-cliente_id").required = !guild;
     };
     type?.addEventListener("change", toggleType);

@@ -686,3 +686,31 @@ body{background:var(--e30-bg);color:var(--e30-ink)}
  #view-precios #prices-list .price-actions{gap:5px}
  #view-precios #prices-list .price-actions .button{padding:6px 8px;font-size:9px}
 }
+
+
+/* Price lookup focus mode: keep live results visible above the iOS keyboard */
+body.price-searching .topbar{display:none}
+body.price-searching #view-precios .price-toolbar{
+ position:sticky;top:0;z-index:7;padding:7px 0 10px;margin:0 0 9px;
+ background:rgba(244,245,249,.97);backdrop-filter:blur(14px)
+}
+body.price-searching #view-precios .price-toolbar .search-wrap{
+ flex:1 1 100%;min-width:0;height:48px;border-color:#8b9ab5;
+ box-shadow:0 0 0 3px rgba(70,100,138,.11)
+}
+body.price-searching #view-precios #new-price,
+body.price-searching #view-precios .price-chips,
+body.price-searching #view-precios .panel-heading{display:none!important}
+body.price-searching #view-precios .content,
+body.price-searching #view-precios .panel{padding-top:0}
+body.price-searching #view-precios #prices-list{min-height:0}
+body.price-searching #view-precios #prices-list .price-row{scroll-margin-top:68px}
+@media(max-width:760px){
+ body.price-searching{padding-bottom:0}
+ body.price-searching .main-column{min-height:0}
+ body.price-searching #view-precios .content{padding-top:7px}
+ body.price-searching #view-precios .price-toolbar{gap:0;margin-bottom:8px}
+ body.price-searching #view-precios .price-toolbar .search-wrap{height:48px;flex-basis:100%}
+ body.price-searching #view-precios .panel{border-radius:13px}
+ body.price-searching #view-precios #prices-list .price-row{padding:11px 12px;gap:6px 9px}
+}

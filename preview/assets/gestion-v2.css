@@ -519,3 +519,108 @@ h1,h2,h3,.stat-card b,.brand b{font-family:Inter,-apple-system,BlinkMacSystemFon
  .dashboard-stats .stat-card span{font-size:8px}
  .dashboard-stats .stat-card b{font-size:17px}
 }
+
+
+/* =========================================================
+   E30 UNIFIED PRODUCT DESIGN
+   Shared visual language across Orders, Sales, Stock,
+   Cash, Clients, Prices, Warranty and Reports.
+   ========================================================= */
+:root{
+ --e30-bg:#f4f5f9;--e30-card:#fff;--e30-ink:#191d30;--e30-muted:#7d879c;
+ --e30-line:#e7eaf1;--e30-navy:#14104c;--e30-steel:#46648a;
+ --e30-shadow:0 5px 22px rgba(20,16,76,.045);
+}
+body{background:var(--e30-bg);color:var(--e30-ink)}
+.view{width:100%;min-width:0;animation:e30-view-in .18s ease-out}
+@keyframes e30-view-in{from{opacity:.75;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
+.view>.stats-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:0 0 18px}
+.view>.stats-row .stat-card{min-height:105px;padding:17px 18px;border-radius:15px;background:var(--e30-card);border:1px solid var(--e30-line);box-shadow:var(--e30-shadow)}
+.view>.stats-row .stat-card span{font-size:11px;color:var(--e30-muted);font-weight:550;line-height:1.35}
+.view>.stats-row .stat-card b{font-size:24px;font-weight:740;letter-spacing:-.045em;color:var(--e30-ink)}
+.view>.toolbar{display:flex;align-items:center;gap:10px;min-height:44px;margin:0 0 15px;padding:0}
+.view>.toolbar>.muted{flex:1;font-size:12px;line-height:1.5}
+.view>.toolbar .search-wrap{height:44px;border:1px solid #e2e6ef;border-radius:11px;background:#fff;box-shadow:0 1px 3px rgba(20,16,76,.025)}
+.view>.toolbar select,.view>.toolbar>.button{height:44px;border-radius:10px}
+.view>.panel,.view>.table-panel,.view>.panel.table-panel{
+ border:1px solid var(--e30-line);border-radius:16px;background:#fff;box-shadow:var(--e30-shadow);overflow:hidden
+}
+.view .panel-heading{min-height:67px;padding:17px 20px;background:#fff;border-bottom:1px solid #edf0f5}
+.view .panel-heading h2{font-size:16px;font-weight:720;letter-spacing:-.035em;color:var(--e30-ink)}
+.view .panel-heading .muted{font-size:11px;color:var(--e30-muted)}
+.view .count-label{padding:6px 9px;border-radius:99px;background:#f0f2f8;color:#64718a;font-size:10px;font-weight:700}
+.view .orders-list{min-height:0;background:#fff}
+.view .order-row{
+ min-height:65px;padding:13px 18px;gap:12px;border-bottom:1px solid #eff1f5;
+ background:#fff;transition:background .14s ease
+}
+.view .order-row:last-child{border-bottom:0}
+.view .order-row:hover{background:#f8f9fc}
+.view .order-no{color:var(--e30-steel);font-weight:750}
+.view .row-main b{font-size:12px;font-weight:680;line-height:1.4;color:var(--e30-ink)}
+.view .row-main small{font-size:10px;line-height:1.45;color:#8791a5}
+.view .state-pill,.view .branch-pill{border:0;border-radius:99px;padding:6px 9px;font-size:9px;font-weight:700}
+.view .state-pill.ready{background:#e8f5ef;color:#187456}
+.view .state-pill.repair{background:#edf1fa;color:#3f5d8e}
+.view .state-pill.pending{background:#fff4e4;color:#98691b}
+.view .branch-pill{background:#f0f2f8;color:#64718a}
+.view .money{font-size:10px;color:#7b8599}
+.view .money b{font-size:12px;color:var(--e30-ink)}
+.view .empty-state{padding:38px 18px;color:#8791a5;font-size:12px}
+.view .client-grid{gap:12px}
+.view .client-card{border:1px solid var(--e30-line);border-radius:14px;background:#fff;box-shadow:0 2px 12px rgba(20,16,76,.035);padding:17px;transition:transform .15s,box-shadow .15s}
+.view .client-card:hover{background:#fbfcfe;box-shadow:var(--e30-shadow);transform:translateY(-1px)}
+.view .client-card b{font-size:13px;color:var(--e30-ink)}
+.view .client-card span{font-size:11px;color:var(--e30-muted)}
+.view .client-card .client-orders{border-color:#edf0f5;color:var(--e30-steel)}
+.view .price-chips{gap:7px}
+.view .filter-chip{border-radius:99px;border:1px solid var(--e30-line);background:#fff;color:#65718a;font-weight:650}
+.view .filter-chip.active{background:var(--e30-navy);border-color:var(--e30-navy);color:#fff}
+.view .search-wrap:focus-within,.view .toolbar select:focus,.view .field input:focus,.view .field select:focus,.view .field textarea:focus{
+ border-color:#8092b0;box-shadow:0 0 0 3px rgba(70,100,138,.10)
+}
+.view .field label{font-size:10px;font-weight:700;color:#657087;letter-spacing:.02em}
+.view .field input,.view .field select,.view .field textarea{
+ min-height:42px;border:1px solid #e3e7ef;border-radius:10px;background:#fbfcfe;color:var(--e30-ink);font-size:12px;padding:9px 11px
+}
+.view .field textarea{min-height:84px}
+.view .button{min-height:40px;border-radius:10px;font-size:11px;font-weight:680}
+.view .button.primary{background:var(--e30-navy);border-color:var(--e30-navy);color:#fff}
+.view .button:not(.primary):not(.danger){background:#fff;border-color:#e3e7ef;color:#333b50}
+.view .button.danger{background:#fff7f7;border-color:#f0dadd;color:#bd4c5c}
+.view .button:hover{box-shadow:0 4px 12px rgba(20,16,76,.07)}
+/* Keep table-like rows legible and horizontally safe on narrow screens */
+@media(max-width:760px){
+ .view>.stats-row{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-bottom:13px}
+ .view>.stats-row .stat-card{min-height:91px;padding:12px 9px;border-radius:13px}
+ .view>.stats-row .stat-card span{font-size:9px;line-height:1.25;min-height:25px}
+ .view>.stats-row .stat-card b{font-size:18px;margin-top:7px}
+ .view>.toolbar{gap:8px;margin-bottom:12px}
+ .view>.toolbar .search-wrap{flex:1 1 100%;min-width:0}
+ .view>.toolbar select{flex:1 1 0;min-width:0;max-width:100%;font-size:10px;padding-inline:8px}
+ .view>.toolbar>.button{flex:0 0 auto;max-width:100%;padding:9px 11px;font-size:10px}
+ .view .panel,.view .table-panel{border-radius:14px}
+ .view .panel-heading{min-height:58px;padding:14px}
+ .view .panel-heading h2{font-size:14px}
+ .view .panel-heading .muted{font-size:10px;line-height:1.4}
+ .view .order-row{min-height:58px;padding:11px 10px;gap:7px}
+ .view .row-main b{font-size:11px}
+ .view .row-main small{font-size:9px}
+ .view .state-pill,.view .branch-pill{padding:5px 7px;font-size:8px}
+ .view .money{font-size:9px}
+ .view .money b{font-size:10px}
+ .view .client-grid{grid-template-columns:1fr;gap:9px}
+ .view .client-card{padding:14px;border-radius:12px}
+ .view .client-card b{font-size:12px}
+ .view .client-card span{font-size:10px}
+ .view .empty-state{padding:30px 14px;font-size:11px}
+ .view .field label{font-size:10px}
+ .view .field input,.view .field select,.view .field textarea{font-size:12px}
+}
+@media(max-width:370px){
+ .view>.stats-row{gap:5px}
+ .view>.stats-row .stat-card{padding:10px 7px}
+ .view>.stats-row .stat-card span{font-size:8px}
+ .view>.stats-row .stat-card b{font-size:16px}
+ .view>.toolbar>.button{padding-inline:8px;font-size:9px}
+}

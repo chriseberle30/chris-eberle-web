@@ -90,18 +90,26 @@
     }
   }
   function renderDashboard() {
-    if (!$("#home-activity")) return;
+    if (!$("#home-orders-list")) return;
     const today = new Date(); today.setHours(0,0,0,0);
     const income = data.cash.filter(x => x.tipo === "Ingreso" && new Date(x.creado) >= today).reduce((sum,x) => sum + Number(x.importe || 0),0);
     const active = data.orders.filter(x => !["Entregado","Cancelado"].includes(x.estado));
     $("#home-income").textContent = money(income);
     $("#home-active").textContent = active.length;
     $("#home-ready").textContent = active.filter(x => x.estado === "Listo").length;
-    const activities = [
-      ...data.orders.map(x => ({at:x.creada, kind:"Orden", title:`#${x.id} · ${x.modelo || "Equipo"} · ${x.falla || "Trabajo"}`, detail:`${x.cliente || x.gremio || "Cliente"} · ${x.negocio || ""}`, icon:"▣"})),
-      ...data.cash.map(x => ({at:x.creado, kind:x.tipo === "Ingreso" ? "Ingreso" : "Egreso", title:x.concepto || "Movimiento de caja", detail:`${x.categoria || ""} · ${x.sucursal || ""}`, amount:(x.tipo === "Ingreso" ? "+" : "−") + money(x.importe), icon:"＄"}))
-    ].filter(x => x.at).sort((a,b)=>new Date(b.at)-new Date(a.at)).slice(0,12);
-    $("#home-activity").innerHTML = activities.map(x => `<article class="order-row home-activity-row"><span class="home-activity-icon">${x.icon}</span><div class="row-main"><b>${esc(x.title)}</b><small>${esc(x.detail)} · ${date(x.at)}</small></div><span class="branch-pill">${esc(x.kind)}</span>${x.amount ? `<b class="money">${esc(x.amount)}</b>` : ""}</article>`).join("") || '<div class="empty-state">Todavía no hay movimientos registrados.</div>';
+    const recent = [...active].sort((a,b) => new Date(b.creada || 0) - new Date(a.creada || 0)).slice(0,8);
+    $("#home-orders-list").innerHTML = recent.map(order => {
+      const client = order.clientes?.nombre || order.cliente || order.gremio || "Cliente sin nombre";
+      const phone = formatPhone(order.telefono || order.clientes?.telefono || "");
+      const work = `${order.modelo || "Equipo sin modelo"} · ${order.falla || "Trabajo sin descripción"}`;
+      const balance = Rules.balance(order);
+      return `<article class="order-row home-order-row" data-order="${order.id}">
+        <span class="home-order-number">#${order.id}</span>
+        <div class="row-main"><b>${esc(work)}</b><small>${esc(client)} · ${esc(phone || "Sin teléfono")} · ${date(order.creada)}</small></div>
+        <div class="home-order-meta"><span class="state-pill ${stateClass(order.estado)}">${esc(order.estado || "Pendiente")}</span><span class="branch-pill">${esc(order.negocio || "")}</span></div>
+        <div class="home-order-balance"><b>${money(balance > 0 ? balance : order.total)}</b><small>${balance > 0 ? "Saldo pendiente" : "Total"}</small></div>
+      </article>`;
+    }).join("") || '<div class="empty-state">No hay órdenes activas. Cuando ingreses un equipo, aparecerá acá.</div>';
   }
   function renderStats() {
     const active = data.orders.filter((order) => !["Entregado", "Cancelado"].includes(order.estado));
@@ -486,6 +494,7 @@
     $("#new-order").addEventListener("click", () => openOrderForm());
     $("#home-new-order").addEventListener("click", () => openOrderForm());
     $("#home-prices").addEventListener("click", () => setView("precios"));
+    $("#home-view-orders").addEventListener("click", () => setView("ordenes"));
     $("#home-orders").addEventListener("click", () => setView("ordenes"));
     $("#budget-add").addEventListener("click", () => notice("El formulario de presupuestos se incorpora en la siguiente etapa."));
     $("#new-client").addEventListener("click", () => openClientForm());

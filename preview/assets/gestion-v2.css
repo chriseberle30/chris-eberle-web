@@ -249,3 +249,17 @@ body{background:#f6f7fa;color:var(--ink)}
 
 /* Inicio E30: panel de actividad y accesos rápidos */
 .dashboard-stats{grid-template-columns:repeat(3,minmax(0,1fr))}.dashboard-actions{display:flex;gap:9px;flex-wrap:wrap;margin:0 0 18px}.dashboard-recent{margin-top:8px}.home-activity-row{grid-template-columns:34px minmax(0,1fr) auto auto;align-items:center}.home-activity-icon{width:30px;height:30px;display:grid;place-items:center;border-radius:9px;background:#eef1f8;color:#14104c;font-size:17px}.home-activity-row .money{white-space:nowrap;font-size:12px}@media(max-width:760px){.dashboard-stats{grid-template-columns:repeat(3,minmax(0,1fr))}.dashboard-actions{display:grid;grid-template-columns:1fr 1fr}.dashboard-actions button:first-child{grid-column:1/-1}.home-activity-row{grid-template-columns:28px minmax(0,1fr) auto;gap:7px;padding:11px 9px}.home-activity-row .branch-pill{grid-column:3;grid-row:1}.home-activity-row .money{grid-column:2/-1;justify-self:start}.home-activity-icon{width:27px;height:27px}}
+
+
+/* Barra móvil simplificada: Precios · Inicio · Nueva orden */
+@media(max-width:760px){
+ .mobile-nav{grid-template-columns:repeat(3,minmax(0,1fr));}
+ .mobile-nav button{gap:3px;}
+ .mobile-nav button svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+ .mobile-nav button span{font-size:10px;font-weight:600;}
+ .mobile-nav button.active{background:#eef2f8;color:#14104c;}
+ .mobile-nav .mobile-nav-home{font-weight:700;}
+ .mobile-nav .mobile-nav-home.active{background:#14104c;color:#fff;box-shadow:0 5px 14px #14104c25;}
+ .mobile-nav .mobile-nav-home.active span{color:#fff;}
+ .mobile-nav button:active{transform:scale(.97);}
+}

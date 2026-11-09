@@ -486,7 +486,7 @@
     $("#new-order").addEventListener("click", () => openOrderForm());
     $("#home-new-order").addEventListener("click", () => openOrderForm());
     $("#home-prices").addEventListener("click", () => setView("precios"));
-    $("#home-new-budget").addEventListener("click", () => setView("presupuestos"));
+    $("#home-orders").addEventListener("click", () => setView("ordenes"));
     $("#budget-add").addEventListener("click", () => notice("El formulario de presupuestos se incorpora en la siguiente etapa."));
     $("#new-client").addEventListener("click", () => openClientForm());
     $("#new-price").addEventListener("click", () => openPriceForm());

@@ -115,9 +115,9 @@
   }
   function renderPrices(search = "") {
     const words = search.toLocaleLowerCase("es-AR").split(/\s+/).filter(Boolean);
-    const category = $("#price-category")?.value || "";
+    const category = ($("#price-category")?.value || "").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "");
     const rows = data.prices.filter((price) => {
-      const haystack = `${price.marca || ""} ${price.modelo || ""} ${price.servicio || ""}`.toLocaleLowerCase("es-AR");
+      const haystack = `${price.marca || ""} ${price.modelo || ""} ${price.servicio || ""}`.toLocaleLowerCase("es-AR").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "");
       if (!words.every((word) => haystack.includes(word))) return false;
       if (!category) return true;
       if (category === "otro") return !/(pantalla|display|bater|cámara|camara|carga|pin)/i.test(haystack);
@@ -137,7 +137,7 @@
     $$(".view").forEach((section) => { section.hidden = section.id !== `view-${view}`; });
     $$('[data-view]').forEach((button) => button.classList.toggle("active", button.dataset.view === view));
     const titles = { ordenes: "Órdenes de reparación", clientes: "Clientes", precios: "Precios de reparación", caja: "Caja y movimientos", stock: "Inventario y accesorios", ventas: "Ventas", garantias: "Garantías y reclamos", reportes: "Reportes del negocio", papelera: "Papelera de órdenes" };
-    $("#page-title").textContent = titles[view]; $(".sidebar").classList.remove("open");
+    $("#page-title").textContent = titles[view]; $(".sidebar").classList.remove("open"); $("#sidebar-backdrop").classList.remove("visible"); $("#menu-toggle").setAttribute("aria-expanded","false"); $("#menu-toggle").setAttribute("aria-label","Abrir menú"); $("#menu-toggle").textContent="☰";
     if (view === "ordenes") loadOrders({ search: $("#order-search").value }).then((rows) => { data.orders = rows; renderOrders(rows); renderStats(); }).catch((error) => notice(error.message, true));
     if (["caja","stock","ventas","garantias","reportes"].includes(view)) refresh().catch((error) => notice(error.message,true));
   }
@@ -399,7 +399,7 @@
     const cost = orders.reduce((sum, row) => sum + Number(row.costo || 0), 0);
     $("#report-revenue").textContent = money(collected);
     $("#report-cost").textContent = money(cost);
-    $("#report-margin").textContent = money(collected - cost);
+    $("#report-sales").textContent = money(sales.reduce((sum, row) => sum + Number(row.total || 0), 0));
     $("#branch-report").innerHTML = Rules.BRANCHES.map((branch) => {
       const branchOrders = orders.filter((x) => x.negocio === branch);
       const branchPayments = paidOrders.filter((x) => x.negocio === branch);
@@ -441,8 +441,20 @@
     $("#cash-add").addEventListener("click",openCashForm);$("#cash-branch").addEventListener("change",renderCash);
     $("#stock-add").addEventListener("click",()=>openStockForm());$("#stock-search").addEventListener("input",e=>renderStock(e.target.value));
     $("#sale-add").addEventListener("click",openSaleForm);$("#claim-add").addEventListener("click",()=>openClaimForm());
-    $("#menu-toggle").addEventListener("click", () => $(".sidebar").classList.toggle("open"));
-    $("#mobile-more").addEventListener("click", () => $(".sidebar").classList.toggle("open"));
+    const sidebar = $(".sidebar");
+    const backdrop = $("#sidebar-backdrop");
+    const toggleSidebar = (force) => {
+      const open = typeof force === "boolean" ? force : !sidebar.classList.contains("open");
+      sidebar.classList.toggle("open", open);
+      backdrop.classList.toggle("visible", open);
+      $("#menu-toggle").setAttribute("aria-expanded", String(open));
+      $("#menu-toggle").setAttribute("aria-label", open ? "Cerrar menú" : "Abrir menú");
+      $("#menu-toggle").textContent = open ? "×" : "☰";
+    };
+    $("#menu-toggle").addEventListener("click", () => toggleSidebar());
+    $("#mobile-more").addEventListener("click", () => toggleSidebar());
+    backdrop.addEventListener("click", () => toggleSidebar(false));
+    document.addEventListener("keydown", (event) => { if (event.key === "Escape") toggleSidebar(false); });
     $("#modal-form").addEventListener("submit", runAction);
     $("#modal").addEventListener("click", (event) => { if (event.target === $("#modal") || event.target.closest("[data-close]")) closeModal(); });
     document.addEventListener("click", (event) => {
@@ -470,7 +482,7 @@
     $("#order-search").addEventListener("input", queryOrders); $("#branch-filter").addEventListener("change", () => renderOrders());
     $("#state-filter").addEventListener("change", () => renderOrders());
     $("#client-search").addEventListener("input", (event) => renderClients(event.target.value));
-    $("#price-search").addEventListener("input", (event) => renderPrices(event.target.value)); $("#price-category").addEventListener("change", () => renderPrices($("#price-search").value)); $("#price-category").addEventListener("change", () => renderPrices($("#price-search").value));
+    $("#price-search").addEventListener("input", (event) => renderPrices(event.target.value)); $("#price-category").addEventListener("change", () => renderPrices($("#price-search").value));
     document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && $("#app").hidden === false) refresh(); });
   }
   function initialize() {

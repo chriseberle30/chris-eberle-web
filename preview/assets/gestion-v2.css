@@ -714,3 +714,91 @@ body.price-searching #view-precios #prices-list .price-row{scroll-margin-top:68p
  body.price-searching #view-precios .panel{border-radius:13px}
  body.price-searching #view-precios #prices-list .price-row{padding:11px 12px;gap:6px 9px}
 }
+
+
+/* Apertura local: orden nueva corta, datos secundarios plegados */
+.order-form-grid{gap:5px 14px}
+.order-form-grid>.field label{margin-top:10px}
+.order-form-grid .quick-client-button{margin-top:8px;min-height:36px;font-size:11px}
+.order-advanced{
+ border:1px solid #e7eaf1;border-radius:12px;background:#f8f9fc;
+ margin-top:8px;padding:0 13px
+}
+.order-advanced summary{
+ min-height:45px;display:flex;align-items:center;justify-content:space-between;
+ cursor:pointer;list-style:none;font-size:12px;font-weight:700;color:#39445a
+}
+.order-advanced summary::-webkit-details-marker{display:none}
+.order-advanced summary::after{content:"＋";font-size:18px;color:#46648a}
+.order-advanced[open] summary::after{content:"−"}
+.order-advanced summary span{margin-left:auto;margin-right:10px;font-size:10px;font-weight:500;color:#8992a5}
+.order-advanced>.form-grid{padding:0 0 12px}
+#view-inicio .dashboard-actions #home-new-order{display:inline-flex}
+#view-inicio .dashboard-actions{grid-template-columns:1fr 1fr}
+#view-inicio .dashboard-actions #home-new-order{grid-column:1/-1}
+@media(max-width:760px){
+ .order-form-grid{grid-template-columns:1fr 1fr;gap:3px 10px}
+ .order-form-grid>.field.span-2,.order-form-grid>.order-advanced.span-2{grid-column:1/-1}
+ .order-form-grid>.field label{font-size:10px;margin-top:8px}
+ .order-form-grid .field input,.order-form-grid .field select{min-height:42px}
+ .order-advanced{margin-top:7px;padding-inline:11px}
+ .order-advanced summary{min-height:43px;font-size:11px}
+ .order-advanced>.form-grid{grid-template-columns:1fr}
+ .order-advanced>.form-grid>.field.span-2{grid-column:auto}
+}
+
+
+/* Opening-readiness responsive layouts for inventory and admin lists */
+#view-stock .stock-row{grid-template-columns:minmax(0,1.5fr) minmax(110px,.8fr) minmax(130px,.9fr) auto;align-items:center}
+#view-stock .stock-product b{font-size:13px}
+#view-stock .stock-quantity b,#view-stock .stock-prices b{font-size:12px}
+#view-stock .stock-quantity small,#view-stock .stock-prices small{font-size:10px;color:#8791a5}
+#view-stock .stock-actions{justify-content:flex-end;flex-wrap:wrap}
+#view-stock .stock-actions .button{font-size:10px;padding:7px 9px}
+#view-stock .stock-low-pill{justify-self:start}
+#view-reportes .report-row{grid-template-columns:1fr repeat(3,minmax(120px,.8fr));align-items:center}
+#view-reportes .report-row .row-main small{font-size:10px;color:#8791a5}
+#view-reportes .report-row .row-main b{font-size:12px}
+#view-papelera .trash-row{grid-template-columns:65px minmax(0,1fr) auto auto;align-items:center}
+#view-caja .cash-row,#view-ventas .sales-row{grid-template-columns:minmax(0,1fr) auto minmax(110px,auto);align-items:center}
+@media(max-width:760px){
+ #view-stock .stock-row{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"product quantity" "prices prices" "actions actions" "low low";gap:8px 10px;padding:12px}
+ #view-stock .stock-product{grid-area:product;min-width:0}
+ #view-stock .stock-product b{font-size:11px}
+ #view-stock .stock-product small{font-size:9px}
+ #view-stock .stock-quantity{grid-area:quantity;text-align:right}
+ #view-stock .stock-quantity b{font-size:10px}
+ #view-stock .stock-quantity small{font-size:9px}
+ #view-stock .stock-prices{grid-area:prices;display:flex;justify-content:space-between;gap:10px;padding-top:7px;border-top:1px solid #eff1f5}
+ #view-stock .stock-prices b,#view-stock .stock-prices small{font-size:10px}
+ #view-stock .stock-actions{grid-area:actions;justify-content:flex-start}
+ #view-stock .stock-actions .button{min-height:33px;font-size:9px;padding:6px 9px}
+ #view-stock .stock-low-pill{grid-area:low}
+ #view-reportes .report-row{grid-template-columns:1fr 1fr;gap:10px;padding:13px}
+ #view-reportes .report-row .row-main:first-child{grid-column:1/-1;padding-bottom:8px;border-bottom:1px solid #eff1f5}
+ #view-reportes .report-row .row-main small{font-size:9px}
+ #view-reportes .report-row .row-main b{font-size:11px}
+ #view-papelera .trash-row{grid-template-columns:34px minmax(0,1fr) auto;gap:8px;padding:11px}
+ #view-papelera .trash-row .button{grid-column:2/-1;justify-self:start}
+ #view-caja .cash-row,#view-ventas .sales-row{grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:12px}
+ #view-caja .cash-row .money,#view-ventas .sales-row .money{grid-column:2;grid-row:1;text-align:right;white-space:nowrap}
+ #view-caja .cash-row .branch-pill,#view-ventas .sales-row .branch-pill{grid-column:1;grid-row:2;justify-self:start}
+ #view-caja .cash-row .row-main,#view-ventas .sales-row .row-main{grid-column:1/-1}
+}
+
+
+/* Price cards: one compact two-line item, one prominent price, one action row */
+#view-precios #prices-list .price-row{grid-template-columns:minmax(0,1fr) auto auto;grid-template-areas:none;gap:12px;padding:14px 17px}
+#view-precios #prices-list .price-device{grid-area:auto;min-width:0}
+#view-precios #prices-list .price-device b{font-size:13px;font-weight:750;line-height:1.35}
+#view-precios #prices-list .price-device small{font-size:11px;color:#7f899e;margin-top:4px}
+#view-precios #prices-list .price-value{grid-area:auto;text-align:right;white-space:nowrap}
+#view-precios #prices-list .price-value b{font-size:18px;color:#14104c;font-weight:800}
+#view-precios #prices-list .price-actions{grid-area:auto;flex-wrap:nowrap}
+@media(max-width:760px){
+ #view-precios #prices-list .price-row{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"device value" "actions actions";gap:8px 10px;padding:12px 13px}
+ #view-precios #prices-list .price-device{grid-area:device}
+ #view-precios #prices-list .price-value{grid-area:value;text-align:right}
+ #view-precios #prices-list .price-value b{font-size:18px}
+ #view-precios #prices-list .price-actions{grid-area:actions;justify-content:flex-start;flex-wrap:wrap;padding-top:7px;border-top:1px solid #eff1f5}
+}

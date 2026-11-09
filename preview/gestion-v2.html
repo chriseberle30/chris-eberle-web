@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#101828">
   <title>Gestión E30</title>
-  <link rel="stylesheet" href="assets/gestion-v2.css?v=e30-home-orders-1">
+  <link rel="stylesheet" href="assets/gestion-v2.css?v=e30-opening-ready-1">
 <script>window.addEventListener("error",function(e){var p=document.querySelector("#loading-screen p");if(p)p.textContent="No se pudo iniciar Gestión: "+(e.message||"error al cargar un archivo");});window.addEventListener("unhandledrejection",function(e){var p=document.querySelector("#loading-screen p");var r=e.reason;if(p)p.textContent="Error al conectar: "+(r&&r.message?r.message:String(r||"error desconocido"));});</script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer onerror="this.onerror=null;this.src=&#39;https://unpkg.com/@supabase/supabase-js@2&#39;"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" defer></script>
-  <script src="assets/e30-gestion-domain.js?v=e30-home-orders-1" defer></script>
-  <script src="assets/gestion-v2.js?v=e30-home-orders-1" defer></script>
+  <script src="assets/e30-gestion-domain.js?v=e30-opening-ready-1" defer></script>
+  <script src="assets/gestion-v2.js?v=e30-opening-ready-1" defer></script>
 </head>
 <body>
   <div id="notice" class="notice" role="status" hidden></div>
@@ -35,7 +35,7 @@
         <button data-view="inicio" class="nav-item active"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg></span>Inicio</button>
         <p class="nav-group-label">OPERACIÓN</p>
         <button data-view="precios" class="nav-item"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>Precios</button>
-        <button data-view="presupuestos" class="nav-item"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h8l4 4v14H5V3zM14 3v5h5M8 13h8M8 17h8"/></svg></span>Presupuestos</button>
+        
         <button data-view="ordenes" class="nav-item"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></span>Órdenes</button>
         <button data-view="clientes" class="nav-item"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M10 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM20 8v6m3-3h-6"/></svg></span>Clientes</button>
         <button data-view="garantias" class="nav-item"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11ZM9 12l2 2 4-4"/></svg></span>Garantías</button>
@@ -49,7 +49,7 @@
       <div class="sidebar-bottom"><span class="connection-dot"></span><span id="connection-label">Conectando</span><button id="sign-out" class="button ghost full">Cerrar sesión</button></div>
     </aside>
     <div class="main-column">
-      <header class="topbar"><button id="menu-toggle" class="icon-button mobile-only" aria-label="Abrir menú"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><div><p class="eyebrow brand-identity">E30 · i30</p><h1 id="page-title">Inicio</h1></div><div class="top-actions"><span id="user-label" class="user-chip"></span><button id="new-order" class="button primary">＋ Nueva orden</button></div></header>
+      <header class="topbar"><button id="menu-toggle" class="icon-button mobile-only" aria-label="Abrir menú"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><div><p class="eyebrow brand-identity">E30 · i30</p><h1 id="page-title">Inicio</h1></div><div class="top-actions"><span id="user-label" class="user-chip"></span><button id="new-order" class="button primary" hidden>＋ Nueva orden</button></div></header>
       <main class="content">
         <section id="view-inicio" class="view">
           <div class="stats-row dashboard-stats">
@@ -57,7 +57,7 @@
             <article class="stat-card"><span><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 18h6"/></svg>Órdenes activas</span><b id="home-active">0</b></article>
             <article class="stat-card"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>Listas para entregar</span><b id="home-ready">0</b></article>
           </div>
-          <div class="dashboard-actions"><button class="button primary" id="home-new-order">＋ Nueva orden</button><button class="button" id="home-orders">Ver órdenes</button><button class="button" id="home-prices">Consultar precios</button></div>
+          <div class="dashboard-actions"><button class="button primary" id="home-new-order">＋ Nueva orden</button><button class="button" id="home-prices">Consultar precios</button></div>
           <div class="panel table-panel dashboard-recent"><div class="panel-heading"><div><h2>Órdenes recientes</h2><p class="muted">Equipos en curso y listos para entregar</p></div><button type="button" class="button" id="home-view-orders">Ver todas</button></div><div id="home-orders-list" class="orders-list"></div></div>
         </section>
         <section id="view-presupuestos" class="view" hidden>

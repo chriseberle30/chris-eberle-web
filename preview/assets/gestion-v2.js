@@ -148,16 +148,19 @@
   }
   function renderPrices(search = "") {
     const words = search.toLocaleLowerCase("es-AR").split(/\s+/).filter(Boolean);
-    const category = (document.querySelector(".filter-chip.active")?.dataset.priceCategory || "").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "");
+    const category = (document.querySelector(".filter-chip.active")?.dataset.priceCategory || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const collator = new Intl.Collator("es-AR", { numeric: true, sensitivity: "base" });
     const rows = data.prices.filter((price) => {
       const haystack = `${price.marca || ""} ${price.modelo || ""} ${price.servicio || ""}`.toLocaleLowerCase("es-AR").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
       if (!words.every((word) => haystack.includes(word))) return false;
       if (!category) return true;
       if (category === "otro") return !/(pantalla|display|bater|camara|carga|pin)/i.test(haystack);
       return haystack.includes(category);
+    }).sort((a,b) => {
+      return collator.compare(a.marca || "iPhone", b.marca || "iPhone") || collator.compare(a.modelo || "", b.modelo || "") || collator.compare(a.servicio || "", b.servicio || "");
     });
     $("#price-count").textContent = `${rows.length} tarifas`;
-    $("#prices-list").innerHTML = rows.map((price) => `<article class="order-row price-row"><div class="row-main price-device"><b>${esc(price.marca || "")}</b><small>${esc(price.modelo)}</small></div><div class="row-main price-service"><b>${esc(price.servicio)}</b><small>${price.activo ? "Tarifa activa" : "En pausa"}</small></div><div class="money price-value"><b>${money(price.precio)}</b></div><div class="price-actions"><button class="button" data-copy-price="${price.id}">Copiar</button><button class="button" data-edit-price="${price.id}">Editar</button><button class="button ${price.activo ? "danger" : ""}" data-toggle-price="${price.id}" data-active="${price.activo}">${price.activo ? "Pausar" : "Activar"}</button></div></article>`).join("") || `<div class="empty-state">${data.prices.length ? "No encontramos precios con esa búsqueda o categoría." : 'Todavía no hay tarifas cargadas.<div class="empty-actions"><button class="button primary" data-empty-add-price>＋ Agregar tarifa</button><button class="button" data-empty-bulk-price>Carga masiva</button></div>'}</div>`;
+    $("#prices-list").innerHTML = rows.map((price) => `<article class="order-row price-row"><div class="row-main price-device"><b>${esc(`${price.marca || "iPhone"} ${price.modelo}`.trim())}</b><small>${esc(price.servicio)}${price.activo ? "" : " · En pausa"}</small></div><div class="money price-value"><b>${money(price.precio)}</b></div><div class="price-actions"><button class="button" data-copy-price="${price.id}">Copiar</button><button class="button" data-edit-price="${price.id}">Editar</button><button class="button ${price.activo ? "danger" : ""}" data-toggle-price="${price.id}" data-active="${price.activo}">${price.activo ? "Pausar" : "Activar"}</button></div></article>`).join("") || `<div class="empty-state">${data.prices.length ? "No encontramos precios con esa búsqueda o categoría." : 'Todavía no hay tarifas cargadas.<div class="empty-actions"><button class="button primary" data-empty-add-price>＋ Agregar tarifa</button><button class="button" data-empty-bulk-price>Carga masiva</button></div>'}</div>`;
   }
   function openBulkPriceImport() {
     const body = '<p class="muted">Importá un CSV con columnas: marca, modelo, servicio, precio. La importación agrega tarifas; no modifica ni elimina las existentes.</p><div class="field"><label for="price-csv-file">Archivo CSV</label><input id="price-csv-file" type="file" accept=".csv,text/csv"></div>';
@@ -182,7 +185,7 @@
     });
   }
   function renderTrash() {
-    $("#trash-list").innerHTML = data.trash.map((order) => `<article class="order-row"><b class="order-no">#${order.id}</b><div class="row-main"><b>${esc(order.cliente || order.gremio || "Cliente")}</b><small>${esc(order.modelo || "")} · Eliminada ${date(order.borrada)}</small></div><div><span class="branch-pill">${esc(order.negocio)}</span></div><button class="button" data-restore="${order.id}">Restaurar</button></article>`).join("") || `<div class="empty-state">La papelera está vacía.</div>`;
+    $("#trash-list").innerHTML = data.trash.map((order) => `<article class="order-row trash-row"><b class="order-no">#${order.id}</b><div class="row-main"><b>${esc(order.cliente || order.gremio || "Cliente")}</b><small>${esc(order.modelo || "")} · Eliminada ${date(order.borrada)}</small></div><div><span class="branch-pill">${esc(order.negocio)}</span></div><button class="button" data-restore="${order.id}">Restaurar</button></article>`).join("") || `<div class="empty-state">La papelera está vacía.</div>`;
   }
   function renderCurrent() {
     renderOrders(); renderClients($("#client-search").value); renderDashboard(); renderPrices($("#price-search").value); renderTrash(); renderCash(); renderStock(); renderSales(); renderClaims(); renderReports();
@@ -192,7 +195,8 @@
     $$(".view").forEach((section) => { section.hidden = section.id !== `view-${view}`; });
     $$('[data-view]').forEach((button) => button.classList.toggle("active", button.dataset.view === view));
     const titles = { inicio: "Inicio", presupuestos: "Presupuestos", ordenes: "Órdenes de reparación", clientes: "Clientes", precios: "Precios de reparación", caja: "Caja y movimientos", stock: "Inventario y accesorios", ventas: "Ventas", garantias: "Garantías y reclamos", reportes: "Reportes del negocio", papelera: "Papelera de órdenes" };
-    $("#page-title").textContent = titles[view]; $(".sidebar").classList.remove("open"); $("#sidebar-backdrop").classList.remove("visible"); $("#menu-toggle").setAttribute("aria-expanded","false"); $("#menu-toggle").setAttribute("aria-label","Abrir menú"); $("#menu-toggle").textContent="☰";
+    $("#new-order").hidden = view === "inicio";
+        $("#page-title").textContent = titles[view]; $(".sidebar").classList.remove("open"); $("#sidebar-backdrop").classList.remove("visible"); $("#menu-toggle").setAttribute("aria-expanded","false"); $("#menu-toggle").setAttribute("aria-label","Abrir menú"); $("#menu-toggle").textContent="☰";
     if (view === "inicio") renderDashboard();
     if (view === "ordenes") loadOrders({ search: $("#order-search").value }).then((rows) => { data.orders = rows; renderOrders(rows); renderStats(); }).catch((error) => notice(error.message, true));
     if (["caja","stock","ventas","garantias","reportes"].includes(view)) refresh().catch((error) => notice(error.message,true));
@@ -204,41 +208,53 @@
   }
   function openOrderForm(order = null) {
     const isEditing = Boolean(order?.id);
-    const clientOptions = data.clients.map((client) => `<option value="${esc(client.id)}" ${client.id === order?.cliente_id ? "selected" : ""}>${esc(client.nombre)}${client.telefono ? ` · ${esc(client.telefono)}` : ""}</option>`).join("");
-    const body = `<div class="form-grid">
-      ${!isEditing ? selectField("Tipo de trabajo", "tipo", ["Particular", "Gremio"], "Particular", "span-2") : ""}
-      ${selectField("Sucursal *", "negocio", Rules.BRANCHES, order?.negocio || "E30")}
-      ${selectField("Estado", "estado", Rules.ORDER_STATES, order?.estado || "Recibido")}
-      <div class="field span-2" id="client-picker-wrap"><label for="f-cliente_id">Cliente</label>
+    const clientOptions = data.clients.map((client) => `<option value="${esc(client.id)}" ${String(client.id) === String(order?.cliente_id) ? "selected" : ""}>${esc(client.nombre)}${client.telefono ? ` · ${esc(client.telefono)}` : ""}</option>`).join("");
+    const body = `<div class="form-grid order-form-grid">
+      ${!isEditing ? selectField("Tipo de trabajo", "tipo", ["Particular", "Gremio"], "Particular") : ""}
+      ${selectField("Sucursal", "negocio", Rules.BRANCHES, order?.negocio || "E30")}
+      ${isEditing ? selectField("Estado", "estado", Rules.ORDER_STATES, order?.estado || "Recibido", "span-2") : ""}
+      <div class="field span-2" id="client-picker-wrap"><label for="f-cliente_id">Cliente *</label>
         <select id="f-cliente_id" name="cliente_id"><option value="">Elegí un cliente existente</option>${clientOptions}</select>
-        <button type="button" class="button" id="quick-client-toggle" style="margin-top:8px">＋ Crear cliente acá</button>
+        <button type="button" class="button quick-client-button" id="quick-client-toggle">＋ Alta rápida de cliente</button>
       </div>
       <div class="field span-2" id="quick-client-fields" hidden>
-        <label>Alta rápida de cliente</label>
+        <label>Nuevo cliente</label>
         ${formField("Nombre / comercio *", "nuevo_nombre")}
         ${formField("Teléfono", "nuevo_telefono", "", "tel")}
         ${formField("Email (opcional)", "nuevo_email", "", "email")}
         <button type="button" class="button" id="quick-client-cancel">Cancelar alta rápida</button>
       </div>
-      <div class="field span-2" id="guild-name-wrap" hidden>${formField("Técnico / comercio *", "gremio")}</div>
-      ${formField("Modelo del equipo *", "modelo", order?.modelo || "", "text")}
-      ${formField("Marca", "marca", order?.marca || "iPhone", "text")}
-      ${formField("Total acordado", "total", order?.total ?? 0, "number")}${formField("Costo estimado / repuestos", "costo", order?.costo ?? 0, "number")}
-      <div class="field"><label for="f-falla">Falla / trabajo solicitado *</label><textarea id="f-falla" name="falla" required>${esc(order?.falla || "")}</textarea></div>
-      <div class="field span-2"><label for="f-notas">Notas internas</label><textarea id="f-notas" name="notas">${esc(order?.notas || "")}</textarea></div>
-      ${formField("IMEI / serie", "imei", order?.imei || "")}${selectField("Garantía", "garantia_dias", ["A definir", "Sin garantía", "30", "60", "90", "180"], order?.garantia_dias == null ? "A definir" : String(order.garantia_dias))}<div class="field span-2"><label for="f-garantia_condiciones">Condiciones de garantía</label><textarea id="f-garantia_condiciones" name="garantia_condiciones">${esc(order?.garantia_condiciones || "")}</textarea></div>${formField("Trabajo realizado (para entrega)", "trabajo_realizado", order?.trabajo_realizado || "")}
-      ${!isEditing ? `${formField("Seña inicial (opcional)", "sena", "0", "number")}${selectField("Medio de la seña", "medio", Rules.PAYMENT_METHODS, "Efectivo")}` : ""}
+      <div class="field span-2" id="guild-name-wrap" hidden>${formField("Técnico / comercio *", "gremio", order?.gremio || "")}</div>
+      ${formField("Modelo del equipo *", "modelo", order?.modelo || "", "text", "span-2")}
+      ${formField("Marca", "marca", order?.marca || "iPhone")}
+      ${formField("Total acordado ($)", "total", order?.total ?? "", "number")}
+      <div class="field span-2"><label for="f-falla">Falla / trabajo solicitado *</label><textarea id="f-falla" name="falla" required>${esc(order?.falla || "")}</textarea></div>
+      ${!isEditing ? `${formField("Seña inicial ($)", "sena", "0", "number")}${selectField("Medio de la seña", "medio", Rules.PAYMENT_METHODS, "Efectivo")}` : ""}
+      <details class="order-advanced span-2">
+        <summary>Datos adicionales <span>Opcionales</span></summary>
+        <div class="form-grid">
+          ${formField("Costo estimado / repuestos ($)", "costo", order?.costo ?? 0, "number")}
+          ${formField("IMEI / número de serie", "imei", order?.imei || "")}
+          ${selectField("Garantía", "garantia_dias", ["A definir", "Sin garantía", "30", "60", "90", "180"], order?.garantia_dias == null ? "A definir" : String(order.garantia_dias))}
+          <div class="field span-2"><label for="f-garantia_condiciones">Condiciones de garantía</label><textarea id="f-garantia_condiciones" name="garantia_condiciones">${esc(order?.garantia_condiciones || "")}</textarea></div>
+          <div class="field span-2"><label for="f-notas">Notas internas</label><textarea id="f-notas" name="notas">${esc(order?.notas || "")}</textarea></div>
+          <div class="field span-2"><label for="f-trabajo_realizado">Trabajo realizado (para la entrega)</label><textarea id="f-trabajo_realizado" name="trabajo_realizado">${esc(order?.trabajo_realizado || "")}</textarea></div>
+        </div>
+      </details>
     </div>`;
-    openModal(isEditing ? `Editar orden #${order.id}` : "Nueva orden de reparación", "ORDEN DE TRABAJO", body, actionButtons("Cancelar", isEditing ? "Guardar cambios" : "Crear orden"));
+    openModal(isEditing ? `Editar orden #${order.id}` : "Nueva orden", "ORDEN DE TRABAJO", body, actionButtons("Cancelar", isEditing ? "Guardar cambios" : "Crear orden"));
     $("#modal-form").dataset.action = isEditing ? "update-order" : "create-order";
     $("#modal-form").dataset.id = isEditing ? order.id : "";
     const type = $("#f-tipo");
     const toggleType = () => {
-      const guild = type?.value === "Gremio";
+      const guild = (type?.value || order?.tipo || "Particular") === "Gremio";
       $("#guild-name-wrap").hidden = !guild;
       $("#f-gremio")?.toggleAttribute("required", guild);
       $("#client-picker-wrap").hidden = guild;
       $("#quick-client-fields").hidden = true;
+      $("#quick-client-toggle").hidden = false;
+      $("#f-cliente_id").disabled = false;
+      $("#f-nuevo_nombre").required = false;
       $("#f-cliente_id").required = !guild;
     };
     type?.addEventListener("change", toggleType);
@@ -246,7 +262,6 @@
     $("#quick-client-toggle")?.addEventListener("click", () => {
       $("#quick-client-fields").hidden = false;
       $("#quick-client-toggle").hidden = true;
-      // Si se da de alta en línea, no exigir también elegir un cliente existente.
       $("#f-cliente_id").required = false;
       $("#f-cliente_id").disabled = true;
       $("#f-nuevo_nombre").required = true;
@@ -256,7 +271,7 @@
       $("#quick-client-fields").hidden = true;
       $("#quick-client-toggle").hidden = false;
       $("#f-cliente_id").disabled = false;
-      $("#f-cliente_id").required = true;
+      $("#f-cliente_id").required = !((type?.value || order?.tipo || "Particular") === "Gremio");
       $("#f-nuevo_nombre").required = false;
     });
   }
@@ -436,15 +451,28 @@
     window.print();
   }
   function monthStart(){const d=new Date();return new Date(d.getFullYear(),d.getMonth(),1);}
-  function renderCash(){if(!$("#cash-list"))return;const start=monthStart();const month=data.cash.filter(x=>new Date(x.creado)>=start);const income=month.filter(x=>x.tipo==="Ingreso").reduce((a,x)=>a+Number(x.importe),0);const expense=month.filter(x=>x.tipo==="Egreso").reduce((a,x)=>a+Number(x.importe),0);$("#cash-income").textContent=money(income);$("#cash-expense").textContent=money(expense);$("#cash-net").textContent=money(income-expense);const branch=$("#cash-branch")?.value||"";const rows=data.cash.filter(x=>!branch||x.sucursal===branch);$("#cash-list").innerHTML=rows.map(x=>"<article class=\"order-row\"><div class=\"row-main\"><b>"+esc(x.concepto)+"</b><small>"+date(x.creado)+" · "+esc(x.categoria)+" · "+esc(x.medio)+"</small></div><span class=\"branch-pill\">"+esc(x.sucursal)+"</span><b class=\"money\" style=\"color:"+(x.tipo==="Ingreso"?"#16805d":"#b42318")+"\">"+(x.tipo==="Ingreso"?"+":"−")+money(x.importe)+"</b></article>").join("")||"<div class=\"empty-state\">Todavía no hay movimientos de caja.</div>";}
-  function renderStock(search=""){if(!$("#stock-list"))return;const q=search.toLocaleLowerCase("es-AR").trim();const rows=data.stockItems.filter(x=>x.activo&&[x.nombre,x.categoria,x.sku].join(" ").toLocaleLowerCase("es-AR").includes(q));$("#stock-count").textContent=data.stockItems.filter(x=>x.activo).length;$("#stock-units").textContent=rows.reduce((a,x)=>a+Number(x.cantidad),0);$("#stock-low").textContent=data.stockItems.filter(x=>x.activo&&Number(x.cantidad)<=Number(x.minimo)).length;$("#stock-list").innerHTML=rows.map(x=>"<article class=\"order-row\"><div class=\"row-main\"><b>"+esc(x.nombre)+"</b><small>"+esc(x.categoria)+" · SKU "+esc(x.sku||"—")+"</small></div><div class=\"row-main\"><b>"+Number(x.cantidad)+" unidades</b><small>Mínimo "+Number(x.minimo)+"</small></div><div class=\"row-main\"><b>"+money(x.precio)+"</b><small>Costo "+money(x.costo)+"</small></div><div class=\"price-actions\"><button class=\"button\" data-stock-move=\""+x.id+"\">Movimiento</button><button class=\"button\" data-stock-edit=\""+x.id+"\">Editar</button></div>"+(Number(x.cantidad)<=Number(x.minimo)?"<span class=\"state-pill pending\">Stock bajo</span>":"")+"</article>").join("")||"<div class=\"empty-state\">No hay artículos cargados. Agregá el primero para empezar.</div>";}
-  function renderSales(){if(!$("#sales-list"))return;const start=monthStart();const rows=data.sales.filter(x=>new Date(x.creado)>=start);$("#sales-total").textContent=money(rows.reduce((a,x)=>a+Number(x.total),0));$("#sales-units").textContent=rows.reduce((a,x)=>a+(x.venta_items||[]).reduce((n,i)=>n+Number(i.cantidad),0),0);$("#sales-margin").textContent=money(rows.reduce((a,x)=>a+Number(x.total)-Number(x.costo_total),0));$("#sales-list").innerHTML=data.sales.map(x=>"<article class=\"order-row\"><div class=\"row-main\"><b>Venta #"+x.id+" · "+esc(x.concepto||"Venta")+"</b><small>"+date(x.creado)+" · "+esc(x.cliente||"Consumidor final")+" · "+esc(x.medio)+"</small></div><span class=\"branch-pill\">"+esc(x.sucursal)+"</span><b class=\"money\">"+money(x.total)+"</b></article>").join("")||"<div class=\"empty-state\">Todavía no hay ventas.</div>";}
+  function renderCash(){if(!$("#cash-list"))return;const start=monthStart();const month=data.cash.filter(x=>new Date(x.creado)>=start);const income=month.filter(x=>x.tipo==="Ingreso").reduce((a,x)=>a+Number(x.importe),0);const expense=month.filter(x=>x.tipo==="Egreso").reduce((a,x)=>a+Number(x.importe),0);$("#cash-income").textContent=money(income);$("#cash-expense").textContent=money(expense);$("#cash-net").textContent=money(income-expense);const branch=$("#cash-branch")?.value||"";const rows=data.cash.filter(x=>!branch||x.sucursal===branch);$("#cash-list").innerHTML=rows.map(x=>"<article class=\"order-row cash-row\"><div class=\"row-main\"><b>"+esc(x.concepto)+"</b><small>"+date(x.creado)+" · "+esc(x.categoria)+" · "+esc(x.medio)+"</small></div><span class=\"branch-pill\">"+esc(x.sucursal)+"</span><b class=\"money\" style=\"color:"+(x.tipo==="Ingreso"?"#16805d":"#b42318")+"\">"+(x.tipo==="Ingreso"?"+":"−")+money(x.importe)+"</b></article>").join("")||"<div class=\"empty-state\">Todavía no hay movimientos de caja.</div>";}
+  function renderStock(search=""){
+    if(!$("#stock-list"))return;
+    const q=search.toLocaleLowerCase("es-AR").trim();
+    const rows=data.stockItems.filter(x=>x.activo&&[x.nombre,x.categoria,x.sku].join(" ").toLocaleLowerCase("es-AR").includes(q));
+    $("#stock-count").textContent=data.stockItems.filter(x=>x.activo).length;
+    $("#stock-units").textContent=rows.reduce((a,x)=>a+Number(x.cantidad),0);
+    $("#stock-low").textContent=data.stockItems.filter(x=>x.activo&&Number(x.cantidad)<=Number(x.minimo)).length;
+    $("#stock-list").innerHTML=rows.map(x=>`<article class="order-row stock-row">
+      <div class="row-main stock-product"><b>${esc(x.nombre)}</b><small>${esc(x.categoria)} · SKU ${esc(x.sku||"—")}</small></div>
+      <div class="row-main stock-quantity"><b>${Number(x.cantidad)} unidades</b><small>Mínimo ${Number(x.minimo)}</small></div>
+      <div class="row-main stock-prices"><b>Venta ${money(x.precio)}</b><small>Costo ${money(x.costo)}</small></div>
+      <div class="price-actions stock-actions"><button class="button" data-stock-move="${x.id}">Movimiento</button><button class="button" data-stock-edit="${x.id}">Editar</button></div>
+      ${Number(x.cantidad)<=Number(x.minimo)?'<span class="state-pill pending stock-low-pill">Stock bajo</span>':""}
+    </article>`).join("")||'<div class="empty-state">No hay artículos cargados. Agregá el primero para empezar.</div>';
+  }
+  function renderSales(){if(!$("#sales-list"))return;const start=monthStart();const rows=data.sales.filter(x=>new Date(x.creado)>=start);$("#sales-total").textContent=money(rows.reduce((a,x)=>a+Number(x.total),0));$("#sales-units").textContent=rows.reduce((a,x)=>a+(x.venta_items||[]).reduce((n,i)=>n+Number(i.cantidad),0),0);$("#sales-margin").textContent=money(rows.reduce((a,x)=>a+Number(x.total)-Number(x.costo_total),0));$("#sales-list").innerHTML=data.sales.map(x=>"<article class=\"order-row sales-row\"><div class=\"row-main\"><b>Venta #"+x.id+" · "+esc(x.concepto||"Venta")+"</b><small>"+date(x.creado)+" · "+esc(x.cliente||"Consumidor final")+" · "+esc(x.medio)+"</small></div><span class=\"branch-pill\">"+esc(x.sucursal)+"</span><b class=\"money\">"+money(x.total)+"</b></article>").join("")||"<div class=\"empty-state\">Todavía no hay ventas.</div>";}
   function openCashForm(){const body="<div class=\"form-grid\">"+selectField("Tipo","tipo",["Egreso","Ingreso"],"Egreso")+selectField("Sucursal","sucursal",Rules.BRANCHES,"E30")+formField("Categoría","categoria","Gastos del local")+selectField("Medio","medio",Rules.PAYMENT_METHODS,"Efectivo")+formField("Concepto *","concepto")+formField("Importe *","importe","","number")+"</div>";openModal("Registrar movimiento","CAJA",body,actionButtons("Cancelar","Guardar movimiento"));$("#modal-form").dataset.action="save-cash";}
   function openStockForm(item=null){const body="<div class=\"form-grid\">"+formField("Nombre *","nombre",item?.nombre||"")+formField("Categoría","categoria",item?.categoria||"Accesorios")+formField("SKU / código","sku",item?.sku||"")+formField("Cantidad inicial","cantidad",item?.cantidad??0,"number")+formField("Costo unitario","costo",item?.costo??0,"number")+formField("Precio de venta","precio",item?.precio??0,"number")+formField("Stock mínimo","minimo",item?.minimo??0,"number")+"</div>";openModal(item?"Editar artículo":"Nuevo artículo","INVENTARIO",body,actionButtons());$("#modal-form").dataset.action="save-stock";$("#modal-form").dataset.id=item?.id||"";}
   function openStockMove(itemId){const item=data.stockItems.find(x=>String(x.id)===String(itemId));if(!item)return;const body="<p class=\"muted\">"+esc(item.nombre)+" · Stock actual: "+item.cantidad+"</p><div class=\"form-grid\">"+selectField("Movimiento","tipo",["Entrada","Salida","Ajuste"],"Entrada")+formField("Cantidad *","cantidad","1","number")+formField("Costo unitario","costo",item.costo,"number")+"<div class=\"field span-2\"><label for=\"f-nota\">Nota</label><input id=\"f-nota\" name=\"nota\"></div></div>";openModal("Movimiento de stock","ARTÍCULO #"+item.id,body,actionButtons());$("#modal-form").dataset.action="stock-move";$("#modal-form").dataset.id=item.id;}
   function openSaleForm(){const active=data.stockItems.filter(x=>x.activo&&Number(x.cantidad)>0);if(!active.length)return notice("Primero cargá artículos con stock disponible.",true);const opts=active.map(x=>x.id+" · "+x.nombre+" · "+x.cantidad+" disponibles");const body="<div class=\"form-grid\">"+selectField("Artículo *","item_id",opts,opts[0],"span-2")+formField("Cantidad *","cantidad","1","number")+formField("Precio unitario","precio_unitario",active[0].precio,"number")+formField("Cliente (opcional)","cliente")+selectField("Sucursal","sucursal",Rules.BRANCHES,"E30")+selectField("Medio de pago","medio",Rules.PAYMENT_METHODS,"Efectivo")+"</div><p class=\"muted\">Al confirmar se descuenta el stock y se registra el ingreso en caja.</p>";openModal("Nueva venta","VENTAS",body,actionButtons("Cancelar","Registrar venta"));$("#modal-form").dataset.action="save-sale";$("#f-item_id").addEventListener("change",()=>{const id=$("#f-item_id").value.split(" · ")[0];const item=active.find(x=>String(x.id)===id);if(item)$("#f-precio_unitario").value=item.precio;});}
   function renderClaims(){if(!$("#claims-list"))return;$("#claims-list").innerHTML=data.claims.map(x=>"<article class=\"order-row\"><div class=\"row-main\"><b>Reclamo #"+x.id+" · Orden #"+x.orden_id+"</b><small>"+esc(x.ordenes?.modelo||"Equipo")+" · "+esc(x.ordenes?.cliente||x.ordenes?.gremio||"Cliente")+" · "+date(x.creado)+"</small></div><span class=\"state-pill pending\">"+esc(x.estado)+"</span><div class=\"price-actions\"><button class=\"button\" data-claim-edit=\""+x.id+"\">Abrir</button></div></article>").join("")||"<div class=\"empty-state\">No hay reclamos cargados.</div>";}
-  undefined
   function renderReports() {
     if (!$("#branch-report")) return;
     const start = monthStart();
@@ -463,7 +491,7 @@
       const paid = branchPayments.reduce((sum, row) => sum + Number(row.importe || 0), 0);
       const sold = branchSales.reduce((sum, row) => sum + Number(row.total || 0), 0);
       const costs = branchOrders.reduce((sum, row) => sum + Number(row.costo || 0), 0);
-      return `<article class="order-row"><div class="row-main"><b>${branch}</b><small>${branchOrders.length} órdenes · ${branchSales.length} ventas</small></div><div class="row-main"><small>Cobros de órdenes</small><b>${money(paid)}</b></div><div class="row-main"><small>Ventas accesorios</small><b>${money(sold)}</b></div><div class="row-main"><small>Costos de órdenes creadas</small><b>${money(costs)}</b></div></article>`;
+      return `<article class="order-row report-row"><div class="row-main"><b>${branch}</b><small>${branchOrders.length} órdenes · ${branchSales.length} ventas</small></div><div class="row-main"><small>Cobros de órdenes</small><b>${money(paid)}</b></div><div class="row-main"><small>Ventas accesorios</small><b>${money(sold)}</b></div><div class="row-main"><small>Costos de órdenes creadas</small><b>${money(costs)}</b></div></article>`;
     }).join("");
   }
   function openClaimForm(claim=null){const orderOpts=data.orders.filter(x=>x.estado==="Entregado"||Number(x.garantia_dias)>0).map(x=>String(x.id)+" · "+x.modelo+" · "+(x.cliente||x.gremio||"Cliente"));const body="<div class=\"form-grid\">"+selectField("Orden *","orden_id",orderOpts,claim?String(claim.orden_id)+" · "+(claim.ordenes?.modelo||""):"") +formField("Motivo del reclamo *","motivo",claim?.motivo||"","text","span-2")+selectField("Estado","estado",["Abierto","En revisión","Aprobado","Rechazado","Resuelto"],claim?.estado||"Abierto")+formField("Diagnóstico","diagnostico",claim?.diagnostico||"","text","span-2")+formField("Resolución","resolucion",claim?.resolucion||"","text","span-2")+"</div>";openModal(claim?"Reclamo #"+claim.id:"Nuevo reclamo","GARANTÍA",body,actionButtons());$("#modal-form").dataset.action="save-claim";$("#modal-form").dataset.id=claim?.id||"";}
@@ -495,7 +523,6 @@
     $("#home-new-order").addEventListener("click", () => openOrderForm());
     $("#home-prices").addEventListener("click", () => setView("precios"));
     $("#home-view-orders").addEventListener("click", () => setView("ordenes"));
-    $("#home-orders").addEventListener("click", () => setView("ordenes"));
     $("#budget-add").addEventListener("click", () => notice("El formulario de presupuestos se incorpora en la siguiente etapa."));
     $("#new-client").addEventListener("click", () => openClientForm());
     $("#new-price").addEventListener("click", () => openPriceForm());

@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#101828">
   <title>Gestión E30</title>
-  <link rel="stylesheet" href="assets/gestion-v2.css?v=e30-dashboard-refine-1">
+  <link rel="stylesheet" href="assets/gestion-v2.css?v=e30-unified-ui-1">
 <script>window.addEventListener("error",function(e){var p=document.querySelector("#loading-screen p");if(p)p.textContent="No se pudo iniciar Gestión: "+(e.message||"error al cargar un archivo");});window.addEventListener("unhandledrejection",function(e){var p=document.querySelector("#loading-screen p");var r=e.reason;if(p)p.textContent="Error al conectar: "+(r&&r.message?r.message:String(r||"error desconocido"));});</script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer onerror="this.onerror=null;this.src=&#39;https://unpkg.com/@supabase/supabase-js@2&#39;"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" defer></script>
-  <script src="assets/e30-gestion-domain.js?v=e30-dashboard-refine-1" defer></script>
-  <script src="assets/gestion-v2.js?v=e30-dashboard-refine-1" defer></script>
+  <script src="assets/e30-gestion-domain.js?v=e30-unified-ui-1" defer></script>
+  <script src="assets/gestion-v2.js?v=e30-unified-ui-1" defer></script>
 </head>
 <body>
   <div id="notice" class="notice" role="status" hidden></div>
@@ -57,7 +57,7 @@
             <article class="stat-card"><span><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 18h6"/></svg>Órdenes activas</span><b id="home-active">0</b></article>
             <article class="stat-card"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>Listas para entregar</span><b id="home-ready">0</b></article>
           </div>
-          <div class="dashboard-actions"><button class="button primary" id="home-new-order">＋ Nueva orden</button><button class="button" id="home-new-budget">＋ Nuevo presupuesto</button><button class="button" id="home-prices">Consultar precios</button></div>
+          <div class="dashboard-actions"><button class="button primary" id="home-new-order">＋ Nueva orden</button><button class="button" id="home-orders">Ver órdenes</button><button class="button" id="home-prices">Consultar precios</button></div>
           <div class="panel table-panel dashboard-recent"><div class="panel-heading"><div><h2>Últimos movimientos</h2><p class="muted">Actividad reciente de órdenes y caja</p></div></div><div id="home-activity" class="orders-list"></div></div>
         </section>
         <section id="view-presupuestos" class="view" hidden>

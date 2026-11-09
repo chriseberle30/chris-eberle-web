@@ -34,7 +34,7 @@
       <nav class="side-nav" aria-label="Navegación principal">
         <button data-view="inicio" class="nav-item active"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg></span>Inicio</button>
         <p class="nav-group-label">OPERACIÓN</p>
-        <button data-view="precios" class="nav-item active"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>Precios</button>
+        <button data-view="precios" class="nav-item"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>Precios</button>
         <button data-view="presupuestos" class="nav-item"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h8l4 4v14H5V3zM14 3v5h5M8 13h8M8 17h8"/></svg></span>Presupuestos</button>
         <button data-view="ordenes" class="nav-item"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></span>Órdenes</button>
         <button data-view="clientes" class="nav-item"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M10 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM20 8v6m3-3h-6"/></svg></span>Clientes</button>
@@ -72,7 +72,7 @@
           <div class="toolbar"><div class="search-wrap"><span>⌕</span><input id="client-search" type="search" placeholder="Buscar por nombre o teléfono…"></div><button id="new-client" class="button primary">＋ Nuevo cliente</button></div>
           <div id="clients-list" class="client-grid"></div>
         </section>
-        <section id="view-precios" class="view">
+        <section id="view-precios" class="view" hidden>
           <div class="toolbar price-toolbar"><div class="search-wrap"><span>⌕</span><input id="price-search" type="search" placeholder="Buscar modelo, reparación o precio…" autocomplete="off" autofocus></div><button id="new-price" class="button primary">＋ Agregar tarifa</button></div><div class="price-chips" role="group" aria-label="Filtrar tipo de reparación"><button class="filter-chip active" type="button" data-price-category="">Todos</button><button class="filter-chip" type="button" data-price-category="pantalla">Pantallas</button><button class="filter-chip" type="button" data-price-category="bater">Baterías</button><button class="filter-chip" type="button" data-price-category="camara">Cámaras</button><button class="filter-chip" type="button" data-price-category="carga">Carga / pin</button><button class="filter-chip" type="button" data-price-category="otro">Otros</button></div>
           <div class="panel table-panel"><div class="panel-heading"><div><h2>Lista de precios</h2><p class="muted">Precios de referencia para consulta rápida</p></div><span id="price-count" class="count-label"></span></div><div id="prices-list" class="orders-list"></div></div>
         </section>

@@ -135,7 +135,29 @@
       return haystack.includes(category);
     });
     $("#price-count").textContent = `${rows.length} tarifas`;
-    $("#prices-list").innerHTML = rows.map((price) => `<article class="order-row price-row"><div class="row-main"><b>${esc(price.marca || "")}</b><small>${esc(price.modelo)}</small></div><div class="row-main"><b>${esc(price.servicio)}</b><small>${price.activo ? "Tarifa activa" : "En pausa"}</small></div><div class="money"><b>${money(price.precio)}</b></div><div class="price-actions"><button class="button" data-copy-price="${price.id}">Copiar</button><button class="button" data-edit-price="${price.id}">Editar</button><button class="button ${price.activo ? "danger" : ""}" data-toggle-price="${price.id}" data-active="${price.activo}">${price.activo ? "Pausar" : "Activar"}</button></div></article>`).join("") || `<div class="empty-state">${data.prices.length ? "No encontramos precios con esa búsqueda o categoría." : `Todavía no hay tarifas cargadas.<div class="empty-actions"><button class="button primary" data-empty-add-price>＋ Agregar tarifa</button><button class="button" data-empty-bulk-price> Carga masiva</button></div>`}</div>`;
+    $("#prices-list").innerHTML = rows.map((price) => `<article class="order-row price-row"><div class="row-main"><b>${esc(price.marca || "")}</b><small>${esc(price.modelo)}</small></div><div class="row-main"><b>${esc(price.servicio)}</b><small>${price.activo ? "Tarifa activa" : "En pausa"}</small></div><div class="money"><b>${money(price.precio)}</b></div><div class="price-actions"><button class="button" data-copy-price="${price.id}">Copiar</button><button class="button" data-edit-price="${price.id}">Editar</button><button class="button ${price.activo ? "danger" : ""}" data-toggle-price="${price.id}" data-active="${price.activo}">${price.activo ? "Pausar" : "Activar"}</button></div></article>`).join("") || `<div class="empty-state">${data.prices.length ? "No encontramos precios con esa búsqueda o categoría." : "Todavía no hay tarifas cargadas.<div class=\\"empty-actions\\"><button class=\\"button primary\\" data-empty-add-price>＋ Agregar tarifa</button><button class=\\"button\\" data-empty-bulk-price>Carga masiva</button></div>"}</div>`;
+  }
+  function openBulkPriceImport() {
+    const body = '<p class="muted">Importá un CSV con columnas: marca, modelo, servicio, precio. La importación agrega tarifas; no modifica ni elimina las existentes.</p><div class="field"><label for="price-csv-file">Archivo CSV</label><input id="price-csv-file" type="file" accept=".csv,text/csv"></div>';
+    openModal("Carga masiva de precios", "IMPORTAR TARIFAS", body, '<button class="button" type="button" data-close>Cancelar</button><button class="button primary" type="button" id="confirm-price-import">Importar CSV</button>');
+    $("#confirm-price-import").addEventListener("click", async () => {
+      const file = $("#price-csv-file").files?.[0];
+      if (!file) return notice("Seleccioná un archivo CSV.", true);
+      try {
+        const raw = await file.text();
+        const lines = raw.replace(/^\\uFEFF/, "").split(/\\r?\\n/).filter(Boolean);
+        const parse = (line) => line.split(",").map((cell) => cell.trim().replace(/^"|"$/g, "").replace(/""/g, '"'));
+        const headers = parse(lines.shift()).map(x => x.toLowerCase());
+        const indexes = ["marca","modelo","servicio","precio"].map(key => headers.indexOf(key));
+        if (indexes.some(i => i < 0)) throw new Error("El CSV debe incluir las columnas marca, modelo, servicio y precio.");
+        const rows = lines.map(line => { const cells=parse(line); return {marca:cells[indexes[0]]||"iPhone",modelo:cells[indexes[1]]||"",servicio:cells[indexes[2]]||"",precio:Number(String(cells[indexes[3]]||"").replace(/[$. ]/g,"").replace(",", ".")),activo:true}; }).filter(x=>x.modelo&&x.servicio&&Number.isFinite(x.precio)&&x.precio>=0);
+        if (!rows.length) throw new Error("No encontré filas válidas para importar.");
+        if (!window.confirm("Se agregarán "+rows.length+" tarifas. ¿Continuar?")) return;
+        const {error}=await sb.from("precios").insert(rows);
+        if(error) throw error;
+        notice(rows.length+" tarifas importadas."); closeModal(); await refresh();
+      } catch(error) { notice("No se pudo importar: "+(error.message||error),true); }
+    });
   }
   function renderTrash() {
     $("#trash-list").innerHTML = data.trash.map((order) => `<article class="order-row"><b class="order-no">#${order.id}</b><div class="row-main"><b>${esc(order.cliente || order.gremio || "Cliente")}</b><small>${esc(order.modelo || "")} · Eliminada ${date(order.borrada)}</small></div><div><span class="branch-pill">${esc(order.negocio)}</span></div><button class="button" data-restore="${order.id}">Restaurar</button></article>`).join("") || `<div class="empty-state">La papelera está vacía.</div>`;

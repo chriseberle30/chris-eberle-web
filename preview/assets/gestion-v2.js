@@ -99,43 +99,533 @@
     $("#home-ready").textContent = active.filter(x => x.estado === "Listo").length;
     const recent = [...active].sort((a,b) => new Date(b.creada || 0) - new Date(a.creada || 0)).slice(0,8);
     $("#home-orders-list").innerHTML = recent.map(order => {
-      const client = order.clientes?.nombre || order.cliente || order.gremio || "";
-    const phone = order.telefono || order.clientes?.telefono || "";
+      const client = order.clientes?.nombre || order.cliente || order.gremio || "Cliente sin nombre";
+      const phone = formatPhone(order.telefono || order.clientes?.telefono || "");
+      const model = order.modelo || "Equipo sin modelo"; const fault = order.falla || "Trabajo sin descripción";
+      const balance = Rules.balance(order);
+      const totalLabel = Number(order.total || 0) > 0 ? money(order.total) : "A PRESUPUESTAR";
+      return `<article class="order-row home-order-row" data-order="${order.id}">
+        <span class="home-order-number">#${order.id}</span>
+        <div class="row-main home-order-copy"><b class="home-device-model">${esc(model)}</b><span class="home-device-fault">${esc(fault)}</span></div>
+        <div class="home-order-client"><b>${esc(client)}</b><small>${esc(phone || "Sin teléfono")}</small></div>
+        <div class="home-order-meta"><button type="button" class="state-pill state-pill-action ${stateClass(order.estado)}" data-quick-state="${order.id}" aria-label="Cambiar estado de la orden ${order.id}">${esc(order.estado || "Pendiente")} <span aria-hidden="true">▾</span></button><span class="branch-pill">${esc(order.negocio || "")}</span></div>
+        <div class="home-order-balance"><b>${balance > 0 ? money(balance) : totalLabel}</b><small>${balance > 0 ? "Saldo pendiente" : (Number(order.total || 0) > 0 ? "Total" : "Sin presupuesto")}</small></div>
+        <time class="home-order-date">${esc(date(order.creada))}</time>
+      </article>`;
+    }).join("") || '<div class="empty-state">No hay órdenes activas. Cuando ingreses un equipo, aparecerá acá.</div>';
+  }
+  function renderStats() {
+    const active = data.orders.filter((order) => !["Entregado", "No reparable", "Cancelado"].includes(order.estado));
+    $("#stat-active").textContent = active.length;
+    $("#stat-ready").textContent = active.filter((order) => order.estado === "Listo").length;
+    $("#stat-balance").textContent = money(active.reduce((sum, order) => sum + Rules.balance(order), 0));
+  }
+  function formatPhone(value) {
+    const digits = String(value || "").replace(/\D/g, "");
+    if (!digits) return "";
+    if (digits.startsWith("549") && digits.length >= 12) return "+54 9 " + digits.slice(3,5) + " " + digits.slice(5);
+    if (digits.startsWith("54") && digits.length >= 11) return "+54 " + digits.slice(2,4) + " " + digits.slice(4);
+    if (digits.startsWith("0") && digits.length >= 10) return digits.slice(0,2) + " " + digits.slice(2,6) + "-" + digits.slice(6);
+    if (digits.length === 10) return digits.slice(0,2) + " " + digits.slice(2,6) + "-" + digits.slice(6);
+    return digits;
+  }
+  function renderOrders(rows = data.orders, target = "#orders-list") {
+    const branch = $("#branch-filter")?.value || "";
+    const state = $("#state-filter")?.value || "";
+    const filtered = rows.filter((order) => (!branch || order.negocio === branch) && (!state || order.estado === state));
+    $("#order-count").textContent = `${filtered.length} ${filtered.length === 1 ? "orden" : "órdenes"}`;
+    const tableHeader = target === "#orders-list" ? "<div class=\"order-table-head\"><span>Orden</span><span>Equipo / falla</span><span>Cliente</span><span>Estado / sucursal</span><span>Saldo</span><span>Fecha</span></div>" : "";
+    $(target).innerHTML = tableHeader + filtered.map((order) => {
+      const client = order.clientes?.nombre || order.cliente || order.gremio || "Cliente sin nombre";
+      const phone = formatPhone(order.telefono || order.clientes?.telefono || "");
+      const due = Rules.balance(order);
+      const totalLabel = Number(order.total || 0) > 0 ? money(order.total) : "A PRESUPUESTAR";
+      return `<article class="order-row order-table-row" data-order="${order.id}">
+        <b class="order-no">#${order.id}</b>
+        <div class="row-main order-device"><b>${esc(order.modelo || "Equipo sin modelo")}</b><small>${esc(order.falla || "Trabajo sin descripción")}</small></div>
+        <div class="order-client"><b>${esc(client)}</b><small>${esc(phone || "Sin teléfono")}</small></div>
+        <div class="order-state"><span class="state-pill ${stateClass(order.estado)}">${esc(order.estado || "Pendiente")}</span><small>${esc(order.negocio || "")}</small></div>
+        <div class="money order-balance"><b>${totalLabel}</b><small>${due > 0 ? "Debe " + money(due) : (Number(order.total || 0) > 0 ? "Saldo cubierto" : "Sin presupuesto")}</small></div>
+        <time class="order-date">${esc(date(order.creada))}</time>
+      </article>`;
+    }).join("") || `<div class="empty-state">${rows.length ? "No hay resultados con estos filtros." : "Todavía no hay órdenes para mostrar."}</div>`;
+  }
+  function renderClients(search = "") {
+    const terms = search.toLocaleLowerCase("es-AR").trim().split(/\s+/).filter(Boolean);
+    const rows = data.clients.filter((client) => terms.every((term) => `${client.nombre} ${client.telefono || ""} ${client.email || ""}`.toLocaleLowerCase("es-AR").includes(term)));
+    $("#clients-list").innerHTML = rows.map((client) => {
+      return `<article class="client-card" data-client="${esc(client.id)}"><b>${esc(client.nombre)}</b><span>${esc(client.telefono || "Sin teléfono")}${client.email ? ` · ${esc(client.email)}` : ""}</span><span class="client-orders">Ver historial de reparaciones</span></article>`;
+    }).join("") || `<div class="empty-state">No hay clientes. Creá uno para asociarlo a una orden.</div>`;
+  }
+  function renderPrices(search = "") {
+    const words = search.toLocaleLowerCase("es-AR").split(/\s+/).filter(Boolean);
+    const category = (document.querySelector(".filter-chip.active")?.dataset.priceCategory || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const collator = new Intl.Collator("es-AR", { numeric: true, sensitivity: "base" });
+    const rows = data.prices.filter((price) => {
+      const haystack = `${price.marca || ""} ${price.modelo || ""} ${price.servicio || ""}`.toLocaleLowerCase("es-AR").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      if (!words.every((word) => haystack.includes(word))) return false;
+      if (!category) return true;
+      if (category === "otro") return !/(pantalla|display|bater|camara|carga|pin)/i.test(haystack);
+      return haystack.includes(category);
+    }).sort((a,b) => {
+      return collator.compare(a.marca || "iPhone", b.marca || "iPhone") || collator.compare(a.modelo || "", b.modelo || "") || collator.compare(a.servicio || "", b.servicio || "");
+    });
+    $("#price-count").textContent = `${rows.length} tarifas`;
+    $("#prices-list").innerHTML = rows.slice(0, renderPrices.limit || 80).map((price) => {
+      const brand = String(price.marca || "iPhone"), model = String(price.modelo || "");
+      const title = model.toLowerCase().startsWith(brand.toLowerCase()) ? model : `${brand} ${model}`.trim();
+      return `<article class="order-row price-row${price.activo ? "" : " paused"}"><div class="row-main price-device"><b>${esc(title)}</b><small>${esc(price.servicio)}${price.activo ? "" : " · En pausa"}</small></div><div class="money price-value"><b>${money(price.precio)}</b></div><button class="icon-copy" type="button" data-copy-price="${price.id}" aria-label="Copiar precio"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg></button><div class="price-actions"><button class="button" data-edit-price="${price.id}">Editar</button><button class="button ${price.activo ? "danger" : ""}" data-toggle-price="${price.id}" data-active="${price.activo}">${price.activo ? "Pausar" : "Activar"}</button></div></article>`;
+    }).join("") + (rows.length > (renderPrices.limit || 80) ? `<button class="button more-prices" type="button" data-more-prices="1">Mostrar más (${rows.length - (renderPrices.limit || 80)} restantes)</button>` : "") || `<div class="empty-state">${data.prices.length ? "No encontramos precios con esa búsqueda o categoría." : 'Todavía no hay tarifas cargadas.<div class="empty-actions"><button class="button primary" data-empty-add-price>＋ Agregar tarifa</button><button class="button" data-empty-bulk-price>Carga masiva</button></div>'}</div>`;
+  }
+  function openBulkPriceImport() {
+    const body = '<p class="muted">Importá un CSV con columnas: marca, modelo, servicio, precio. La importación agrega tarifas; no modifica ni elimina las existentes.</p><div class="field"><label for="price-csv-file">Archivo CSV</label><input id="price-csv-file" type="file" accept=".csv,text/csv"></div>';
+    openModal("Carga masiva de precios", "IMPORTAR TARIFAS", body, '<button class="button" type="button" data-close>Cancelar</button><button class="button primary" type="button" id="confirm-price-import">Importar CSV</button>');
+    $("#confirm-price-import").addEventListener("click", async () => {
+      const file = $("#price-csv-file").files?.[0];
+      if (!file) return notice("Seleccioná un archivo CSV.", true);
+      try {
+        const raw = await file.text();
+        const lines = raw.replace(/^\uFEFF/, "").split(/\r?\n/).filter(Boolean);
+        const sep = (lines[0] || "").includes(";") && !(lines[0] || "").includes(",") ? ";" : ","; const parse = (line) => line.split(sep).map((cell) => cell.trim().replace(/^"|"$/g, "").replace(/""/g, '"'));
+        const headers = parse(lines.shift()).map(x => x.toLowerCase());
+        const indexes = ["marca","modelo","servicio","precio"].map(key => headers.indexOf(key));
+        if (indexes.some(i => i < 0)) throw new Error("El CSV debe incluir las columnas marca, modelo, servicio y precio.");
+        const rows = lines.map(line => { const cells=parse(line); return {marca:cells[indexes[0]]||"iPhone",modelo:cells[indexes[1]]||"",servicio:cells[indexes[2]]||"",precio:Number(String(cells[indexes[3]]||"").replace(/[$. ]/g,"").replace(",", ".")),activo:true}; }).filter(x=>x.modelo&&x.servicio&&Number.isFinite(x.precio)&&x.precio>=0);
+        if (!rows.length) throw new Error("No encontré filas válidas para importar."); const known = new Set(data.prices.map(p => [p.marca || "iPhone", p.modelo, p.servicio].join("|").toLowerCase())); const fresh = rows.filter(r => !known.has([r.marca, r.modelo, r.servicio].join("|").toLowerCase())); if (!fresh.length) throw new Error("Todas las tarifas del archivo ya existían; no se agregó nada.");
+        if (!window.confirm("Se agregarán "+fresh.length+" tarifas nuevas"+(rows.length>fresh.length?" ("+(rows.length-fresh.length)+" repetidas se omiten)":"")+". ¿Continuar?")) return;
+        const {error}=await sb.from("precios").insert(fresh);
+        if(error) throw error;
+        notice(fresh.length+" tarifas importadas."); closeModal(); await refresh();
+      } catch(error) { notice("No se pudo importar: "+(error.message||error),true); }
+    });
+  }
+  function renderTrash() {
+    $("#trash-list").innerHTML = data.trash.map((order) => `<article class="order-row trash-row"><b class="order-no">#${order.id}</b><div class="row-main"><b>${esc(order.cliente || order.gremio || "Cliente")}</b><small>${esc(order.modelo || "")} · Eliminada ${date(order.borrada)}</small></div><div><span class="branch-pill">${esc(order.negocio)}</span></div><button class="button" data-restore="${order.id}">Restaurar</button></article>`).join("") || `<div class="empty-state">La papelera está vacía.</div>`;
+  }
+  function renderCurrent() {
+    renderOrders(); renderClients($("#client-search").value); renderDashboard(); renderPrices($("#price-search").value); renderTrash(); renderCash(); renderStock(); renderSales(); renderClaims(); renderReports();
+  }
+  function setView(view) {
+    data.view = view;
+    $$(".view").forEach((section) => { section.hidden = section.id !== `view-${view}`; });
+    $$('[data-view]').forEach((button) => button.classList.toggle("active", button.dataset.view === view));
+    const titles = { inicio: "Inicio", presupuestos: "Presupuestos", ordenes: "Órdenes de reparación", clientes: "Clientes", precios: "Precios de reparación", caja: "Caja y movimientos", stock: "Inventario y accesorios", ventas: "Ventas", garantias: "Garantías y reclamos", reportes: "Reportes del negocio", costos: "Costos pendientes", papelera: "Papelera de órdenes" };
+    $("#new-order").hidden = view === "inicio";
+        $("#page-title").textContent = titles[view]; $(".sidebar").classList.remove("open"); $("#sidebar-backdrop").classList.remove("visible"); $("#menu-toggle").setAttribute("aria-expanded","false"); $("#menu-toggle").setAttribute("aria-label","Abrir menú"); $("#menu-toggle").textContent="☰";
+    if (view === "inicio") renderDashboard();
+    if (view === "ordenes") loadOrders({ search: $("#order-search").value }).then((rows) => { data.orders = rows; renderOrders(rows); renderStats(); }).catch((error) => notice(error.message, true));
+    if (["caja","stock","ventas","garantias","reportes","costos"].includes(view)) refresh().catch((error) => notice(error.message,true));
+  }
+  function openClientForm(client = null) {
+    const body = `<div class="form-grid">${formField("Nombre completo *", "nombre", client?.nombre || "", "text", "span-2")}${formField("Teléfono", "telefono", client?.telefono || "", "tel")}${formField("Email", "email", client?.email || "", "email")}<div class="field span-2"><label for="f-notas">Notas</label><textarea id="f-notas" name="notas">${esc(client?.notas || "")}</textarea></div></div>`;
+    openModal(client ? "Editar cliente" : "Nuevo cliente", "CLIENTES", body, actionButtons());
+    $("#modal-form").dataset.action = "save-client"; $("#modal-form").dataset.id = client?.id || "";
+  }
+  function getE30Settings(){try{return JSON.parse(localStorage.getItem("e30_settings")||"{}")}catch(e){return {}}}
+  function saveE30Settings(){const s={e30Name:$("#cfg-e30-name").value,i30Name:$("#cfg-i30-name").value,e30Address:$("#cfg-e30-address").value,i30Address:$("#cfg-i30-address").value,phone:$("#cfg-phone").value,warrantyDays:Number($("#cfg-warranty-days").value||30),warrantyTerms:$("#cfg-warranty-terms").value};localStorage.setItem("e30_settings",JSON.stringify(s));notice("Configuración guardada en este dispositivo.");}
+  function openOrderForm(order = null) {
+    const isEditing = Boolean(order?.id);
+    const clientOptions = data.clients.map((client) => `<option value="${esc(client.id)}" ${String(client.id) === String(order?.cliente_id) ? "selected" : ""}>${esc(client.nombre)}${client.telefono ? ` · ${esc(client.telefono)}` : ""}</option>`).join("");
+    const body = `<div class="form-grid order-form-grid">
+      ${!isEditing ? selectField("Tipo de trabajo", "tipo", ["Particular", "Gremio"], "Particular") : ""}
+      ${selectField("Sucursal", "negocio", Rules.BRANCHES, order?.negocio || "E30")}
+      ${isEditing ? selectField("Estado", "estado", Rules.ORDER_STATES, order?.estado || "Recibido", "span-2") : ""}
+      <div class="field span-2" id="client-picker-wrap"><label for="f-cliente_id">Cliente *</label>
+        <select id="f-cliente_id" name="cliente_id"><option value="">Elegí un cliente existente</option>${clientOptions}</select>
+        <button type="button" class="button quick-client-button" id="quick-client-toggle">＋ Alta rápida de cliente</button>
+      </div>
+      <div class="field span-2" id="quick-client-fields" hidden>
+        <label>Nuevo cliente</label>
+        ${formField("Nombre / comercio *", "nuevo_nombre")}
+        ${formField("Teléfono", "nuevo_telefono", "", "tel")}
+        ${formField("Email (opcional)", "nuevo_email", "", "email")}
+        <p class="quick-client-hint">El cliente se guarda automáticamente al crear la orden.</p>
+        <div class="quick-client-actions"><button type="button" class="button" id="quick-client-cancel">Cancelar</button></div>
+      </div>
+      <div class="field span-2" id="guild-name-wrap" hidden>${formField("Técnico / comercio *", "gremio", order?.gremio || "")}</div>
+      ${formField("Modelo del equipo *", "modelo", order?.modelo || "")}
+      ${formField("Total acordado ($)", "total", order?.total ?? "", "number", "span-2")}
+      <div class="field span-2"><label for="f-falla">Falla / trabajo solicitado *</label><textarea id="f-falla" name="falla" required>${esc(order?.falla || "")}</textarea><div class="fault-quick-picks" aria-label="Fall as frecuentes">${["Pantalla","Batería","No carga","Pin de carga","Cámara","Face ID","Audio","No enciende","Se reinicia","Software","Otro"].map(x=>`<button type="button" class="fault-chip" data-fault="${x}">${x}</button>`).join("")}</div></div>
+      <div class="field span-2"><label for="f-estado_ingreso">Observaciones de recepción <span class="muted">· opcional</span></label><textarea id="f-estado_ingreso" name="estado_ingreso" placeholder="Golpes, rayas o accesorios que deja...">${esc(order?.estado_ingreso || "")}</textarea></div>
+      ${!isEditing ? '<div class="field span-2 reception-photo-field"><label for="f-order-photo">Foto del equipo · opcional</label><input id="f-order-photo" name="order_photo" type="file" accept="image/*" capture="environment"><small>Se comprime antes de guardarse para ocupar poco espacio.</small></div>' : ""}
+      ${!isEditing ? formField("Seña inicial ($)", "sena", "0", "number", "span-2") : ""}
+      <details class="order-advanced span-2">
+        <summary>Datos adicionales <span>Opcionales</span></summary>
+        <div class="form-grid">
+          ${formField("IMEI / número de serie", "imei", order?.imei || "")}
+          ${selectField("Garantía (días)", "garantia_dias", ["30", "Sin garantía", "60", "90", "180"], order?.garantia_dias == null ? "30" : String(order.garantia_dias))}
+          <div class="field span-2"><label for="f-notas">Notas internas</label><textarea id="f-notas" name="notas">${esc(order?.notas || "")}</textarea></div>
+        </div>
+      </details>
+    </div>`;
+    openModal(isEditing ? `Editar orden #${order.id}` : "Nueva orden", "ORDEN DE TRABAJO", body, actionButtons("Cancelar", isEditing ? "Guardar cambios" : "Crear orden"));
+    $("#modal-form").dataset.action = isEditing ? "update-order" : "create-order";
+    $("#modal-form").dataset.id = isEditing ? order.id : "";
+    $$(".fault-chip").forEach((button) => button.addEventListener("click", () => {
+      const field=$("#f-falla"); const value=button.dataset.fault;
+      const parts=field.value.split(/[,;\n]/).map(x=>x.trim()).filter(Boolean);
+      if(!parts.some(x=>x.toLocaleLowerCase("es-AR")===value.toLocaleLowerCase("es-AR"))) parts.push(value);
+      field.value=parts.join(", "); field.focus(); button.classList.add("selected");
+    }));
+    const type = $("#f-tipo");
+    const toggleType = () => {
+      const guild = (type?.value || order?.tipo || "Particular") === "Gremio";
+      $("#guild-name-wrap").hidden = !guild;
+      $("#f-gremio")?.toggleAttribute("required", guild);
+      $("#client-picker-wrap").hidden = guild;
+      $("#quick-client-fields").hidden = true;
+      $("#quick-client-toggle").hidden = false;
+      $("#f-cliente_id").disabled = false;
+      $("#f-nuevo_nombre").required = false;
+      $("#f-cliente_id").required = !guild;
+    };
+    type?.addEventListener("change", toggleType);
+    toggleType();
+    $("#quick-client-toggle")?.addEventListener("click", () => {
+      $("#quick-client-fields").hidden = false;
+      $("#quick-client-toggle").hidden = true;
+      $("#f-cliente_id").required = false;
+      $("#f-cliente_id").disabled = true;
+      $("#f-nuevo_nombre").required = true;
+      $("#f-nuevo_nombre").focus();
+    });
+    $("#quick-client-cancel")?.addEventListener("click", () => {
+      $("#quick-client-fields").hidden = true;
+      $("#quick-client-toggle").hidden = false;
+      $("#f-cliente_id").disabled = false;
+      $("#f-cliente_id").required = !((type?.value || order?.tipo || "Particular") === "Gremio");
+      $("#f-nuevo_nombre").required = false;
+    });
+  }
+  function openPriceForm(price = null) {
+    const body = `<div class="form-grid">${formField("Marca", "marca", price?.marca || "iPhone")}${formField("Modelo *", "modelo", price?.modelo || "")} ${formField("Reparación *", "servicio", price?.servicio || "")} ${formField("Precio *", "precio", price?.precio ?? "", "number")}</div>`;
+    openModal(price ? "Editar tarifa" : "Agregar tarifa", "LISTA DE PRECIOS", body, actionButtons());
+    $("#modal-form").dataset.action = "save-price"; $("#modal-form").dataset.id = price?.id || "";
+  }
+  async function openOrder(orderId) {
+    let order = data.orders.find((row) => String(row.id) === String(orderId)) || data.trash.find((row) => String(row.id) === String(orderId));
+    if (!order) {
+      const result = await sb.from("ordenes").select("*,clientes(id,nombre,telefono)").eq("id", orderId).maybeSingle();
+      if (result.error) return notice(result.error.message, true);
+      order = result.data;
+    }
+    if (!order) return;
+    data.currentOrder = order;
+    const [{ data: history, error: historyError }, { data: payments, error: paymentsError }] = await Promise.all([
+      sb.from("orden_historial").select("id,evento,detalle,creado").eq("orden_id", order.id).order("creado", { ascending: false }).limit(100),
+      sb.from("pagos").select("id,importe,medio,creado").eq("orden_id", order.id).order("creado", { ascending: false }),
+    ]);
+    if (historyError || paymentsError) return notice(`No se pudo cargar el historial: ${(historyError || paymentsError).message}`, true);
+    const due = Rules.balance({ ...order, pagos: payments || [] });
+    let photoUrl = ""; if (order.foto_path) { const signed = await sb.storage.from("ordenes-fotos").createSignedUrl(order.foto_path, 300); photoUrl = signed.data?.signedUrl || ""; }
+    const stateOptions = Rules.ORDER_STATES.map((state) => `<option value="${esc(state)}" ${state === order.estado ? "selected" : ""}>${esc(state)}</option>`).join("");
+    const body = `<div class="detail-grid"><div class="detail-item"><small>Cliente</small><b>${esc(order.clientes?.nombre || order.cliente || order.gremio || "Sin nombre")}</b></div><div class="detail-item"><small>Equipo · sucursal</small><b>${esc(order.modelo)} · ${esc(order.negocio)}</b></div><div class="detail-item"><small>Estado</small><b>${esc(order.estado)}</b></div><div class="detail-item"><small>Total · saldo</small><b>${money(order.total)} · ${money(due)}</b></div><div class="detail-item"><small>Falla / trabajo</small><b>${esc(order.falla || "—")}</b></div><div class="detail-item"><small>Teléfono</small><b>${esc(order.telefono || order.clientes?.telefono || "—")}</b></div><div class="detail-item"><small>IMEI / serie</small><b>${esc(order.imei || "—")}</b></div><div class="detail-item"><small>Creada</small><b>${date(order.creada)}</b></div></div><div class="quick-actions">${due > 0 ? `<button class="button primary" data-payment="${order.id}" data-balance="${due}">＋ Registrar pago / seña</button>` : ""}<button class="button" data-edit-order="${order.id}">Editar orden</button><button class="button" data-costs="${order.id}">Cargar costos</button><button class="button" data-add-photo="${order.id}">${order.foto_path ? "Cambiar foto" : "Agregar foto opcional"}</button><button class="button" data-ticket="${order.id}" data-ticket-type="recepcion">Imprimir recepción</button><button class="button" data-ticket="${order.id}" data-ticket-type="entrega">Imprimir entrega</button>${order.borrada ? `<button class="button" data-restore="${order.id}">Restaurar</button>` : `<button class="button danger" data-trash="${order.id}">Enviar a papelera</button>`}</div><div class="field state-editor"><label for="detail-state">Cambiar estado</label><select id="detail-state">${stateOptions}</select><button class="button primary" type="button" data-update-state="${order.id}">Guardar estado</button></div>${photoUrl ? `<div class="order-photo-preview"><img src="${esc(photoUrl)}" alt="Foto del equipo recibido"><small>Foto privada de la orden</small></div>` : ""}<h3 class="section-title">Pagos registrados</h3>${(payments || []).map((payment) => `<div class="payment-row"><span>${date(payment.creado)} · ${esc(payment.medio || "Efectivo")}</span><b>${money(payment.importe)}</b></div>`).join("") || `<p class="muted">Todavía no hay pagos registrados.</p>`}<h3 class="section-title">Historial de la reparación</h3>${(history || []).map((entry) => `<div class="history-item"><b>${esc(entry.evento)}</b>${entry.detalle ? ` · ${esc(entry.detalle)}` : ""}<small>${date(entry.creado)}</small></div>`).join("") || `<p class="muted">Sin eventos de historial.</p>`}`;
+    openModal(`Orden #${order.id}`, "DETALLE DE REPARACIÓN", body, `<button class="button" type="button" data-close>Cerrar</button>`);
+    $("#modal-form").dataset.action = "dismiss";
+  }
+  async function openClient(clientId) {
+    const client = data.clients.find((row) => String(row.id) === String(clientId)); if (!client) return;
+    const { data: linked, error } = await sb.from("ordenes").select("id,cliente_id,cliente,modelo,estado,total,negocio,creada,borrada").eq("cliente_id", client.id).order("creada", { ascending: false }).limit(1000);
+    if (error) return notice(`No se pudo cargar el historial del cliente: ${error.message}`, true);
+    const orders = linked || [];
+    const body = `<div class="detail-grid"><div class="detail-item"><small>Teléfono</small><b>${esc(client.telefono || "—")}</b></div><div class="detail-item"><small>Email</small><b>${esc(client.email || "—")}</b></div></div><p>${esc(client.notas || "Sin notas")}</p><h3 class="section-title">Historial de reparaciones · ${orders.length}</h3>${orders.map((order) => `<div class="history-item" data-open-order="${order.id}"><b>#${order.id} · ${esc(order.modelo || "Equipo")}</b> · ${esc(order.borrada ? "En papelera" : order.estado)} · ${money(order.total)}<small>${date(order.creada)} · ${esc(order.negocio)}</small></div>`).join("") || `<p class="muted">Este cliente todavía no tiene órdenes asociadas.</p>`}<div class="quick-actions"><button class="button" data-edit-client="${esc(client.id)}">Editar cliente</button><button class="button primary" data-client-new-order="${esc(client.id)}">＋ Crear orden</button></div>`;
+    openModal(client.nombre, "CLIENTE E HISTORIAL", body, `<button class="button" type="button" data-close>Cerrar</button>`);
+  }
+  function openCostsForm(order) {
+    const body = `<p class="muted">Completá estos datos cuando tengas un rato. No hace falta cargarlos al recibir el equipo.</p><div class="form-grid">
+      ${formField("Costo del repuesto ($)", "costo_repuesto", order.costo_repuesto ?? 0, "number")}
+      ${formField("Mano de obra ($)", "costo_mano_obra", order.costo_mano_obra ?? 0, "number")}
+      ${formField("Otros gastos ($)", "costo_otros", order.costo_otros ?? 0, "number")}
+      <p class="muted span-2">No modifica caja ni stock. Solo calcula la rentabilidad de la reparación.</p>
+    </div>`;
+    openModal("Completar costos", `ORDEN #${order.id} · ${esc(order.modelo || "")}`, body, actionButtons("Después", "Guardar costos"));
+    $("#modal-form").dataset.action = "save-order-costs"; $("#modal-form").dataset.id = order.id;
+  }
+  async function storeOrderPhoto(orderId, file) {
+    if (!file || !file.type.startsWith("image/")) throw new Error("Elegí una imagen válida.");
+    const image = new Image(), objectUrl = URL.createObjectURL(file);
+    try {
+      await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=()=>reject(new Error("No se pudo leer la foto."));image.src=objectUrl;});
+      const scale=Math.min(1,1280/Math.max(image.width,image.height)), canvas=document.createElement("canvas");
+      canvas.width=Math.max(1,Math.round(image.width*scale));canvas.height=Math.max(1,Math.round(image.height*scale));
+      canvas.getContext("2d").drawImage(image,0,0,canvas.width,canvas.height);
+      let blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/jpeg",0.68));if(!blob)throw new Error("No se pudo comprimir la foto.");
+      let quality=0.58;while(blob.size>240*1024&&quality>=0.38){blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/jpeg",quality));quality-=0.08;}
+      if(blob.size>256*1024)throw new Error("La foto sigue siendo pesada. Probá con otra imagen.");
+      const {data:userData,error:userError}=await sb.auth.getUser();if(userError||!userData.user)throw new Error("La sesión expiró. Volvé a ingresar.");
+      const path=userData.user.id+"/"+orderId+".jpg";
+      const uploaded=await sb.storage.from("ordenes-fotos").upload(path,blob,{contentType:"image/jpeg",upsert:true});if(uploaded.error)throw uploaded.error;
+      const saved=await sb.from("ordenes").update({foto_path:path}).eq("id",orderId);if(saved.error)throw saved.error;
+    } finally { URL.revokeObjectURL(objectUrl); }
+  }
+  async function addOrderPhoto(orderId) {
+    const input=document.createElement("input");input.type="file";input.accept="image/*";input.capture="environment";
+    input.addEventListener("change",async()=>{const file=input.files?.[0];if(!file)return;try{await storeOrderPhoto(orderId,file);notice("Foto comprimida y guardada (máximo 256 KB).");await refresh();await openOrder(orderId);}catch(error){notice("No se pudo guardar la foto: "+(error.message||error),true);}},{once:true});input.click();
+  }
+  function openPayment(orderId, balance) {
+    const body = `<div class="form-grid">${formField("Importe del pago *", "importe", balance, "number")}${selectField("Medio de pago", "medio", Rules.PAYMENT_METHODS, "Efectivo")}<p class="muted span-2">Saldo actual: ${money(balance)}. El registro queda asociado a la orden.</p></div>`;
+    openModal("Registrar pago", `ORDEN #${orderId}`, body, actionButtons("Cancelar", "Registrar pago"));
+    $("#modal-form").dataset.action = "save-payment"; $("#modal-form").dataset.id = orderId;
+  }
+  async function runAction(event) {
+    const form = event.currentTarget; const action = form.dataset.action; if (action === "dismiss") return;
+    event.preventDefault(); if (data.busy) return; data.busy = true;
+    const fd = new FormData(form); const values = Object.fromEntries(fd.entries());
+    try {
+      if (action === "save-client") {
+        const payload = Rules.validateClient(values);
+        const query = form.dataset.id ? sb.from("clientes").update(payload).eq("id", form.dataset.id) : sb.from("clientes").insert(payload);
+        const { error } = await query; if (error) throw error;
+        notice("Cliente guardado.");
+      } else if (action === "create-order" || action === "update-order") {
+        let client = data.clients.find((row) => row.id === values.cliente_id);
+        const tipo = action === "create-order" ? (values.tipo || "Particular") : (data.currentOrder?.tipo || "Particular");
+        if (tipo === "Particular" && !client && values.nuevo_nombre?.trim()) {
+          const quickPayload = Rules.validateClient({ nombre: values.nuevo_nombre, telefono: values.nuevo_telefono, email: values.nuevo_email });
+          const created = await sb.from("clientes").insert(quickPayload).select("id,nombre,telefono").single();
+          if (created.error) throw created.error;
+          client = created.data;
+           data.clients.push(created.data);
+        }
+        if (tipo === "Particular" && !client) throw new Error("Elegí un cliente o crealo desde esta misma pantalla.");
+        if (tipo === "Gremio" && !values.gremio?.trim()) throw new Error("Ingresá el nombre del técnico o comercio.");
+        
+        const valid = Rules.validateOrder({ ...values, sena: action === "create-order" ? values.sena : 0 });
+        const payload = { cliente_id: tipo === "Particular" ? client.id : null, cliente: tipo === "Particular" ? client.nombre : values.gremio.trim(), telefono: tipo === "Particular" ? client.telefono : values.nuevo_telefono || null, negocio: valid.negocio, tipo, gremio: tipo === "Gremio" ? values.gremio.trim() : null, marca: "Apple", modelo: valid.modelo, falla: valid.falla, estado: values.estado || "Recibido", total: valid.total, notas: values.notas || null, estado_ingreso: values.estado_ingreso?.trim() || null, imei: values.imei || null, garantia_dias: values.garantia_dias === "Sin garantía" ? 0 : Number(values.garantia_dias || 30), garantia_condiciones: getE30Settings().warrantyTerms || "La garantía cubre el trabajo realizado y el repuesto instalado. No cubre golpes, humedad ni manipulación de terceros.", trabajo_realizado: values.trabajo_realizado || null };
+        if (action === "create-order") {
+          const result = await sb.rpc("e30_crear_orden", { p_orden: payload, p_sena: valid.sena, p_medio: "Efectivo" });
+          if (result.error) throw result.error;
+          data.lastCreatedOrderId = result.data;
+           const receptionPhoto = $("#f-order-photo")?.files?.[0];
+           if (receptionPhoto) { try { await storeOrderPhoto(data.lastCreatedOrderId, receptionPhoto); } catch (photoError) { notice("La orden se creó, pero no se pudo guardar la foto: " + (photoError.message || photoError), true); } }
+        } else {
+          const existing = await sb.from("ordenes").select("pagos(importe)").eq("id", form.dataset.id).single();
+          if (existing.error) throw existing.error;
+          const paidAmount = (existing.data.pagos || []).reduce((sum, payment) => sum + Number(payment.importe || 0), 0);
+          if (valid.total < paidAmount) throw new Error(`El total no puede quedar debajo de lo ya pagado (${money(paidAmount)}).`);
+          payload.entregada = payload.estado === "Entregado" ? (data.currentOrder?.entregada || new Date().toISOString()) : null;
+          const result = await sb.from("ordenes").update(payload).eq("id", form.dataset.id);
+          if (result.error) throw result.error;
+        }
+        notice(action === "create-order" ? `Orden #${data.lastCreatedOrderId} creada.` : "Orden actualizada.");
+      } else if (action === "save-order-costs") {
+        const fields=["costo_repuesto","costo_mano_obra","costo_otros"];const costs={};
+        for(const key of fields){const n=Number(values[key]||0);if(!Number.isFinite(n)||n<0)throw new Error("Los costos deben ser números iguales o mayores a cero.");costs[key]=n;}
+        costs.costo=costs.costo_repuesto+costs.costo_mano_obra+costs.costo_otros;costs.costos_cargados=true;
+        const {error}=await sb.from("ordenes").update(costs).eq("id",form.dataset.id);if(error)throw error;notice("Costos guardados.");
+      } else if (action === "save-price") {
+        const existingPrice = data.prices.find((row) => String(row.id) === String(form.dataset.id));
+        const price = { marca: values.marca || "iPhone", modelo: values.modelo.trim(), servicio: values.servicio.trim(), precio: Number(values.precio), activo: existingPrice ? existingPrice.activo : true };
+        if (!price.modelo || !price.servicio || !Number.isFinite(price.precio) || price.precio < 0) throw new Error("Completá modelo, reparación y un precio válido.");
+        const query = form.dataset.id ? sb.from("precios").update(price).eq("id", form.dataset.id) : sb.from("precios").insert(price);
+        const { error } = await query; if (error) throw error; notice("Precio guardado.");
+      } else if(action==="save-claim"){
+        const orderId=Number(values.orden_id.split(" · ")[0]);if(!orderId||!values.motivo?.trim())throw new Error("Elegí una orden y describí el motivo.");const payload={orden_id:orderId,motivo:values.motivo.trim(),estado:values.estado,diagnostico:values.diagnostico||null,resolucion:values.resolucion||null,actualizado:new Date().toISOString()};const q=form.dataset.id?sb.from("reclamos_garantia").update(payload).eq("id",form.dataset.id):sb.from("reclamos_garantia").insert(payload);const {error}=await q;if(error)throw error;notice("Reclamo guardado.");
+      } else if(action==="save-cash"){
+        const amount=Number(values.importe);if(!values.concepto?.trim()||!Number.isFinite(amount)||amount<=0)throw new Error("Completá concepto e importe válido.");
+        const {error}=await sb.from("caja_movimientos").insert({tipo:values.tipo,categoria:values.categoria||"General",concepto:values.concepto.trim(),importe:amount,medio:values.medio,sucursal:values.sucursal});if(error)throw error;notice("Movimiento de caja registrado.");
+      } else if(action==="save-stock"){
+        const payload={nombre:values.nombre.trim(),categoria:values.categoria||"Accesorios",sku:values.sku||null,cantidad:Number(values.cantidad),costo:Number(values.costo),precio:Number(values.precio),minimo:Number(values.minimo)};if(!payload.nombre||Object.values(payload).some(v=>typeof v==="number"&&(!Number.isFinite(v)||v<0)))throw new Error("Revisá nombre, cantidades y precios.");
+        if(form.dataset.id){delete payload.cantidad;const {error}=await sb.from("stock_items").update(payload).eq("id",form.dataset.id);if(error)throw error;}else{const {data:item,error}=await sb.from("stock_items").insert(payload).select("id,cantidad,costo").single();if(error)throw error;if(Number(item.cantidad)>0){const {error:moveError}=await sb.from("stock_movimientos").insert({item_id:item.id,tipo:"Entrada",cantidad:item.cantidad,costo_unitario:item.costo,nota:"Stock inicial"});if(moveError)throw moveError;}}notice("Artículo guardado.");
+      } else if(action==="stock-move"){
+        const {error}=await sb.rpc("e30_stock_movimiento",{p_item_id:Number(form.dataset.id),p_tipo:values.tipo,p_cantidad:Number(values.cantidad),p_costo:Number(values.costo||0),p_nota:values.nota||null});if(error)throw error;notice("Stock actualizado.");
+      } else if(action==="save-sale"){
+        const itemId=Number(values.item_id.split(" · ")[0]);const amount=Number(values.cantidad);const price=Number(values.precio_unitario);if(!Number.isFinite(amount)||amount<=0||!Number.isFinite(price)||price<0)throw new Error("Revisá cantidad y precio.");
+        const {data:id,error}=await sb.rpc("e30_registrar_venta",{p_venta:{sucursal:values.sucursal,cliente:values.cliente,medio:values.medio,precio_unitario:price},p_item_id:itemId,p_cantidad:amount});if(error)throw error;notice("Venta #"+id+" registrada; stock y caja actualizados.");
+      } else if (action === "save-payment") {
+        const order = data.orders.find((row) => String(row.id) === String(form.dataset.id));
+        if (!order) throw new Error("No se encontró la orden.");
+        const { data: payments, error: paymentReadError } = await sb.from("pagos").select("importe").eq("orden_id", order.id);
+        if (paymentReadError) throw paymentReadError;
+        const currentBalance = Math.max(0, Number(order.total) - (payments || []).reduce((sum, item) => sum + Number(item.importe || 0), 0));
+        const payment = Rules.validatePayment(values, currentBalance);
+        const { error } = await sb.rpc("e30_registrar_pago", { p_orden_id: order.id, p_importe: payment.importe, p_medio: payment.medio }); if (error) throw error;
+        notice("Pago registrado.");
+      }
+      closeModal(); await refresh();
+      if (action === "create-order") {
+        if (data.lastCreatedOrderId) printTicket(data.lastCreatedOrderId);
+      }
+    } catch (error) { notice(error.message || "No se pudo guardar el cambio.", true); }
+    finally { data.busy = false; }
+  }
+  async function updateOrderState(orderId, selectedState = null) {
+    const state = selectedState || $("#detail-state")?.value;
+    if (!Rules.ORDER_STATES.includes(state)) return notice("Elegí un estado válido.", true);
+    const order = data.orders.find((row) => String(row.id) === String(orderId)) || data.currentOrder;
+    const patch = { estado: state, entregada: state === "Entregado" ? (order?.entregada || new Date().toISOString()) : null };
+    const { error } = await sb.from("ordenes").update(patch).eq("id", orderId);
+    if (error) return notice(`No se pudo actualizar el estado: ${error.message}`, true);
+    closeModal(); await refresh(); notice(`Estado de la orden #${orderId}: ${state}.`);
+  }
+
+  function openQuickStatePicker(orderId) {
+    const order = data.orders.find((row) => String(row.id) === String(orderId));
+    if (!order) return;
+    const options = Rules.ORDER_STATES.map((state) => `<option value="${esc(state)}" ${state === order.estado ? "selected" : ""}>${esc(state)}</option>`).join("");
+    const body = `<p class="muted">Elegí el nuevo estado para <b>${esc(order.modelo || "el equipo")}</b>.</p><div class="field"><label for="quick-detail-state">Estado de reparación</label><select id="quick-detail-state">${options}</select></div>`;
+    openModal(`Estado · Orden #${order.id}`, "ACTUALIZACIÓN RÁPIDA", body, '<button class="button" type="button" data-close>Cancelar</button><button class="button primary" type="button" id="quick-state-save">Guardar estado</button>');
+    $("#quick-state-save").addEventListener("click", () => updateOrderState(orderId, $("#quick-detail-state").value));
+  }
+
+  async function trashOrder(orderId) {
+    if (!confirm(`¿Enviar la orden #${orderId} a la papelera? Se puede restaurar después.`)) return;
+    const { error } = await sb.from("ordenes").update({ borrada: new Date().toISOString() }).eq("id", orderId);
+    if (error) return notice(`No se pudo mover a papelera: ${error.message}`, true);
+    closeModal(); await refresh(); notice("Orden enviada a la papelera.");
+  }
+  async function restoreOrder(orderId) {
+    const { error } = await sb.from("ordenes").update({ borrada: null }).eq("id", orderId);
+    if (error) return notice(`No se pudo restaurar: ${error.message}`, true);
+    closeModal(); await refresh(); notice("Orden restaurada.");
+  }
+  async function togglePrice(priceId, active) {
+    const { error } = await sb.from("precios").update({ activo: !active }).eq("id", priceId);
+    if (error) return notice(error.message, true); await refresh(); notice(active ? "Tarifa pausada." : "Tarifa activada.");
+  }
+
+  let e30QueueTimer = null;
+  let e30QueueBusy = false;
+  let e30QueueStarting = false;
+
+  function isMobilePrintClient() {
+    return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+  }
+
+  async function processRemotePrintQueue() {
+    if (e30QueueBusy || !window.qz || !qz.websocket.isActive()) return;
+    e30QueueBusy = true;
+    try {
+      const { data: job, error } = await sb.from("print_jobs")
+        .select("id,payload,job_name")
+        .eq("status", "pending")
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      if (!job) return;
+      const { data: claimed, error: claimError } = await sb.from("print_jobs")
+        .update({ status: "printing", last_error: null })
+        .eq("id", job.id).eq("status", "pending")
+        .select("id");
+      if (claimError) throw claimError;
+      if (!claimed?.length) return;
+      try {
+        const printer = await qz.printers.find("XP-80");
+        if (!printer) throw new Error("No se encontró la XP-80.");
+        const config = qz.configs.create(printer, { margins: 0, jobName: job.job_name || "E30 comprobante" });
+        await qz.print(config, [{ type: "html", format: "plain", data: job.payload }]);
+        await qz.print(config, [{ type: "raw", format: "command", flavor: "plain", data: "\x1B" + "d" + "\x07" + "\x1D" + "V" + "\x00" }]);
+        const { error: doneError } = await sb.from("print_jobs")
+          .update({ status: "done", printed_at: new Date().toISOString(), last_error: null })
+          .eq("id", job.id);
+        if (doneError) throw doneError;
+        notice("Comprobante recibido del celular e impreso.", false);
+      } catch (printError) {
+        await sb.from("print_jobs").update({ status: "pending", last_error: String(printError?.message || printError).slice(0, 500) }).eq("id", job.id);
+        throw printError;
+      }
+    } catch (error) {
+      console.error("E30 cola de impresión", error);
+    } finally {
+      e30QueueBusy = false;
+    }
+  }
+
+  async function startRemotePrintReceiver() {
+    if (isMobilePrintClient() || e30QueueStarting || e30QueueTimer) return;
+    e30QueueStarting = true;
+    try {
+      if (!window.qz) throw new Error("QZ Tray todavía no está cargado.");
+      if (!qz.websocket.isActive()) await qz.websocket.connect();
+      const printer = await qz.printers.find("XP-80");
+      if (!printer) throw new Error("No se encontró la XP-80.");
+      await processRemotePrintQueue();
+      e30QueueTimer = setInterval(processRemotePrintQueue, 1500);
+      console.info("E30: receptor remoto de impresión activo.");
+    } catch (error) {
+      console.warn("E30: no se pudo iniciar el receptor remoto; se reintentará.", error);
+      setTimeout(startRemotePrintReceiver, 5000);
+    } finally {
+      e30QueueStarting = false;
+    }
+  }
+
+  async function printTicketWithQZ() {
+    try {
+      const ticket = document.querySelector("#print-area").innerHTML;
+      const styles = `
+        <style>
+          @page { size: 80mm auto; margin: 4mm; }
+          html,body { margin:0; padding:0; width:72mm; color:#000; background:#fff; }
+          body { font:9px/1.2 Arial,sans-serif; }
+          .ticket { width:100%; }
+          h2 { text-align:center; font-size:14px; margin:0 0 2px; }
+          h3 { text-align:center; font-size:11px; margin:5px 0; }
+          p { margin:2px 0 5px; overflow-wrap:anywhere; }
+          hr { border:0; border-top:1px dashed #000; margin:4px 0; }
+          b { font-weight:700; }
+          .ticket-tracking { text-align:center; margin:5px 0; padding:1mm 0; }
+          .ticket-tracking img { display:block; width:30mm; height:30mm; margin:3px auto; image-rendering:pixelated; background:#fff; padding:2mm; }
+          .ticket-tracking small { display:block; font-size:9px; margin-top:3px; }
+        </style>`;
+      const doc = "<html><head><meta charset='utf-8'>" + styles + "</head><body>" + ticket + "</body></html>";
+
+      if (isMobilePrintClient()) {
+        const { error } = await sb.from("print_jobs").insert({ payload: doc, job_name: "E30 comprobante" });
+        if (error) throw error;
+        notice("Comprobante enviado a la notebook. Se imprimirá automáticamente.", false);
+        return;
+      }
+
+      if (!window.qz) throw new Error("QZ Tray no está cargado en esta página.");
+      if (!qz.websocket.isActive()) await qz.websocket.connect();
+      const printer = await qz.printers.find("XP-80");
+      if (!printer) throw new Error("No se encontró la impresora XP-80.");
+      const config = qz.configs.create(printer, { margins: 0, jobName: "E30 Comprobante" });
+      await qz.print(config, [{ type: "html", format: "plain", data: doc }]);
+      await qz.print(config, [{ type: "raw", format: "command", flavor: "plain", data: "\x1B" + "d" + "\x07" + "\x1D" + "V" + "\x00" }]);
+      notice("Comprobante enviado a la XP-80.", false);
+    } catch (err) {
+      console.error("E30 QZ print", err);
+      notice("No se pudo enviar/imprimir: " + (err?.message || err), true);
+    }
+  }
+
+  async function printTicket(orderId, type = "recepcion") {
+    let order = data.orders.find((row) => String(row.id) === String(orderId)) || data.trash.find((row) => String(row.id) === String(orderId));
+    if (!order) {
+      const result = await sb.from("ordenes").select("*,pagos(id,importe,medio,creado),clientes(id,nombre,telefono)").eq("id", orderId).maybeSingle();
+      if (result.error) return notice(result.error.message, true);
+      order = result.data;
+    }
+    if (!order) return;
+    const { data: payments, error } = await sb.from("pagos").select("id,importe,medio,creado").eq("orden_id", order.id).order("creado");
+    if (error) return notice(error.message, true);
+    const client = order.clientes?.nombre || order.cliente || order.gremio || "—";
     const paid = (payments || []).reduce((sum, p) => sum + Number(p.importe || 0), 0);
     const due = Math.max(0, Number(order.total || 0) - paid);
     const settings=getE30Settings(); const brand = order.negocio === "i30" ? (settings.i30Name||"i30 | iPhone Service") : (settings.e30Name||"E30 | Técnico de celulares");
-    const address = (order.negocio === "i30" ? settings.i30Address : settings.e30Address) || (order.negocio === "i30" ? "Moreno" : "Las Flores");
     const warrantyDays = order.garantia_dias == null ? 30 : Number(order.garantia_dias);
     const warrantyEnd = order.entregada && warrantyDays > 0
-      ? new Date(new Date(order.entregada).getTime() + warrantyDays * 86400000).toLocaleDateString("es-AR") : "";
+      ? new Date(new Date(order.entregada).getTime() + warrantyDays * 86400000).toLocaleDateString("es-AR") : "No corresponde / pendiente";
     const isDelivery = type === "entrega";
-    const fault = isDelivery ? (order.trabajo_realizado || order.falla || "") : (order.falla || "");
-    const terms = [warrantyDays === 0 ? "Trabajo sin garantía." : `Garantía: ${warrantyDays} días.`, order.garantia_condiciones || ""].filter(Boolean).join(" ");
+    const paymentLines = (payments || []).map(p => `<div>${date(p.creado)} · ${esc(p.medio)}: ${money(p.importe)}</div>`).join("");
+    const terms = warrantyDays === 0 ? "Trabajo sin garantía." : `Garantía: ${warrantyDays} días.`;
     const trackingUrl = order.tracking_token ? (() => { const u = new URL("seguimiento.html", location.href); u.searchParams.set("t", order.tracking_token); return u.href; })() : "";
-    const equipo = [order.marca, order.modelo].filter(Boolean).join(" ");
-    const orderDate = date(isDelivery ? (order.entregada || new Date().toISOString()) : order.creada);
     $("#print-area").innerHTML = `<div class="ticket">
-      <div class="ticket-brand">${esc(brand)}</div>
-      ${address ? `<p class="ticket-address">${esc(address)}</p>` : ""}
-      <div class="ticket-kind">${isDelivery ? "COMPROBANTE DE ENTREGA" : "COMPROBANTE DE RECEPCIÓN"}</div>
-      <div class="ticket-order">ORDEN #${esc(order.id)}</div>
-      ${orderDate ? `<p class="ticket-date">${isDelivery ? "Fecha de entrega" : "Fecha de recepción"}: ${orderDate}</p>` : ""}
-      <hr class="ticket-rule">
-      ${client || phone ? `<section class="ticket-section"><span class="ticket-label">CLIENTE</span>${client ? `<p class="ticket-value">${esc(client)}</p>` : ""}${phone ? `<p class="ticket-value ticket-sub">Tel. ${esc(phone)}</p>` : ""}</section>` : ""}
-      ${equipo || order.imei ? `<section class="ticket-section"><span class="ticket-label">EQUIPO</span>${equipo ? `<p class="ticket-value">${esc(equipo)}</p>` : ""}${order.imei ? `<p class="ticket-value ticket-sub">IMEI: ${esc(order.imei)}</p>` : ""}</section>` : ""}
-      ${!isDelivery && order.estado_ingreso ? `<section class="ticket-section"><span class="ticket-label">ESTADO DE INGRESO</span><p class="ticket-value">${esc(order.estado_ingreso)}</p></section>` : ""}
-      ${fault ? `<section class="ticket-section"><span class="ticket-label">${isDelivery ? "TRABAJO REALIZADO" : "FALLA INFORMADA"}</span><p class="ticket-value">${esc(fault)}</p></section>` : ""}
-      <hr class="ticket-rule">
-      <span class="ticket-label">RESUMEN DE CUENTA</span>
-      <div class="ticket-money">
-        <div class="ticket-money-row"><span>Total</span><strong>${money(order.total)}</strong></div>
-        <div class="ticket-money-row"><span>Pagado / seña</span><strong>${money(paid)}</strong></div>
-        <div class="ticket-money-row ticket-balance"><span>Saldo</span><strong>${money(due)}</strong></div>
-      </div>
-      ${terms || (isDelivery && warrantyEnd) ? `<section class="ticket-section"><span class="ticket-label">GARANTÍA Y CONDICIONES</span><p class="ticket-terms">${esc(terms)}${isDelivery && warrantyEnd ? `<br><strong>Vencimiento de garantía: ${warrantyEnd}</strong>` : ""}</p></section>` : ""}
-      <div class="ticket-sign"><div class="ticket-sign-line"></div>Firma y aclaración de conformidad</div>
-      ${trackingUrl ? `<hr class="ticket-rule"><div class="ticket-tracking"><div id="tracking-qr"></div><b>SEGUIMIENTO ONLINE</b><small>Escaneá para consultar el estado de tu equipo</small></div>` : ""}
-      <p class="ticket-thanks">Gracias por confiar en ${esc(order.negocio || brand)}.</p>
+      <h2>${brand}</h2><p>${(order.negocio === "i30" ? settings.i30Address : settings.e30Address) || (order.negocio === "i30" ? "Moreno" : "Las Flores")}</p><hr>
+      <h3>${isDelivery ? "COMPROBANTE DE ENTREGA" : "COMPROBANTE DE RECEPCIÓN"}</h3>
+      <b>ORDEN #${esc(order.id)}</b> · ${date(isDelivery ? (order.entregada || new Date().toISOString()) : order.creada)}<hr>
+      ${trackingUrl ? `<div class="ticket-tracking"><div id="tracking-qr"></div><b>Seguimiento online</b><small>Escaneá para ver el estado</small></div><hr>` : ""}
+      <b>CLIENTE</b><p>${esc(client)}<br>${esc(order.telefono || order.clientes?.telefono || "—")}</p>
+      <b>EQUIPO</b><p>${esc(order.marca || "")} ${esc(order.modelo || "")}${order.imei ? `<br>IMEI: ${esc(order.imei)}` : ""}</p>
+      ${!isDelivery ? `<b>ESTADO DE INGRESO</b><p>${esc(order.estado_ingreso||"No informado")}</p>` : ""}<b>${isDelivery ? "TRABAJO REALIZADO" : "FALLA INFORMADA"}</b><p>${esc(isDelivery ? (order.trabajo_realizado || order.falla || "—") : (order.falla || "—"))}</p>
+      <hr><b>RESUMEN DE CUENTA</b><p>Total: ${money(order.total)}<br>Pagado: ${money(paid)}<br><b>Saldo: ${money(due)}</b></p>
+      ${isDelivery ? `<b>PAGOS</b><p>${paymentLines || "Sin pagos registrados"}</p>` : ""}
+      <hr><b>GARANTÍA Y CONDICIONES</b><p>${terms}<br>${esc(order.garantia_condiciones || "Conserve este comprobante para cualquier consulta.")}${isDelivery && order.garantia_dias > 0 ? `<br>Vencimiento estimado: ${warrantyEnd}` : ""}</p>
+      <hr><p>Declaro recibir / entregar el equipo y acepto las condiciones informadas.</p>
+      <p style="margin-top:10px">Firma: ____________________</p><hr><p>Gracias por confiar en ${esc(order.negocio)}.</p>
     </div>`;
     if (trackingUrl && window.QRCode) {
       new QRCode($("#tracking-qr"), { text: trackingUrl, width: 120, height: 120, correctLevel: QRCode.CorrectLevel.L });

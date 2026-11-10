@@ -898,3 +898,8 @@ body.theme-dark .mobile-nav{background:#111c2d;border-color:#29364a}
 body.theme-dark .mobile-nav button{color:#a5b1c2}
 body.theme-dark .mobile-nav button.active{color:#8fb0ff}
 body.theme-dark .modal::backdrop{background:#020611cc}
+
+/* FIX DEFINITIVO: acciones del inicio siempre en dos columnas iguales */
+#view-inicio .dashboard-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important;width:100%}
+#view-inicio .dashboard-actions #home-new-order,
+#view-inicio .dashboard-actions #home-prices{grid-column:auto!important;display:inline-flex!important;width:100%!important;min-width:0;min-height:46px!important;flex:initial!important;justify-content:center!important;align-items:center!important;white-space:normal}

@@ -5,7 +5,7 @@
   else root.E30Gestion = api;
 })(typeof globalThis !== "undefined" ? globalThis : this, function () {
   const BRANCHES = ["E30", "i30"];
-  const ORDER_STATES = ["Recibido", "Pendiente", "Esperando repuesto", "En reparación", "Listo", "Entregado", "Cancelado"];
+  const ORDER_STATES = ["Recibido", "Pendiente", "Esperando repuesto", "En reparación", "Listo", "Entregado", "No reparable", "Cancelado"];
   const PAYMENT_METHODS = ["Efectivo", "Transferencia", "Mercado Pago", "Tarjeta"];
   const clean = (value) => String(value ?? "").trim();
   const amount = (value) => {

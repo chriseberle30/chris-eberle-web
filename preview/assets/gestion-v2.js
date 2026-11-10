@@ -242,7 +242,7 @@
         <summary>Datos adicionales <span>Opcionales</span></summary>
         <div class="form-grid">
           ${formField("IMEI / número de serie", "imei", order?.imei || "")}
-          ${selectField("Garantía", "garantia_dias", ["A definir", "Sin garantía", "30", "60", "90", "180"], order?.garantia_dias == null ? "A definir" : String(order.garantia_dias))}
+          ${selectField("Garantía (días)", "garantia_dias", ["30", "Sin garantía", "60", "90", "180"], order?.garantia_dias == null ? "30" : String(order.garantia_dias))}
           <div class="field span-2"><label for="f-notas">Notas internas</label><textarea id="f-notas" name="notas">${esc(order?.notas || "")}</textarea></div>
         </div>
       </details>
@@ -380,7 +380,7 @@
         if (tipo === "Gremio" && !values.gremio?.trim()) throw new Error("Ingresá el nombre del técnico o comercio.");
         
         const valid = Rules.validateOrder({ ...values, sena: action === "create-order" ? values.sena : 0 });
-        const payload = { cliente_id: tipo === "Particular" ? client.id : null, cliente: tipo === "Particular" ? client.nombre : values.gremio.trim(), telefono: tipo === "Particular" ? client.telefono : values.nuevo_telefono || null, negocio: valid.negocio, tipo, gremio: tipo === "Gremio" ? values.gremio.trim() : null, marca: "Apple", modelo: valid.modelo, falla: valid.falla, estado: values.estado || "Recibido", total: valid.total, notas: values.notas || null, estado_ingreso: values.estado_ingreso?.trim() || null, imei: values.imei || null, garantia_dias: values.garantia_dias === "A definir" || !values.garantia_dias ? null : values.garantia_dias === "Sin garantía" ? 0 : Number(values.garantia_dias), garantia_condiciones: getE30Settings().warrantyTerms || "La garantía cubre el trabajo realizado y el repuesto instalado. No cubre golpes, humedad ni manipulación de terceros.", trabajo_realizado: values.trabajo_realizado || null };
+        const payload = { cliente_id: tipo === "Particular" ? client.id : null, cliente: tipo === "Particular" ? client.nombre : values.gremio.trim(), telefono: tipo === "Particular" ? client.telefono : values.nuevo_telefono || null, negocio: valid.negocio, tipo, gremio: tipo === "Gremio" ? values.gremio.trim() : null, marca: "Apple", modelo: valid.modelo, falla: valid.falla, estado: values.estado || "Recibido", total: valid.total, notas: values.notas || null, estado_ingreso: values.estado_ingreso?.trim() || null, imei: values.imei || null, garantia_dias: values.garantia_dias === "Sin garantía" ? 0 : Number(values.garantia_dias || 30), garantia_condiciones: getE30Settings().warrantyTerms || "La garantía cubre el trabajo realizado y el repuesto instalado. No cubre golpes, humedad ni manipulación de terceros.", trabajo_realizado: values.trabajo_realizado || null };
         if (action === "create-order") {
           const result = await sb.rpc("e30_crear_orden", { p_orden: payload, p_sena: valid.sena, p_medio: "Efectivo" });
           if (result.error) throw result.error;
@@ -486,11 +486,12 @@
     const paid = (payments || []).reduce((sum, p) => sum + Number(p.importe || 0), 0);
     const due = Math.max(0, Number(order.total || 0) - paid);
     const settings=getE30Settings(); const brand = order.negocio === "i30" ? (settings.i30Name||"i30 | iPhone Service") : (settings.e30Name||"E30 | Técnico de celulares");
-    const warrantyEnd = order.entregada && order.garantia_dias > 0
-      ? new Date(new Date(order.entregada).getTime() + Number(order.garantia_dias) * 86400000).toLocaleDateString("es-AR") : "No corresponde / pendiente";
+    const warrantyDays = order.garantia_dias == null ? 30 : Number(order.garantia_dias);
+    const warrantyEnd = order.entregada && warrantyDays > 0
+      ? new Date(new Date(order.entregada).getTime() + warrantyDays * 86400000).toLocaleDateString("es-AR") : "No corresponde / pendiente";
     const isDelivery = type === "entrega";
     const paymentLines = (payments || []).map(p => `<div>${date(p.creado)} · ${esc(p.medio)}: ${money(p.importe)}</div>`).join("");
-    const terms = order.garantia_dias === 0 ? "Trabajo sin garantía." : `Garantía: ${order.garantia_dias ? order.garantia_dias + " días" : "A definir"}.`;
+    const terms = warrantyDays === 0 ? "Trabajo sin garantía." : `Garantía: ${warrantyDays} días.`;
     const trackingUrl = order.tracking_token ? `${location.origin}${location.pathname.replace(/gestion-v2\.html$/, "seguimiento.html")}?t=${encodeURIComponent(order.tracking_token)}` : "";
     $("#print-area").innerHTML = `<div class="ticket">
       <h2>${brand}</h2><p>${(order.negocio === "i30" ? settings.i30Address : settings.e30Address) || (order.negocio === "i30" ? "Moreno" : "Las Flores")}</p><hr>

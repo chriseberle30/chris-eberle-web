@@ -738,7 +738,7 @@
         <div class="row-main"><small>Cobrado este mes</small><b>${money(branchPaid)}</b></div>
         <div class="row-main"><small>Saldo pendiente</small><b>${money(branchBalance)}</b></div>
         <div class="row-main"><small>Costos cargados</small><b>${money(branchCost)}</b></div>
-        <div class="row-main"><small>Margen estimado</small><b>${money(branchProfit)}</b></div>
+        <div class="row-main"><small>Ganancia estimada</small><b>${money(branchProfit)}</b></div>
         <div class="row-main"><small>Ventas accesorios</small><b>${money(sold)}</b></div>
       </article>`;
     }).join("");

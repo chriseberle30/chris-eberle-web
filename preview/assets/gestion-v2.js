@@ -556,17 +556,31 @@
       const ticket = document.querySelector("#print-area").innerHTML;
       const styles = `
         <style>
-          @page { size: 80mm auto; margin: 4mm; }
-          html,body { margin:0; padding:0; width:72mm; color:#000; background:#fff; }
-          body { font:9px/1.2 Arial,sans-serif; }
-          .ticket { width:100%; }
-          h2 { text-align:center; font-size:14px; margin:0 0 2px; }
-          h3 { text-align:center; font-size:11px; margin:5px 0; }
-          p { margin:2px 0 5px; overflow-wrap:anywhere; }
-          hr { border:0; border-top:1px dashed #000; margin:4px 0; }
-          b { font-weight:700; }
-          .ticket-tracking { text-align:center; margin:5px 0; padding:1mm 0; }
-          .ticket-tracking img { display:block; width:30mm; height:30mm; margin:3px auto; image-rendering:pixelated; background:#fff; padding:2mm; }
+          @page { size:80mm auto; margin:3mm; }
+          * { box-sizing:border-box; }
+          html,body { margin:0; padding:0; width:74mm; color:#000; background:#fff; }
+          body { font:11px/1.38 Arial,Helvetica,sans-serif; }
+          .ticket { width:100%; color:#000; font-family:Arial,Helvetica,sans-serif; }
+          .ticket-brand { text-align:center; font-size:15px; line-height:1.2; font-weight:800; margin:0 0 2px; }
+          .ticket-address { text-align:center; font-size:10px; margin:0 0 6px; }
+          .ticket-kind { text-align:center; font-size:11px; font-weight:800; letter-spacing:.7px; border-top:2px solid #000; border-bottom:1px solid #000; padding:5px 0; margin:6px 0; }
+          .ticket-order { text-align:center; font-size:23px; line-height:1.1; font-weight:900; margin:7px 0 2px; }
+          .ticket-date { text-align:center; font-size:10px; margin:0 0 7px; }
+          .ticket-section { margin:7px 0; }
+          .ticket-label { display:block; font-size:9px; font-weight:800; letter-spacing:.65px; margin:0 0 2px; }
+          .ticket-value { font-size:11px; line-height:1.35; font-weight:600; overflow-wrap:anywhere; margin:0; }
+          .ticket-sub { font-size:10px; font-weight:400; margin-top:2px; }
+          .ticket-rule { border:0; border-top:1px dashed #000; margin:7px 0; }
+          .ticket-money { border-top:1px solid #000; border-bottom:1px solid #000; padding:5px 0; margin:7px 0; }
+          .ticket-money-row { display:flex; justify-content:space-between; gap:8px; font-size:11px; padding:2px 0; }
+          .ticket-money-row strong { white-space:nowrap; }
+          .ticket-balance { font-size:14px; font-weight:900; border-top:1px dashed #000; margin-top:3px; padding-top:5px; }
+          .ticket-terms { font-size:10.5px; line-height:1.4; overflow-wrap:anywhere; margin:0; }
+          .ticket-sign { margin-top:18px; text-align:center; font-size:10px; }
+          .ticket-sign-line { border-top:1px solid #000; width:72%; margin:22px auto 4px; }
+          .ticket-thanks { text-align:center; font-size:9px; margin:8px 0 0; }
+          .ticket-tracking { text-align:center; margin:8px 0 2px; padding:2mm 0 0; }
+          .ticket-tracking img { display:block; width:30mm; height:30mm; margin:4px auto; image-rendering:pixelated; background:#fff; padding:2mm; }
           .ticket-tracking small { display:block; font-size:9px; margin-top:3px; }
         </style>`;
       const doc = "<html><head><meta charset='utf-8'>" + styles + "</head><body>" + ticket + "</body></html>";
@@ -602,30 +616,43 @@
     if (!order) return;
     const { data: payments, error } = await sb.from("pagos").select("id,importe,medio,creado").eq("orden_id", order.id).order("creado");
     if (error) return notice(error.message, true);
-    const client = order.clientes?.nombre || order.cliente || order.gremio || "—";
+    const client = order.clientes?.nombre || order.cliente || order.gremio || "";
+    const phone = order.telefono || order.clientes?.telefono || "";
     const paid = (payments || []).reduce((sum, p) => sum + Number(p.importe || 0), 0);
     const due = Math.max(0, Number(order.total || 0) - paid);
     const settings=getE30Settings(); const brand = order.negocio === "i30" ? (settings.i30Name||"i30 | iPhone Service") : (settings.e30Name||"E30 | Técnico de celulares");
+    const address = (order.negocio === "i30" ? settings.i30Address : settings.e30Address) || (order.negocio === "i30" ? "Moreno" : "Las Flores");
     const warrantyDays = order.garantia_dias == null ? 30 : Number(order.garantia_dias);
     const warrantyEnd = order.entregada && warrantyDays > 0
-      ? new Date(new Date(order.entregada).getTime() + warrantyDays * 86400000).toLocaleDateString("es-AR") : "No corresponde / pendiente";
+      ? new Date(new Date(order.entregada).getTime() + warrantyDays * 86400000).toLocaleDateString("es-AR") : "";
     const isDelivery = type === "entrega";
-    const paymentLines = (payments || []).map(p => `<div>${date(p.creado)} · ${esc(p.medio)}: ${money(p.importe)}</div>`).join("");
-    const terms = warrantyDays === 0 ? "Trabajo sin garantía." : `Garantía: ${warrantyDays} días.`;
+    const fault = isDelivery ? (order.trabajo_realizado || order.falla || "") : (order.falla || "");
+    const terms = [warrantyDays === 0 ? "Trabajo sin garantía." : `Garantía: ${warrantyDays} días.`, order.garantia_condiciones || ""].filter(Boolean).join(" ");
     const trackingUrl = order.tracking_token ? (() => { const u = new URL("seguimiento.html", location.href); u.searchParams.set("t", order.tracking_token); return u.href; })() : "";
+    const equipo = [order.marca, order.modelo].filter(Boolean).join(" ");
+    const orderDate = date(isDelivery ? (order.entregada || new Date().toISOString()) : order.creada);
     $("#print-area").innerHTML = `<div class="ticket">
-      <h2>${brand}</h2><p>${(order.negocio === "i30" ? settings.i30Address : settings.e30Address) || (order.negocio === "i30" ? "Moreno" : "Las Flores")}</p><hr>
-      <h3>${isDelivery ? "COMPROBANTE DE ENTREGA" : "COMPROBANTE DE RECEPCIÓN"}</h3>
-      <b>ORDEN #${esc(order.id)}</b> · ${date(isDelivery ? (order.entregada || new Date().toISOString()) : order.creada)}<hr>
-      ${trackingUrl ? `<div class="ticket-tracking"><div id="tracking-qr"></div><b>Seguimiento online</b><small>Escaneá para ver el estado</small></div><hr>` : ""}
-      <b>CLIENTE</b><p>${esc(client)}<br>${esc(order.telefono || order.clientes?.telefono || "—")}</p>
-      <b>EQUIPO</b><p>${esc(order.marca || "")} ${esc(order.modelo || "")}${order.imei ? `<br>IMEI: ${esc(order.imei)}` : ""}</p>
-      ${!isDelivery ? `<b>ESTADO DE INGRESO</b><p>${esc(order.estado_ingreso||"No informado")}</p>` : ""}<b>${isDelivery ? "TRABAJO REALIZADO" : "FALLA INFORMADA"}</b><p>${esc(isDelivery ? (order.trabajo_realizado || order.falla || "—") : (order.falla || "—"))}</p>
-      <hr><b>RESUMEN DE CUENTA</b><p>Total: ${money(order.total)}<br>Pagado: ${money(paid)}<br><b>Saldo: ${money(due)}</b></p>
-      ${isDelivery ? `<b>PAGOS</b><p>${paymentLines || "Sin pagos registrados"}</p>` : ""}
-      <hr><b>GARANTÍA Y CONDICIONES</b><p>${terms}<br>${esc(order.garantia_condiciones || "Conserve este comprobante para cualquier consulta.")}${isDelivery && order.garantia_dias > 0 ? `<br>Vencimiento estimado: ${warrantyEnd}` : ""}</p>
-      <hr><p>Declaro recibir / entregar el equipo y acepto las condiciones informadas.</p>
-      <p style="margin-top:10px">Firma: ____________________</p><hr><p>Gracias por confiar en ${esc(order.negocio)}.</p>
+      <div class="ticket-brand">${esc(brand)}</div>
+      ${address ? `<p class="ticket-address">${esc(address)}</p>` : ""}
+      <div class="ticket-kind">${isDelivery ? "COMPROBANTE DE ENTREGA" : "COMPROBANTE DE RECEPCIÓN"}</div>
+      <div class="ticket-order">ORDEN #${esc(order.id)}</div>
+      ${orderDate ? `<p class="ticket-date">${isDelivery ? "Fecha de entrega" : "Fecha de recepción"}: ${orderDate}</p>` : ""}
+      <hr class="ticket-rule">
+      ${client || phone ? `<section class="ticket-section"><span class="ticket-label">CLIENTE</span>${client ? `<p class="ticket-value">${esc(client)}</p>` : ""}${phone ? `<p class="ticket-value ticket-sub">Tel. ${esc(phone)}</p>` : ""}</section>` : ""}
+      ${equipo || order.imei ? `<section class="ticket-section"><span class="ticket-label">EQUIPO</span>${equipo ? `<p class="ticket-value">${esc(equipo)}</p>` : ""}${order.imei ? `<p class="ticket-value ticket-sub">IMEI: ${esc(order.imei)}</p>` : ""}</section>` : ""}
+      ${!isDelivery && order.estado_ingreso ? `<section class="ticket-section"><span class="ticket-label">ESTADO DE INGRESO</span><p class="ticket-value">${esc(order.estado_ingreso)}</p></section>` : ""}
+      ${fault ? `<section class="ticket-section"><span class="ticket-label">${isDelivery ? "TRABAJO REALIZADO" : "FALLA INFORMADA"}</span><p class="ticket-value">${esc(fault)}</p></section>` : ""}
+      <hr class="ticket-rule">
+      <span class="ticket-label">RESUMEN DE CUENTA</span>
+      <div class="ticket-money">
+        <div class="ticket-money-row"><span>Total</span><strong>${money(order.total)}</strong></div>
+        <div class="ticket-money-row"><span>Pagado / seña</span><strong>${money(paid)}</strong></div>
+        <div class="ticket-money-row ticket-balance"><span>Saldo</span><strong>${money(due)}</strong></div>
+      </div>
+      ${terms || (isDelivery && warrantyEnd) ? `<section class="ticket-section"><span class="ticket-label">GARANTÍA Y CONDICIONES</span><p class="ticket-terms">${esc(terms)}${isDelivery && warrantyEnd ? `<br><strong>Vencimiento de garantía: ${warrantyEnd}</strong>` : ""}</p></section>` : ""}
+      <div class="ticket-sign"><div class="ticket-sign-line"></div>Firma y aclaración de conformidad</div>
+      ${trackingUrl ? `<hr class="ticket-rule"><div class="ticket-tracking"><div id="tracking-qr"></div><b>SEGUIMIENTO ONLINE</b><small>Escaneá para consultar el estado de tu equipo</small></div>` : ""}
+      <p class="ticket-thanks">Gracias por confiar en ${esc(order.negocio || brand)}.</p>
     </div>`;
     if (trackingUrl && window.QRCode) {
       new QRCode($("#tracking-qr"), { text: trackingUrl, width: 120, height: 120, correctLevel: QRCode.CorrectLevel.L });

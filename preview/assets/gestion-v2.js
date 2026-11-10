@@ -250,7 +250,7 @@
     openModal(isEditing ? `Editar orden #${order.id}` : "Nueva orden", "ORDEN DE TRABAJO", body, actionButtons("Cancelar", isEditing ? "Guardar cambios" : "Crear orden"));
     $("#modal-form").dataset.action = isEditing ? "update-order" : "create-order";
     $("#modal-form").dataset.id = isEditing ? order.id : "";
-    $(".fault-chip").forEach((button) => button.addEventListener("click", () => {
+    $$(".fault-chip").forEach((button) => button.addEventListener("click", () => {
       const field=$("#f-falla"); const value=button.dataset.fault;
       const parts=field.value.split(/[,;\n]/).map(x=>x.trim()).filter(Boolean);
       if(!parts.some(x=>x.toLocaleLowerCase("es-AR")===value.toLocaleLowerCase("es-AR"))) parts.push(value);

@@ -941,3 +941,60 @@ body.theme-dark .state-pill.received,body.theme-dark .state-pill.closed{backgrou
 /* Estado terminal: equipo diagnosticado como no reparable */
 .state-pill.unrepairable{background:#fce8e8;color:#9b1c1c;border:1px solid #efb5b5}
 body.theme-dark .state-pill.unrepairable{background:#4b2028;color:#ffb4bd;border-color:#74303b}
+
+/* E30 UX pass: órdenes legibles, jerarquía clara y columnas estables */
+@media(min-width:761px){
+  #orders-list .order-row.order-table-row{grid-template-columns:64px minmax(170px,1.25fr) minmax(140px,1fr) minmax(130px,.9fr) minmax(135px,.8fr) 145px;gap:16px;min-height:76px;padding:15px 22px}
+  #orders-list .order-table-row .order-device b{font-size:15px;font-weight:800;color:var(--ink)}
+  #orders-list .order-table-row .order-device small{font-size:13px;color:var(--muted);font-weight:500;line-height:1.35}
+  #orders-list .order-table-row .order-client b{font-size:13px;font-weight:700;color:var(--ink)}
+  #orders-list .order-table-row .order-client small,#orders-list .order-table-row .order-state small{display:block;font-size:12px;color:var(--muted);margin-top:4px}
+  #orders-list .order-table-row .state-pill{font-size:12px;padding:6px 10px}
+  #orders-list .order-table-row .money{text-align:left}
+  #orders-list .order-table-row .money b{font-size:16px;font-weight:800;color:var(--ink)}
+  #orders-list .order-table-row .money small{font-size:12px;color:var(--muted)}
+  #orders-list .order-table-row .order-date{font-size:12px;color:var(--muted);white-space:nowrap}
+  #view-inicio .home-order-row{grid-template-columns:54px minmax(170px,1.2fr) minmax(130px,.9fr) minmax(120px,.8fr) minmax(120px,.75fr) 140px;gap:14px;min-height:82px;padding:15px 20px}
+  .home-order-copy .home-device-model{font-size:17px!important;color:var(--ink)!important}
+  .home-order-copy .home-device-fault{font-size:13px!important;font-weight:500!important;color:var(--muted)!important}
+  .home-order-client b{font-size:13px;color:var(--ink)}
+  .home-order-client small{display:block;font-size:12px;color:var(--muted);margin-top:4px}
+  .home-order-meta{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+  .home-order-meta .state-pill{font-size:12px;padding:6px 10px}
+  .home-order-balance{text-align:left}
+  .home-order-balance b{font-size:16px;font-weight:800;color:var(--ink)}
+  .home-order-balance small{display:block;font-size:12px;color:var(--muted);margin-top:3px}
+  .home-order-date{font-size:12px;color:var(--muted);white-space:nowrap}
+}
+@media(max-width:760px){
+  #orders-list .order-row.order-table-row{grid-template-columns:42px minmax(0,1fr) auto;gap:8px;padding:13px 11px}
+  #orders-list .order-table-row .order-device{grid-column:2}
+  #orders-list .order-table-row .order-client{grid-column:2}
+  #orders-list .order-table-row .order-state{grid-column:3;grid-row:1/3}
+  #orders-list .order-table-row .order-balance{grid-column:2}
+  #orders-list .order-table-row .order-date{display:none}
+  #orders-list .order-table-row .order-device b{font-size:14px;color:var(--ink)}
+  #orders-list .order-table-row .order-device small,#orders-list .order-table-row .order-client small{font-size:12px;color:var(--muted)}
+  #orders-list .order-table-row .state-pill{font-size:11px}
+  #view-inicio .home-order-row{grid-template-columns:38px minmax(0,1fr) auto;gap:7px;padding:13px 10px}
+  #view-inicio .home-order-copy{grid-column:2}
+  #view-inicio .home-order-client{grid-column:2;font-size:12px}
+  #view-inicio .home-order-meta{grid-column:3;grid-row:1/3;display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+  #view-inicio .home-order-balance{grid-column:2}
+  #view-inicio .home-order-date{display:none}
+  #view-inicio .home-order-meta .state-pill{font-size:11px}
+  #view-inicio .home-order-balance b{font-size:14px}
+}
+.sidebar{overflow:hidden;min-height:0}
+.side-nav{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:8px 3px 12px;scrollbar-width:thin;scrollbar-color:#73839a55 transparent}
+.sidebar-bottom{flex:0 0 auto;background:var(--navy);padding-top:12px}
+*{scrollbar-width:thin;scrollbar-color:#9aa6b555 transparent}
+*::-webkit-scrollbar{width:7px;height:7px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{background:#9aa6b555;border-radius:99px}
+*::-webkit-scrollbar-thumb:hover{background:#77869b99}
+.state-pill.delayed{background:#fff2dc;color:#8a630b;border:1px solid #f0d9a8}
+body.theme-dark .state-pill.delayed{background:#49351c;color:#ffd08a;border-color:#6a4b23}
+.muted,.row-main small,.client-card span{font-size:13px}
+.state-pill,.branch-pill{font-size:12px}
+.order-no{font-size:14px}

@@ -998,3 +998,7 @@ body.theme-dark .state-pill.delayed{background:#49351c;color:#ffd08a;border-colo
 .muted,.row-main small,.client-card span{font-size:13px}
 .state-pill,.branch-pill{font-size:12px}
 .order-no{font-size:14px}
+
+.order-table-head{display:grid;grid-template-columns:64px minmax(170px,1.25fr) minmax(140px,1fr) minmax(130px,.9fr) minmax(135px,.8fr) 145px;gap:16px;padding:11px 22px;background:#f7f8fb;border-bottom:1px solid var(--line);color:var(--muted);font-size:11px;font-weight:750;letter-spacing:.045em;text-transform:uppercase}
+body.theme-dark .order-table-head{background:#172235;color:#b5c1d1;border-color:#29364a}
+@media(max-width:760px){.order-table-head{display:none}}

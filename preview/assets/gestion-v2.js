@@ -222,7 +222,7 @@
     $("#modal-form").dataset.action = "save-client"; $("#modal-form").dataset.id = client?.id || "";
   }
   function getE30Settings(){try{return JSON.parse(localStorage.getItem("e30_settings")||"{}")}catch(e){return {}}}
-  function saveE30Settings(){const s={e30Name:$("#cfg-e30-name").value,i30Name:$("#cfg-i30-name").value,e30Address:$("#cfg-e30-address").value,i30Address:$("#cfg-i30-address").value,phone:$("#cfg-phone").value,warrantyDays:Number($("#cfg-warranty-days").value||30),warrantyTerms:$("#cfg-warranty-terms").value};localStorage.setItem("e30_settings",JSON.stringify(s));notice("Configuración guardada en este dispositivo.");}
+  function saveE30Settings(){const s={e30Name:$("#cfg-e30-name").value,i30Name:$("#cfg-i30-name").value,e30Address:$("#cfg-e30-address").value,i30Address:$("#cfg-i30-address").value,e30Phone:$("#cfg-e30-phone").value,i30Phone:$("#cfg-i30-phone").value,e30Social:$("#cfg-e30-social").value,i30Social:$("#cfg-i30-social").value,warrantyDays:Number($("#cfg-warranty-days").value||30),warrantyTerms:$("#cfg-warranty-terms").value};localStorage.setItem("e30_settings",JSON.stringify(s));notice("Configuración guardada en este dispositivo.");}
   function openOrderForm(order = null) {
     const isEditing = Boolean(order?.id);
     const clientOptions = data.clients.map((client) => `<option value="${esc(client.id)}" ${String(client.id) === String(order?.cliente_id) ? "selected" : ""}>${esc(client.nombre)}${client.telefono ? ` · ${esc(client.telefono)}` : ""}</option>`).join("");
@@ -392,7 +392,7 @@
         if (tipo === "Gremio" && !values.gremio?.trim()) throw new Error("Ingresá el nombre del técnico o comercio.");
         
         const valid = Rules.validateOrder({ ...values, sena: action === "create-order" ? values.sena : 0 });
-        const payload = { cliente_id: tipo === "Particular" ? client.id : null, cliente: tipo === "Particular" ? client.nombre : values.gremio.trim(), telefono: tipo === "Particular" ? client.telefono : values.nuevo_telefono || null, negocio: valid.negocio, tipo, gremio: tipo === "Gremio" ? values.gremio.trim() : null, marca: "Apple", modelo: valid.modelo, falla: valid.falla, estado: values.estado || "Recibido", total: valid.total, notas: values.notas || null, estado_ingreso: values.estado_ingreso?.trim() || null, imei: values.imei || null, garantia_dias: values.garantia_dias === "Sin garantía" ? 0 : Number(values.garantia_dias || 30), garantia_condiciones: getE30Settings().warrantyTerms || "La garantía cubre el trabajo realizado y el repuesto instalado. No cubre golpes, humedad ni manipulación de terceros.", trabajo_realizado: values.trabajo_realizado || null };
+        const payload = { cliente_id: tipo === "Particular" ? client.id : null, cliente: tipo === "Particular" ? client.nombre : values.gremio.trim(), telefono: tipo === "Particular" ? client.telefono : values.nuevo_telefono || null, negocio: valid.negocio, tipo, gremio: tipo === "Gremio" ? values.gremio.trim() : null, marca: null, modelo: valid.modelo, falla: valid.falla, estado: values.estado || "Recibido", total: valid.total, notas: values.notas || null, estado_ingreso: values.estado_ingreso?.trim() || null, imei: values.imei || null, garantia_dias: values.garantia_dias === "Sin garantía" ? 0 : Number(values.garantia_dias || 30), garantia_condiciones: getE30Settings().warrantyTerms || "La garantía cubre el trabajo realizado y el repuesto instalado. No cubre golpes, humedad ni manipulación de terceros.", trabajo_realizado: values.trabajo_realizado || null };
         if (action === "create-order") {
           const result = await sb.rpc("e30_crear_orden", { p_orden: payload, p_sena: valid.sena, p_medio: "Efectivo" });
           if (result.error) throw result.error;
@@ -628,6 +628,8 @@
     const due = Math.max(0, Number(order.total || 0) - paid);
     const settings=getE30Settings(); const brand = order.negocio === "i30" ? (settings.i30Name||"i30 | iPhone Service") : (settings.e30Name||"E30 | Técnico de celulares");
     const address = (order.negocio === "i30" ? settings.i30Address : settings.e30Address) || (order.negocio === "i30" ? "Moreno" : "Las Flores");
+    const branchPhone = order.negocio === "i30" ? settings.i30Phone : settings.e30Phone;
+    const branchSocial = order.negocio === "i30" ? settings.i30Social : settings.e30Social;
     const warrantyDays = order.garantia_dias == null ? 30 : Number(order.garantia_dias);
     const warrantyEnd = order.entregada && warrantyDays > 0
       ? new Date(new Date(order.entregada).getTime() + warrantyDays * 86400000).toLocaleDateString("es-AR") : "";
@@ -635,7 +637,7 @@
     const fault = isDelivery ? (order.trabajo_realizado || order.falla || "") : (order.falla || "");
     const terms = [warrantyDays === 0 ? "Trabajo sin garantía." : `Garantía: ${warrantyDays} días.`, order.garantia_condiciones || ""].filter(Boolean).join(" ");
     const trackingUrl = order.tracking_token ? (() => { const u = new URL("seguimiento.html", location.href); u.searchParams.set("t", order.tracking_token); return u.href; })() : "";
-    const equipo = [order.marca, order.modelo].filter(Boolean).join(" ");
+    const equipo = [order.marca && !/^apple$/i.test(String(order.marca).trim()) ? order.marca : "", order.modelo].filter(Boolean).join(" ");
     const orderDate = date(isDelivery ? (order.entregada || new Date().toISOString()) : order.creada);
     $("#print-area").innerHTML = `<div class="ticket">
       <div class="ticket-brand">${esc(brand)}</div>
@@ -900,7 +902,7 @@
   function initialize() {
     $("#state-filter").insertAdjacentHTML("beforeend", Rules.ORDER_STATES.map((state) => `<option>${esc(state)}</option>`).join(""));
     bindEvents(); if(localStorage.getItem("e30_theme")==="dark"){document.body.classList.add("theme-dark");$("#theme-toggle").textContent="☀ Activar modo claro";}
-    const saved=getE30Settings(); for(const [id,key] of [["cfg-e30-name","e30Name"],["cfg-i30-name","i30Name"],["cfg-e30-address","e30Address"],["cfg-i30-address","i30Address"],["cfg-phone","phone"],["cfg-warranty-days","warrantyDays"],["cfg-warranty-terms","warrantyTerms"]])if(saved[key]!=null)$("#"+id).value=saved[key];
+    const saved=getE30Settings(); for(const [id,key] of [["cfg-e30-name","e30Name"],["cfg-i30-name","i30Name"],["cfg-e30-address","e30Address"],["cfg-i30-address","i30Address"],["cfg-e30-phone","e30Phone"],["cfg-i30-phone","i30Phone"],["cfg-e30-social","e30Social"],["cfg-i30-social","i30Social"],["cfg-warranty-days","warrantyDays"],["cfg-warranty-terms","warrantyTerms"]])if(saved[key]!=null)$("#"+id).value=saved[key];
     sb.auth.onAuthStateChange((event, session) => {
       if (event === "INITIAL_SESSION") return; // getSession() below owns the first load; avoid duplicate initial refresh.
       if (session) { showApp(session); setTimeout(() => { refresh(); startRemotePrintReceiver(); }, 0); } else showLogin();

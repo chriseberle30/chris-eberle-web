@@ -106,7 +106,7 @@
       return `<article class="order-row home-order-row" data-order="${order.id}">
         <span class="home-order-number">#${order.id}</span>
         <div class="row-main home-order-copy"><b class="home-device-model">${esc(model)}</b><span class="home-device-fault">${esc(fault)}</span><small>${esc(client)} · ${esc(phone || "Sin teléfono")} · ${date(order.creada)}</small></div>
-        <div class="home-order-meta"><span class="state-pill ${stateClass(order.estado)}">${esc(order.estado || "Pendiente")}</span><span class="branch-pill">${esc(order.negocio || "")}</span></div>
+        <div class="home-order-meta"><button type="button" class="state-pill state-pill-action ${stateClass(order.estado)}" data-quick-state="${order.id}" aria-label="Cambiar estado de la orden ${order.id}">${esc(order.estado || "Pendiente")} <span aria-hidden="true">▾</span></button><span class="branch-pill">${esc(order.negocio || "")}</span></div>
         <div class="home-order-balance"><b>${money(balance > 0 ? balance : order.total)}</b><small>${balance > 0 ? "Saldo pendiente" : "Total"}</small></div>
       </article>`;
     }).join("") || '<div class="empty-state">No hay órdenes activas. Cuando ingreses un equipo, aparecerá acá.</div>';
@@ -438,13 +438,23 @@
     } catch (error) { notice(error.message || "No se pudo guardar el cambio.", true); }
     finally { data.busy = false; }
   }
-  async function updateOrderState(orderId) {
-    const state = $("#detail-state").value;
+  async function updateOrderState(orderId, selectedState = null) {
+    const state = selectedState || $("#detail-state")?.value;
     if (!Rules.ORDER_STATES.includes(state)) return notice("Elegí un estado válido.", true);
-    const patch = { estado: state, entregada: state === "Entregado" ? (data.currentOrder?.entregada || new Date().toISOString()) : null };
+    const order = data.orders.find((row) => String(row.id) === String(orderId)) || data.currentOrder;
+    const patch = { estado: state, entregada: state === "Entregado" ? (order?.entregada || new Date().toISOString()) : null };
     const { error } = await sb.from("ordenes").update(patch).eq("id", orderId);
     if (error) return notice(`No se pudo actualizar el estado: ${error.message}`, true);
-    closeModal(); await refresh(); notice("Estado actualizado.");
+    closeModal(); await refresh(); notice(`Estado de la orden #${orderId}: ${state}.`);
+  }
+
+  function openQuickStatePicker(orderId) {
+    const order = data.orders.find((row) => String(row.id) === String(orderId));
+    if (!order) return;
+    const options = Rules.ORDER_STATES.map((state) => `<option value="${esc(state)}" ${state === order.estado ? "selected" : ""}>${esc(state)}</option>`).join("");
+    const body = `<p class="muted">Elegí el nuevo estado para <b>${esc(order.modelo || "el equipo")}</b>.</p><div class="field"><label for="quick-detail-state">Estado de reparación</label><select id="quick-detail-state">${options}</select></div>`;
+    openModal(`Estado · Orden #${order.id}`, "ACTUALIZACIÓN RÁPIDA", body, '<button class="button" type="button" data-close>Cancelar</button><button class="button primary" type="button" id="quick-state-save">Guardar estado</button>');
+    $("#quick-state-save").addEventListener("click", () => updateOrderState(orderId, $("#quick-detail-state").value));
   }
 
   async function trashOrder(orderId) {
@@ -619,9 +629,10 @@
     $("#modal-form").addEventListener("submit", runAction); $("#cfg-save").addEventListener("click",saveE30Settings); $("#theme-toggle").addEventListener("click",()=>{const dark=document.body.classList.toggle("theme-dark");localStorage.setItem("e30_theme",dark?"dark":"light");$("#theme-toggle").textContent=dark?"☀ Activar modo claro":"☾ Activar modo noche";});
     $("#modal").addEventListener("click", (event) => { if (event.target === $("#modal") || event.target.closest("[data-close]")) closeModal(); });
     document.addEventListener("click", (event) => {
-      const target = event.target.closest("[data-more-prices],[data-stock-move],[data-stock-edit],[data-claim-edit],[data-empty-add-price],[data-empty-bulk-price],[data-order],[data-client],[data-edit-client],[data-client-new-order],[data-edit-order],[data-open-order],[data-payment],[data-trash],[data-restore],[data-ticket],[data-edit-price],[data-toggle-price],[data-copy-price],[data-update-state],[data-costs],[data-add-photo]");
+      const target = event.target.closest("[data-quick-state],[data-more-prices],[data-stock-move],[data-stock-edit],[data-claim-edit],[data-empty-add-price],[data-empty-bulk-price],[data-order],[data-client],[data-edit-client],[data-client-new-order],[data-edit-order],[data-open-order],[data-payment],[data-trash],[data-restore],[data-ticket],[data-edit-price],[data-toggle-price],[data-copy-price],[data-update-state],[data-costs],[data-add-photo]");
       if (!target) return;
-      if (target.dataset.morePrices) { renderPrices.limit = (renderPrices.limit || 80) + 80; renderPrices($("#price-search").value); }
+      if (target.dataset.quickState) openQuickStatePicker(target.dataset.quickState);
+      else if (target.dataset.morePrices) { renderPrices.limit = (renderPrices.limit || 80) + 80; renderPrices($("#price-search").value); }
       else if (target.dataset.emptyAddPrice) openPriceForm();
       else if (target.dataset.emptyBulkPrice) openBulkPriceImport();
       else if (target.dataset.order) openOrder(target.dataset.order);

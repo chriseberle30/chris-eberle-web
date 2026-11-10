@@ -80,7 +80,7 @@
       if (cash.error) throw cash.error; if (stockItems.error) throw stockItems.error; if (sales.error) throw sales.error; if (claims.error) throw claims.error;
       data.orders = orders; data.clients = clients.data || []; data.prices = prices.data || []; data.trash = trash;
       data.cash = cash.data || []; data.stockItems = stockItems.data || []; data.sales = sales.data || []; data.claims = claims.data || [];
-      setConnected("ok", "Conectado a pruebas"); renderCurrent(); renderStats(); renderDashboard(); renderCash(); renderStock(); renderSales(); renderClaims(); renderReports();
+      setConnected("ok", "Conectado"); renderCurrent(); renderStats(); renderDashboard(); renderCash(); renderStock(); renderSales(); renderClaims(); renderReports();
     } catch (error) {
       setConnected("bad", "Revisar configuración");
       const message = /clientes|schema cache|relation/i.test(error.message || "")

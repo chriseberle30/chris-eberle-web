@@ -496,15 +496,15 @@
         <style>
           @page { size: 80mm auto; margin: 4mm; }
           html,body { margin:0; padding:0; width:72mm; color:#000; background:#fff; }
-          body { font:11px/1.4 Arial,sans-serif; }
+          body { font:10px/1.25 Arial,sans-serif; }
           .ticket { width:100%; }
-          h2 { text-align:center; font-size:16px; margin:0 0 3px; }
-          h3 { text-align:center; font-size:13px; margin:8px 0; }
-          p { margin:4px 0 8px; overflow-wrap:anywhere; }
-          hr { border:0; border-top:1px dashed #000; margin:7px 0; }
+          h2 { text-align:center; font-size:14px; margin:0 0 2px; }
+          h3 { text-align:center; font-size:11px; margin:5px 0; }
+          p { margin:2px 0 5px; overflow-wrap:anywhere; }
+          hr { border:0; border-top:1px dashed #000; margin:4px 0; }
           b { font-weight:700; }
-          .ticket-tracking { text-align:center; margin:8px 0; }
-          .ticket-tracking img { display:block; width:28mm; height:28mm; margin:6px auto; }
+          .ticket-tracking { text-align:center; margin:4px 0; }
+          .ticket-tracking img { display:block; width:20mm; height:20mm; margin:3px auto; }
           .ticket-tracking small { display:block; font-size:9px; margin-top:3px; }
         </style>`;
       const doc = "<html><head><meta charset='utf-8'>" + styles + "</head><body>" + ticket + "</body></html>";
@@ -542,10 +542,10 @@
     $("#print-area").innerHTML = `<div class="ticket">
       <h2>${brand}</h2><p>${(order.negocio === "i30" ? settings.i30Address : settings.e30Address) || (order.negocio === "i30" ? "Moreno" : "Las Flores")}</p><hr>
       <h3>${isDelivery ? "COMPROBANTE DE ENTREGA" : "COMPROBANTE DE RECEPCIÓN"}</h3>
-      <b>ORDEN #${esc(order.id)}</b><p>${date(isDelivery ? (order.entregada || new Date().toISOString()) : order.creada)}</p><hr>
-      ${trackingUrl ? `<div class="ticket-tracking"><div id="tracking-qr"></div><b>Seguimiento de reparación</b><small>Escaneá el QR para consultar el estado</small></div><hr>` : ""}
+      <b>ORDEN #${esc(order.id)}</b> · ${date(isDelivery ? (order.entregada || new Date().toISOString()) : order.creada)}<hr>
+      ${trackingUrl ? `<div class="ticket-tracking"><div id="tracking-qr"></div><b>Seguimiento online</b><small>Escaneá para ver el estado</small></div><hr>` : ""}
       <b>CLIENTE</b><p>${esc(client)}<br>${esc(order.telefono || order.clientes?.telefono || "—")}</p>
-      <b>EQUIPO</b><p>${esc(order.marca || "")} ${esc(order.modelo || "")}<br>IMEI: ${esc(order.imei || "—")}</p>
+      <b>EQUIPO</b><p>${esc(order.marca || "")} ${esc(order.modelo || "")}${order.imei ? `<br>IMEI: ${esc(order.imei)}` : ""}</p>
       ${!isDelivery ? `<b>ESTADO DE INGRESO</b><p>${esc(order.estado_ingreso||"No informado")}</p>` : ""}<b>${isDelivery ? "TRABAJO REALIZADO" : "FALLA INFORMADA"}</b><p>${esc(isDelivery ? (order.trabajo_realizado || order.falla || "—") : (order.falla || "—"))}</p>
       <hr><b>RESUMEN DE CUENTA</b><p>Total: ${money(order.total)}<br>Pagado: ${money(paid)}<br><b>Saldo: ${money(due)}</b></p>
       ${isDelivery ? `<b>PAGOS</b><p>${paymentLines || "Sin pagos registrados"}</p>` : ""}
@@ -554,7 +554,7 @@
       <p style="margin-top:28px">Firma: ______________________</p><p>Aclaración: __________________</p><hr><p>Gracias por confiar en ${esc(order.negocio)}.</p>
     </div>`;
     if (trackingUrl && window.QRCode) {
-      new QRCode($("#tracking-qr"), { text: trackingUrl, width: 112, height: 112, correctLevel: QRCode.CorrectLevel.M });
+      new QRCode($("#tracking-qr"), { text: trackingUrl, width: 76, height: 76, correctLevel: QRCode.CorrectLevel.M });
       await new Promise((resolve) => setTimeout(resolve, 300));
     }
     await printTicketWithQZ();

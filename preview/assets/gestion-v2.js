@@ -134,7 +134,8 @@
     const state = $("#state-filter")?.value || "";
     const filtered = rows.filter((order) => (!branch || order.negocio === branch) && (!state || order.estado === state));
     $("#order-count").textContent = `${filtered.length} ${filtered.length === 1 ? "orden" : "órdenes"}`;
-    const tableHeader = target === "#orders-list" ? "<div class=\"order-table-head\"><span>Orden</span><span>Equipo / falla</span><span>Cliente</span><span>Estado / sucursal</span><span>Saldo</span><span>Fecha</span></div>" : "";\n    $(target).innerHTML = tableHeader + filtered.map((order) => {
+    const tableHeader = target === "#orders-list" ? "<div class=\"order-table-head\"><span>Orden</span><span>Equipo / falla</span><span>Cliente</span><span>Estado / sucursal</span><span>Saldo</span><span>Fecha</span></div>" : "";
+    $(target).innerHTML = tableHeader + filtered.map((order) => {
       const client = order.clientes?.nombre || order.cliente || order.gremio || "Cliente sin nombre";
       const phone = formatPhone(order.telefono || order.clientes?.telefono || "");
       const due = Rules.balance(order);

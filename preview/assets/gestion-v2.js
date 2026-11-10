@@ -682,7 +682,17 @@
       .filter((p) => new Date(p.creado) >= start)
       .map((p) => ({ ...p, negocio: order.negocio })));
     const sales = data.sales.filter((x) => new Date(x.creado) >= start);
-    const collected = monthPayments.reduce((sum, row) => sum + Number(row.importe || 0), 0);
+    const explicitCollected = monthPayments.reduce((sum, row) => sum + Number(row.importe || 0), 0);
+    // Al entregar una orden se considera cobrada al 100%; solo suma lo que faltaba para no duplicar pagos.
+    const deliveryCollections = data.orders
+      .filter((order) => order.estado === "Entregado" && order.entregada && new Date(order.entregada) >= start)
+      .reduce((sum, order) => {
+        const paidBeforeDelivery = (order.pagos || [])
+          .filter((payment) => new Date(payment.creado) <= new Date(order.entregada))
+          .reduce((total, payment) => total + Number(payment.importe || 0), 0);
+        return sum + Math.max(0, Number(order.total || 0) - paidBeforeDelivery);
+      }, 0);
+    const collected = explicitCollected + deliveryCollections;
     const billed = orders.reduce((sum, row) => sum + Number(row.total || 0), 0);
     const balance = orders.reduce((sum, row) => sum + Rules.balance(row), 0);
     const costedOrders = orders.filter((x) => x.costos_cargados);
@@ -708,7 +718,16 @@
       const branchSales = sales.filter((x) => x.sucursal === branch);
       const branchCosted = rows.filter((x) => x.costos_cargados);
       const branchBilled = rows.reduce((sum,x) => sum + Number(x.total || 0),0);
-      const branchPaid = payments.reduce((sum,x) => sum + Number(x.importe || 0),0);
+      const branchExplicitPaid = payments.reduce((sum,x) => sum + Number(x.importe || 0),0);
+      const branchDeliveryPaid = rows
+        .filter((order) => order.estado === "Entregado" && order.entregada && new Date(order.entregada) >= start)
+        .reduce((sum, order) => {
+          const paidBeforeDelivery = (order.pagos || [])
+            .filter((payment) => new Date(payment.creado) <= new Date(order.entregada))
+            .reduce((total, payment) => total + Number(payment.importe || 0), 0);
+          return sum + Math.max(0, Number(order.total || 0) - paidBeforeDelivery);
+        }, 0);
+      const branchPaid = branchExplicitPaid + branchDeliveryPaid;
       const branchBalance = rows.reduce((sum,x) => sum + Rules.balance(x),0);
       const branchCost = branchCosted.reduce((sum,x) => sum + Number(x.costo || 0),0);
       const branchProfit = branchCosted.reduce((sum,x) => sum + Number(x.total || 0) - Number(x.costo || 0),0);

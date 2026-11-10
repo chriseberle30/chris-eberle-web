@@ -13,7 +13,7 @@
   const money = (value) => new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(Number(value) || 0);
   const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
   const date = (value) => value ? new Date(value).toLocaleString("es-AR", { dateStyle: "short", timeStyle: "short", hour12: false }) : "—";
-  const stateClass = (state) => ({ "Listo":"ready", "En reparación":"repair", "Esperando repuesto":"waiting", "Pendiente":"delayed", "Recibido":"received", "Entregado":"closed", "Cancelado":"closed" }[state] || "");
+  const stateClass = (state) => ({ "Listo":"ready", "En reparación":"repair", "Esperando repuesto":"waiting", "Pendiente":"delayed", "Recibido":"received", "Entregado":"closed", "No reparable":"unrepairable", "Cancelado":"closed" }[state] || "");
   const data = { clients: [], orders: [], prices: [], trash: [], cash: [], stockItems: [], sales: [], claims: [], view: "inicio", busy: false, queryTimer: null };
 
   function notice(message, error = false) {
@@ -93,7 +93,7 @@
     if (!$("#home-orders-list")) return;
     const today = new Date(); today.setHours(0,0,0,0);
     const income = data.cash.filter(x => x.tipo === "Ingreso" && new Date(x.creado) >= today).reduce((sum,x) => sum + Number(x.importe || 0),0);
-    const active = data.orders.filter(x => !["Entregado","Cancelado"].includes(x.estado));
+    const active = data.orders.filter(x => !["Entregado","No reparable","Cancelado"].includes(x.estado));
     $("#home-income").textContent = money(income);
     $("#home-active").textContent = active.length;
     $("#home-ready").textContent = active.filter(x => x.estado === "Listo").length;
@@ -112,7 +112,7 @@
     }).join("") || '<div class="empty-state">No hay órdenes activas. Cuando ingreses un equipo, aparecerá acá.</div>';
   }
   function renderStats() {
-    const active = data.orders.filter((order) => !["Entregado", "Cancelado"].includes(order.estado));
+    const active = data.orders.filter((order) => !["Entregado", "No reparable", "Cancelado"].includes(order.estado));
     $("#stat-active").textContent = active.length;
     $("#stat-ready").textContent = active.filter((order) => order.estado === "Listo").length;
     $("#stat-balance").textContent = money(active.reduce((sum, order) => sum + Rules.balance(order), 0));

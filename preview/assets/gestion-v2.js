@@ -678,23 +678,50 @@
     if (!$("#branch-report")) return;
     const start = monthStart();
     const orders = data.orders.filter((x) => new Date(x.creada) >= start);
-    const paidOrders = data.orders.flatMap((order) => (order.pagos || []).filter((p) => new Date(p.creado) >= start).map((p) => ({ ...p, negocio: order.negocio })));
+    const monthPayments = orders.flatMap((order) => (order.pagos || [])
+      .filter((p) => new Date(p.creado) >= start)
+      .map((p) => ({ ...p, negocio: order.negocio })));
     const sales = data.sales.filter((x) => new Date(x.creado) >= start);
-    const collected = paidOrders.reduce((sum, row) => sum + Number(row.importe || 0), 0);
-    const cost = orders.reduce((sum, row) => sum + Number(row.costo || 0), 0);
+    const collected = monthPayments.reduce((sum, row) => sum + Number(row.importe || 0), 0);
+    const billed = orders.reduce((sum, row) => sum + Number(row.total || 0), 0);
+    const balance = orders.reduce((sum, row) => sum + Rules.balance(row), 0);
+    const costedOrders = orders.filter((x) => x.costos_cargados);
+    const cost = costedOrders.reduce((sum, row) => sum + Number(row.costo || 0), 0);
+    const profit = costedOrders.reduce((sum, row) => sum + Number(row.total || 0) - Number(row.costo || 0), 0);
+    $("#report-orders").textContent = String(orders.length);
+    $("#report-billed").textContent = money(billed);
     $("#report-revenue").textContent = money(collected);
+    $("#report-balance").textContent = money(balance);
     $("#report-cost").textContent = money(cost);
-    $("#report-profit").textContent = money(data.orders.filter(x=>x.costos_cargados).reduce((sum,x)=>sum+Number(x.total||0)-Number(x.costo||0),0));
+    $("#report-profit").textContent = money(profit);
     $("#report-sales").textContent = money(sales.reduce((sum, row) => sum + Number(row.total || 0), 0));
-    $("#pending-costs-list").innerHTML = data.orders.filter(x=>x.estado==="Entregado"&&!x.costos_cargados).sort((a,b)=>new Date(b.entregada||b.creada)-new Date(a.entregada||a.creada)).map(x=>`<article class="order-row"><div class="row-main"><b>Orden #${x.id} · ${esc(x.modelo||"Equipo")}</b><small>${esc(x.cliente||x.gremio||"Cliente")} · ${esc(x.negocio)} · Entregada ${date(x.entregada)}</small></div><span class="state-pill pending">Costos pendientes</span><button class="button" data-costs="${x.id}">Completar costos</button></article>`).join("") || `<div class="empty-state">No hay costos pendientes de completar.</div>`;
+
+    $("#pending-costs-list").innerHTML = data.orders
+      .filter((x) => x.estado === "Entregado" && !x.costos_cargados)
+      .sort((a,b) => new Date(b.entregada || b.creada) - new Date(a.entregada || a.creada))
+      .map(x => `<article class="order-row"><div class="row-main"><b>Orden #${x.id} · ${esc(x.modelo || "Equipo")}</b><small>${esc(x.cliente || x.gremio || "Cliente")} · ${esc(x.negocio)} · Entregada ${date(x.entregada)}</small></div><span class="state-pill pending">Costos pendientes</span><button class="button" data-costs="${x.id}">Completar costos</button></article>`)
+      .join("") || `<div class="empty-state">No hay costos pendientes de completar.</div>`;
+
     $("#branch-report").innerHTML = Rules.BRANCHES.map((branch) => {
-      const branchOrders = orders.filter((x) => x.negocio === branch);
-      const branchPayments = paidOrders.filter((x) => x.negocio === branch);
+      const rows = orders.filter((x) => x.negocio === branch);
+      const payments = monthPayments.filter((x) => x.negocio === branch);
       const branchSales = sales.filter((x) => x.sucursal === branch);
-      const paid = branchPayments.reduce((sum, row) => sum + Number(row.importe || 0), 0);
-      const sold = branchSales.reduce((sum, row) => sum + Number(row.total || 0), 0);
-      const costs = branchOrders.reduce((sum, row) => sum + Number(row.costo || 0), 0);
-      return `<article class="order-row report-row"><div class="row-main"><b>${branch}</b><small>${branchOrders.length} órdenes · ${branchSales.length} ventas</small></div><div class="row-main"><small>Cobros de órdenes</small><b>${money(paid)}</b></div><div class="row-main"><small>Ventas accesorios</small><b>${money(sold)}</b></div><div class="row-main"><small>Costos de órdenes creadas</small><b>${money(costs)}</b></div></article>`;
+      const branchCosted = rows.filter((x) => x.costos_cargados);
+      const branchBilled = rows.reduce((sum,x) => sum + Number(x.total || 0),0);
+      const branchPaid = payments.reduce((sum,x) => sum + Number(x.importe || 0),0);
+      const branchBalance = rows.reduce((sum,x) => sum + Rules.balance(x),0);
+      const branchCost = branchCosted.reduce((sum,x) => sum + Number(x.costo || 0),0);
+      const branchProfit = branchCosted.reduce((sum,x) => sum + Number(x.total || 0) - Number(x.costo || 0),0);
+      const sold = branchSales.reduce((sum,x) => sum + Number(x.total || 0),0);
+      return `<article class="order-row report-row">
+        <div class="row-main"><b>${branch}</b><small>${rows.length} órdenes creadas · ${branchCosted.length} con costos completos</small></div>
+        <div class="row-main"><small>Total acordado</small><b>${money(branchBilled)}</b></div>
+        <div class="row-main"><small>Cobrado este mes</small><b>${money(branchPaid)}</b></div>
+        <div class="row-main"><small>Saldo pendiente</small><b>${money(branchBalance)}</b></div>
+        <div class="row-main"><small>Costos cargados</small><b>${money(branchCost)}</b></div>
+        <div class="row-main"><small>Margen estimado</small><b>${money(branchProfit)}</b></div>
+        <div class="row-main"><small>Ventas accesorios</small><b>${money(sold)}</b></div>
+      </article>`;
     }).join("");
   }
   function openClaimForm(claim=null){const orderOpts=data.orders.filter(x=>x.estado==="Entregado"||Number(x.garantia_dias)>0).map(x=>String(x.id)+" · "+x.modelo+" · "+(x.cliente||x.gremio||"Cliente"));const body="<div class=\"form-grid\">"+selectField("Orden *","orden_id",orderOpts,claim?String(claim.orden_id)+" · "+(claim.ordenes?.modelo||""):"") +formField("Motivo del reclamo *","motivo",claim?.motivo||"","text","span-2")+selectField("Estado","estado",["Abierto","En revisión","Aprobado","Rechazado","Resuelto"],claim?.estado||"Abierto")+formField("Diagnóstico","diagnostico",claim?.diagnostico||"","text","span-2")+formField("Resolución","resolucion",claim?.resolucion||"","text","span-2")+"</div>";openModal(claim?"Reclamo #"+claim.id:"Nuevo reclamo","GARANTÍA",body,actionButtons());$("#modal-form").dataset.action="save-claim";$("#modal-form").dataset.id=claim?.id||"";}

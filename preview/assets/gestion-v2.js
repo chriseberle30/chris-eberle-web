@@ -13,7 +13,7 @@
   const money = (value) => new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(Number(value) || 0);
   const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
   const date = (value) => value ? new Date(value).toLocaleString("es-AR", { dateStyle: "short", timeStyle: "short", hour12: false }) : "—";
-  const stateClass = (state) => state === "Listo" ? "ready" : ["En reparación", "Esperando repuesto"].includes(state) ? "repair" : ["Pendiente", "Recibido"].includes(state) ? "pending" : "";
+  const stateClass = (state) => ({ "Listo":"ready", "En reparación":"repair", "Esperando repuesto":"waiting", "Pendiente":"delayed", "Recibido":"received", "Entregado":"closed", "Cancelado":"closed" }[state] || "");
   const data = { clients: [], orders: [], prices: [], trash: [], cash: [], stockItems: [], sales: [], claims: [], view: "inicio", busy: false, queryTimer: null };
 
   function notice(message, error = false) {
@@ -198,12 +198,12 @@
     data.view = view;
     $$(".view").forEach((section) => { section.hidden = section.id !== `view-${view}`; });
     $$('[data-view]').forEach((button) => button.classList.toggle("active", button.dataset.view === view));
-    const titles = { inicio: "Inicio", presupuestos: "Presupuestos", ordenes: "Órdenes de reparación", clientes: "Clientes", precios: "Precios de reparación", caja: "Caja y movimientos", stock: "Inventario y accesorios", ventas: "Ventas", garantias: "Garantías y reclamos", reportes: "Reportes del negocio", papelera: "Papelera de órdenes" };
+    const titles = { inicio: "Inicio", presupuestos: "Presupuestos", ordenes: "Órdenes de reparación", clientes: "Clientes", precios: "Precios de reparación", caja: "Caja y movimientos", stock: "Inventario y accesorios", ventas: "Ventas", garantias: "Garantías y reclamos", reportes: "Reportes del negocio", costos: "Costos pendientes", papelera: "Papelera de órdenes" };
     $("#new-order").hidden = view === "inicio";
         $("#page-title").textContent = titles[view]; $(".sidebar").classList.remove("open"); $("#sidebar-backdrop").classList.remove("visible"); $("#menu-toggle").setAttribute("aria-expanded","false"); $("#menu-toggle").setAttribute("aria-label","Abrir menú"); $("#menu-toggle").textContent="☰";
     if (view === "inicio") renderDashboard();
     if (view === "ordenes") loadOrders({ search: $("#order-search").value }).then((rows) => { data.orders = rows; renderOrders(rows); renderStats(); }).catch((error) => notice(error.message, true));
-    if (["caja","stock","ventas","garantias","reportes"].includes(view)) refresh().catch((error) => notice(error.message,true));
+    if (["caja","stock","ventas","garantias","reportes","costos"].includes(view)) refresh().catch((error) => notice(error.message,true));
   }
   function openClientForm(client = null) {
     const body = `<div class="form-grid">${formField("Nombre completo *", "nombre", client?.nombre || "", "text", "span-2")}${formField("Teléfono", "telefono", client?.telefono || "", "tel")}${formField("Email", "email", client?.email || "", "email")}<div class="field span-2"><label for="f-notas">Notas</label><textarea id="f-notas" name="notas">${esc(client?.notas || "")}</textarea></div></div>`;

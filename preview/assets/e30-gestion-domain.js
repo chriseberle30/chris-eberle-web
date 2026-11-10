@@ -44,7 +44,7 @@
     if (!PAYMENT_METHODS.includes(medio)) throw new Error("Elegí un medio de pago válido.");
     return { importe, medio };
   }
-  function paid(order) { return (order.pagos || []).reduce((sum, item) => sum + (Number(item.importe) || 0), 0); }
+  function paid(order) { if (order.estado === "Entregado") return Math.max(0, Number(order.total) || 0); return (order.pagos || []).reduce((sum, item) => sum + (Number(item.importe) || 0), 0); }
   function balance(order) { return Math.max(0, (Number(order.total) || 0) - paid(order)); }
   function searchText(row) { return [row.id, row.nombre, row.cliente, row.telefono, row.modelo, row.falla, row.gremio].filter(Boolean).join(" ").toLocaleLowerCase("es-AR"); }
   return { BRANCHES, ORDER_STATES, PAYMENT_METHODS, validateClient, validateOrder, validatePayment, paid, balance, searchText, normalizedPhone };

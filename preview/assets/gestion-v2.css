@@ -903,3 +903,5 @@ body.theme-dark .modal::backdrop{background:#020611cc}
 #view-inicio .dashboard-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important;width:100%}
 #view-inicio .dashboard-actions #home-new-order,
 #view-inicio .dashboard-actions #home-prices{grid-column:auto!important;display:inline-flex!important;width:100%!important;min-width:0;min-height:46px!important;flex:initial!important;justify-content:center!important;align-items:center!important;white-space:normal}
+
+.order-photo-preview{display:grid;gap:6px;margin:14px 0;padding:12px;border:1px solid var(--line,#e5e7eb);border-radius:12px}.order-photo-preview img{display:block;max-width:100%;max-height:220px;object-fit:contain;border-radius:8px}.order-photo-preview small{color:var(--muted,#667085);font-size:11px}#pending-costs-list .order-row{gap:12px}@media(max-width:760px){#pending-costs-list .order-row{grid-template-columns:1fr auto}#pending-costs-list .order-row .row-main{grid-column:1/-1}}

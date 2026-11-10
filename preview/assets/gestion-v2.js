@@ -642,6 +642,8 @@
     $("#print-area").innerHTML = `<div class="ticket">
       <div class="ticket-brand">${esc(brand)}</div>
       ${address ? `<p class="ticket-address">${esc(address)}</p>` : ""}
+      ${branchPhone ? `<p class="ticket-address">Tel. ${esc(branchPhone)}</p>` : ""}
+      ${branchSocial ? `<p class="ticket-address">${esc(branchSocial)}</p>` : ""}
       <div class="ticket-kind">${isDelivery ? "COMPROBANTE DE ENTREGA" : "COMPROBANTE DE RECEPCIÓN"}</div>
       <div class="ticket-order">ORDEN #${esc(order.id)}</div>
       ${orderDate ? `<p class="ticket-date">${isDelivery ? "Fecha de entrega" : "Fecha de recepción"}: ${orderDate}</p>` : ""}

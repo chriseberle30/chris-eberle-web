@@ -933,3 +933,7 @@ body.theme-dark .modal::backdrop{background:#020611cc}
 body.theme-dark .state-pill.waiting{background:#49351c;color:#ffd08a;border-color:#6a4b23}
 body.theme-dark .state-pill.delayed{background:#4b2028;color:#ffb4bd;border-color:#74303b}
 body.theme-dark .state-pill.received,body.theme-dark .state-pill.closed{background:#293548;color:#c4cedb;border-color:#3a485c}
+
+/* El estado de la orden en Inicio funciona como acceso directo para cambiarlo. */
+.state-pill-action{font:inherit;font-size:inherit;line-height:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:6px;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.state-pill-action:focus-visible{outline:2px solid #46648a;outline-offset:2px}

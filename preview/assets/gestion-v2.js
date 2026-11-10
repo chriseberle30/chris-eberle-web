@@ -514,8 +514,10 @@
         const printer = await qz.printers.find("XP-80");
         if (!printer) throw new Error("No se encontró la XP-80.");
         const config = qz.configs.create(printer, { margins: 0, jobName: job.job_name || "E30 comprobante" });
-        await qz.print(config, [{ type: "html", format: "plain", data: job.payload }]);
-        await qz.print(config, [{ type: "raw", format: "command", flavor: "plain", data: "\x1B" + "d" + "\x07" + "\x1D" + "V" + "\x00" }]);
+        await qz.print(config, [
+          { type: "html", format: "plain", data: job.payload },
+          { type: "raw", format: "command", flavor: "plain", data: "\x1B" + "d" + "\x07" + "\x1D" + "V" + "\x00" }
+        ]);
         const { error: doneError } = await sb.from("print_jobs")
           .update({ status: "done", printed_at: new Date().toISOString(), last_error: null })
           .eq("id", job.id);
@@ -597,8 +599,10 @@
       const printer = await qz.printers.find("XP-80");
       if (!printer) throw new Error("No se encontró la impresora XP-80.");
       const config = qz.configs.create(printer, { margins: 0, jobName: "E30 Comprobante" });
-      await qz.print(config, [{ type: "html", format: "plain", data: doc }]);
-      await qz.print(config, [{ type: "raw", format: "command", flavor: "plain", data: "\x1B" + "d" + "\x07" + "\x1D" + "V" + "\x00" }]);
+      await qz.print(config, [
+        { type: "html", format: "plain", data: doc },
+        { type: "raw", format: "command", flavor: "plain", data: "\x1B" + "d" + "\x07" + "\x1D" + "V" + "\x00" }
+      ]);
       notice("Comprobante enviado a la XP-80.", false);
     } catch (err) {
       console.error("E30 QZ print", err);

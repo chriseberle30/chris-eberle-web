@@ -496,7 +496,7 @@
         <style>
           @page { size: 80mm auto; margin: 4mm; }
           html,body { margin:0; padding:0; width:72mm; color:#000; background:#fff; }
-          body { font:10px/1.25 Arial,sans-serif; }
+          body { font:9px/1.2 Arial,sans-serif; }
           .ticket { width:100%; }
           h2 { text-align:center; font-size:14px; margin:0 0 2px; }
           h3 { text-align:center; font-size:11px; margin:5px 0; }
@@ -538,7 +538,7 @@
     const isDelivery = type === "entrega";
     const paymentLines = (payments || []).map(p => `<div>${date(p.creado)} · ${esc(p.medio)}: ${money(p.importe)}</div>`).join("");
     const terms = warrantyDays === 0 ? "Trabajo sin garantía." : `Garantía: ${warrantyDays} días.`;
-    const trackingUrl = order.tracking_token ? `${location.origin}${location.pathname.replace(/gestion-v2\.html$/, "seguimiento.html")}?t=${encodeURIComponent(order.tracking_token)}` : "";
+    const trackingUrl = order.tracking_token ? (() => { const u = new URL("seguimiento.html", location.href); u.searchParams.set("t", order.tracking_token); return u.href; })() : "";
     $("#print-area").innerHTML = `<div class="ticket">
       <h2>${brand}</h2><p>${(order.negocio === "i30" ? settings.i30Address : settings.e30Address) || (order.negocio === "i30" ? "Moreno" : "Las Flores")}</p><hr>
       <h3>${isDelivery ? "COMPROBANTE DE ENTREGA" : "COMPROBANTE DE RECEPCIÓN"}</h3>
@@ -551,7 +551,7 @@
       ${isDelivery ? `<b>PAGOS</b><p>${paymentLines || "Sin pagos registrados"}</p>` : ""}
       <hr><b>GARANTÍA Y CONDICIONES</b><p>${terms}<br>${esc(order.garantia_condiciones || "Conserve este comprobante para cualquier consulta.")}${isDelivery && order.garantia_dias > 0 ? `<br>Vencimiento estimado: ${warrantyEnd}` : ""}</p>
       <hr><p>Declaro recibir / entregar el equipo y acepto las condiciones informadas.</p>
-      <p style="margin-top:28px">Firma: ______________________</p><p>Aclaración: __________________</p><hr><p>Gracias por confiar en ${esc(order.negocio)}.</p>
+      <p style="margin-top:10px">Firma: ____________________</p><hr><p>Gracias por confiar en ${esc(order.negocio)}.</p>
     </div>`;
     if (trackingUrl && window.QRCode) {
       new QRCode($("#tracking-qr"), { text: trackingUrl, width: 76, height: 76, correctLevel: QRCode.CorrectLevel.M });

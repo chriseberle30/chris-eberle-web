@@ -510,7 +510,7 @@
       const doc = "<html><head><meta charset='utf-8'>" + styles + "</head><body>" + ticket + "</body></html>";
       await qz.print(config, [{ type: "html", format: "plain", data: doc }]);
       // Alimenta y ejecuta el corte completo al finalizar el comprobante.
-      await qz.print(config, [{ type: "raw", format: "command", flavor: "plain", data: "\\x1B" + "d" + "\\x07" + "\\x1D" + "V" + "\\x00" }]);
+      await qz.print(config, [{ type: "raw", format: "command", flavor: "plain", data: "\x1B" + "d" + "\x07" + "\x1D" + "V" + "\x00" }]);
       notice("Comprobante enviado a la XP-80.", false);
     } catch (err) {
       console.error("E30 QZ print", err);

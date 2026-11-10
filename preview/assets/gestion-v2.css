@@ -1002,3 +1002,76 @@ body.theme-dark .state-pill.delayed{background:#49351c;color:#ffd08a;border-colo
 .order-table-head{display:grid;grid-template-columns:64px minmax(170px,1.25fr) minmax(140px,1fr) minmax(130px,.9fr) minmax(135px,.8fr) 145px;gap:16px;padding:11px 22px;background:#f7f8fb;border-bottom:1px solid var(--line);color:var(--muted);font-size:11px;font-weight:750;letter-spacing:.045em;text-transform:uppercase}
 body.theme-dark .order-table-head{background:#172235;color:#b5c1d1;border-color:#29364a}
 @media(max-width:760px){.order-table-head{display:none}}
+
+/* E30: suavizar jerarquía y dar aire a las filas de órdenes */
+#view-inicio .home-order-row{
+  padding-top:18px;padding-bottom:18px;gap:16px;
+  border-bottom:1px solid #edf0f4;
+  transition:background .16s ease;
+}
+#view-inicio .home-order-number{
+  background:#f3f5f9;color:#29345f;border-radius:12px;
+  font-size:12px;font-weight:700;
+}
+#view-inicio .home-order-copy{gap:5px}
+#view-inicio .home-order-copy .home-device-model{
+  font-size:16px!important;font-weight:700!important;letter-spacing:-.02em;
+  line-height:1.3;color:var(--ink)!important;
+}
+#view-inicio .home-order-copy .home-device-fault{
+  color:#778397!important;font-size:13px!important;font-weight:500!important;
+  line-height:1.4;letter-spacing:0;
+}
+#view-inicio .home-order-client{min-width:0;display:flex;flex-direction:column;gap:4px}
+#view-inicio .home-order-client b{
+  display:block;font-size:13px;font-weight:650;color:#384154;line-height:1.35;
+}
+#view-inicio .home-order-client small{
+  display:block;font-size:12px;line-height:1.35;color:#98a1b1;margin:0;
+}
+#view-inicio .home-order-meta{gap:7px}
+#view-inicio .home-order-meta .state-pill{
+  font-size:12px;font-weight:650;padding:6px 10px;
+  box-shadow:none;border:1px solid #e6eaf0;
+}
+#view-inicio .home-order-meta .branch-pill{
+  font-size:11px;font-weight:600;padding:5px 9px;color:#778397;background:#f2f4f8;
+}
+#view-inicio .home-order-balance{gap:4px}
+#view-inicio .home-order-balance b{
+  font-size:15px;font-weight:700;letter-spacing:-.01em;color:#30384a;
+}
+#view-inicio .home-order-balance small{font-size:11px;color:#929bad}
+#view-inicio .home-order-date{font-size:11px;color:#929bad}
+@media(max-width:760px){
+  #view-inicio .home-order-row{
+    grid-template-columns:40px minmax(0,1fr) auto;
+    gap:9px 12px;padding:17px 13px;
+    align-items:start;
+  }
+  #view-inicio .home-order-number{width:36px;height:36px;font-size:12px}
+  #view-inicio .home-order-copy{gap:4px;min-width:0}
+  #view-inicio .home-order-copy .home-device-model{
+    font-size:16px!important;font-weight:700!important;line-height:1.3;
+  }
+  #view-inicio .home-order-copy .home-device-fault{
+    font-size:13px!important;font-weight:500!important;color:#7d8798!important;
+  }
+  #view-inicio .home-order-client{
+    grid-column:2;grid-row:auto;display:flex;flex-direction:column;
+    align-items:flex-start;gap:3px;margin-top:1px;line-height:1.35;
+  }
+  #view-inicio .home-order-client b{font-size:13px;font-weight:650;line-height:1.35}
+  #view-inicio .home-order-client small{font-size:12px;line-height:1.35;margin:0}
+  #view-inicio .home-order-meta{grid-column:3;grid-row:1 / span 2;gap:6px;align-items:flex-end}
+  #view-inicio .home-order-meta .state-pill{font-size:11px;padding:6px 9px}
+  #view-inicio .home-order-meta .branch-pill{font-size:10px;padding:4px 8px}
+  #view-inicio .home-order-balance{grid-column:2;grid-row:auto;margin-top:2px;gap:3px}
+  #view-inicio .home-order-balance b{font-size:14px;font-weight:700}
+  #view-inicio .home-order-balance small{font-size:11px}
+}
+body.theme-dark #view-inicio .home-order-copy .home-device-fault{color:#a5b1c2!important}
+body.theme-dark #view-inicio .home-order-client b{color:#dce4ef}
+body.theme-dark #view-inicio .home-order-client small,
+body.theme-dark #view-inicio .home-order-balance small{color:#9eacbf}
+body.theme-dark #view-inicio .home-order-balance b{color:#e7edf7}

@@ -228,7 +228,8 @@
         ${formField("Nombre / comercio *", "nuevo_nombre")}
         ${formField("Teléfono", "nuevo_telefono", "", "tel")}
         ${formField("Email (opcional)", "nuevo_email", "", "email")}
-        <div class="quick-client-actions"><button type="button" class="button primary" id="quick-client-save">Guardar cliente</button><button type="button" class="button" id="quick-client-cancel">Cancelar</button></div>
+        <p class="quick-client-hint">El cliente se guarda automáticamente al crear la orden.</p>
+        <div class="quick-client-actions"><button type="button" class="button" id="quick-client-cancel">Cancelar</button></div>
       </div>
       <div class="field span-2" id="guild-name-wrap" hidden>${formField("Técnico / comercio *", "gremio", order?.gremio || "")}</div>
       ${formField("Modelo del equipo *", "modelo", order?.modelo || "")}
@@ -276,23 +277,6 @@
       $("#f-cliente_id").disabled = true;
       $("#f-nuevo_nombre").required = true;
       $("#f-nuevo_nombre").focus();
-    });
-    $("#quick-client-save")?.addEventListener("click", async () => {
-      const button = $("#quick-client-save"), name = $("#f-nuevo_nombre").value.trim();
-      if (!name) { notice("Ingresá el nombre del cliente.", true); $("#f-nuevo_nombre").focus(); return; }
-      if (button.disabled) return; button.disabled = true; button.textContent = "Guardando…";
-      try {
-        const payload = Rules.validateClient({ nombre: name, telefono: $("#f-nuevo_telefono").value, email: $("#f-nuevo_email").value });
-        const created = await sb.from("clientes").insert(payload).select("id,nombre,telefono,email,notas").single();
-        if (created.error) throw created.error;
-        data.clients.push(created.data);
-        const option = document.createElement("option"); option.value = created.data.id; option.textContent = created.data.nombre + (created.data.telefono ? " · " + created.data.telefono : "");
-        $("#f-cliente_id").append(option); $("#f-cliente_id").value = String(created.data.id);
-        $("#f-cliente_id").disabled = false; $("#f-cliente_id").required = true;
-        $("#quick-client-fields").hidden = true; $("#quick-client-toggle").hidden = false; $("#f-nuevo_nombre").required = false;
-        notice("Cliente dado de alta. Ya quedó seleccionado para esta orden.");
-      } catch (error) { notice("No se pudo guardar el cliente: " + (error.message || error), true); }
-      finally { button.disabled = false; button.textContent = "Guardar cliente"; }
     });
     $("#quick-client-cancel")?.addEventListener("click", () => {
       $("#quick-client-fields").hidden = true;
@@ -390,6 +374,7 @@
           const created = await sb.from("clientes").insert(quickPayload).select("id,nombre,telefono").single();
           if (created.error) throw created.error;
           client = created.data;
+           data.clients.push(created.data);
         }
         if (tipo === "Particular" && !client) throw new Error("Elegí un cliente o crealo desde esta misma pantalla.");
         if (tipo === "Gremio" && !values.gremio?.trim()) throw new Error("Ingresá el nombre del técnico o comercio.");

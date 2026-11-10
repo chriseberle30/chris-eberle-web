@@ -371,6 +371,7 @@
     const form = event.currentTarget; const action = form.dataset.action; if (action === "dismiss") return;
     event.preventDefault(); if (data.busy) return; data.busy = true;
     const fd = new FormData(form); const values = Object.fromEntries(fd.entries());
+    let createdSaleId = null;
     try {
       if (action === "save-client") {
         const payload = Rules.validateClient(values);
@@ -431,7 +432,7 @@
         const {error}=await sb.rpc("e30_stock_movimiento",{p_item_id:Number(form.dataset.id),p_tipo:values.tipo,p_cantidad:Number(values.cantidad),p_costo:Number(values.costo||0),p_nota:values.nota||null});if(error)throw error;notice("Stock actualizado.");
       } else if(action==="save-sale"){
         const itemId=Number(values.item_id.split(" · ")[0]);const amount=Number(values.cantidad);const price=Number(values.precio_unitario);if(!Number.isFinite(amount)||amount<=0||!Number.isFinite(price)||price<0)throw new Error("Revisá cantidad y precio.");
-        const {data:id,error}=await sb.rpc("e30_registrar_venta",{p_venta:{sucursal:values.sucursal,cliente:values.cliente,medio:values.medio,precio_unitario:price},p_item_id:itemId,p_cantidad:amount});if(error)throw error;notice("Venta #"+id+" registrada; stock y caja actualizados.");
+        const {data:id,error}=await sb.rpc("e30_registrar_venta",{p_venta:{sucursal:values.sucursal,cliente:values.cliente,medio:values.medio,precio_unitario:price},p_item_id:itemId,p_cantidad:amount});if(error)throw error;createdSaleId=id;notice("Venta #"+id+" registrada; stock y caja actualizados.");
       } else if (action === "save-payment") {
         const order = data.orders.find((row) => String(row.id) === String(form.dataset.id));
         if (!order) throw new Error("No se encontró la orden.");
@@ -446,6 +447,7 @@
       if (action === "create-order") {
         if (data.lastCreatedOrderId) printTicket(data.lastCreatedOrderId);
       }
+      if (action === "save-sale" && createdSaleId) printSaleTicket(createdSaleId);
     } catch (error) { notice(error.message || "No se pudo guardar el cambio.", true); }
     finally { data.busy = false; }
   }
@@ -681,7 +683,38 @@
       ${Number(x.cantidad)<=Number(x.minimo)?'<span class="state-pill pending stock-low-pill">Stock bajo</span>':""}
     </article>`).join("")||'<div class="empty-state">No hay artículos cargados. Agregá el primero para empezar.</div>';
   }
-  function renderSales(){if(!$("#sales-list"))return;const start=monthStart();const rows=data.sales.filter(x=>new Date(x.creado)>=start);$("#sales-total").textContent=money(rows.reduce((a,x)=>a+Number(x.total),0));$("#sales-units").textContent=rows.reduce((a,x)=>a+(x.venta_items||[]).reduce((n,i)=>n+Number(i.cantidad),0),0);$("#sales-margin").textContent=money(rows.reduce((a,x)=>a+Number(x.total)-Number(x.costo_total),0));$("#sales-list").innerHTML=data.sales.map(x=>"<article class=\"order-row sales-row\"><div class=\"row-main\"><b>Venta #"+x.id+" · "+esc(x.concepto||"Venta")+"</b><small>"+date(x.creado)+" · "+esc(x.cliente||"Consumidor final")+" · "+esc(x.medio)+"</small></div><span class=\"branch-pill\">"+esc(x.sucursal)+"</span><b class=\"money\">"+money(x.total)+"</b></article>").join("")||"<div class=\"empty-state\">Todavía no hay ventas.</div>";}
+  async function printSaleTicket(saleId) {
+    const sale = data.sales.find((row) => String(row.id) === String(saleId));
+    if (!sale) return notice("No se encontró la venta para imprimir.", true);
+    const items = (sale.venta_items || []).map((line) => {
+      const stockItem = data.stockItems.find((item) => String(item.id) === String(line.item_id));
+      const name = line.nombre || line.concepto || stockItem?.nombre || "Artículo";
+      const qty = Number(line.cantidad || 1);
+      const unit = Number(line.precio_unitario ?? line.precio ?? 0);
+      const subtotal = Number(line.subtotal ?? qty * unit);
+      return `<div class="ticket-money-row"><span>${esc(name)} × ${qty}</span><strong>${money(subtotal)}</strong></div>`;
+    }).join("");
+    const brand = getE30Settings().businessName || "E30 · Técnico de celulares";
+    const customer = sale.cliente || "Consumidor final";
+    const total = Number(sale.total || 0);
+    $("#print-area").innerHTML = `<div class="ticket">
+      <div class="ticket-brand">${esc(brand)}</div>
+      <div class="ticket-kind">COMPROBANTE DE VENTA</div>
+      <div class="ticket-order">VENTA #${esc(sale.id)}</div>
+      <p class="ticket-date">${date(sale.creado)}</p>
+      <hr class="ticket-rule">
+      <section class="ticket-section"><span class="ticket-label">CLIENTE</span><p class="ticket-value">${esc(customer)}</p></section>
+      <section class="ticket-section"><span class="ticket-label">SUCURSAL</span><p class="ticket-value">${esc(sale.sucursal || "E30")}</p></section>
+      <hr class="ticket-rule">
+      <span class="ticket-label">DETALLE</span>
+      ${items || `<p class="ticket-value">${esc(sale.concepto || "Venta")}</p>`}
+      <div class="ticket-money"><div class="ticket-money-row"><span>Medio de pago</span><strong>${esc(sale.medio || "—")}</strong></div><div class="ticket-money-row ticket-balance"><span>TOTAL</span><strong>${money(total)}</strong></div></div>
+      <p class="ticket-thanks">Gracias por tu compra.</p>
+    </div>`;
+    await printTicketWithQZ();
+  }
+
+  function renderSales(){if(!$("#sales-list"))return;const start=monthStart();const rows=data.sales.filter(x=>new Date(x.creado)>=start);$("#sales-total").textContent=money(rows.reduce((a,x)=>a+Number(x.total),0));$("#sales-units").textContent=rows.reduce((a,x)=>a+(x.venta_items||[]).reduce((n,i)=>n+Number(i.cantidad),0),0);$("#sales-margin").textContent=money(rows.reduce((a,x)=>a+Number(x.total)-Number(x.costo_total),0));$("#sales-list").innerHTML=data.sales.map(x=>"<article class=\"order-row sales-row\"><div class=\"row-main\"><b>Venta #"+x.id+" · "+esc(x.concepto||"Venta")+"</b><small>"+date(x.creado)+" · "+esc(x.cliente||"Consumidor final")+" · "+esc(x.medio)+"</small></div><span class=\"branch-pill\">"+esc(x.sucursal)+"</span><b class=\"money\">"+money(x.total)+"</b><button class=\"button button-small\" type=\"button\" data-sale-ticket=\""+x.id+"\">Imprimir ticket</button></article>").join("")||"<div class=\"empty-state\">Todavía no hay ventas.</div>";}
   function openCashForm(){const body="<div class=\"form-grid\">"+selectField("Tipo","tipo",["Egreso","Ingreso"],"Egreso")+selectField("Sucursal","sucursal",Rules.BRANCHES,"E30")+formField("Categoría","categoria","Gastos del local")+selectField("Medio","medio",Rules.PAYMENT_METHODS,"Efectivo")+formField("Concepto *","concepto")+formField("Importe *","importe","","number")+"</div>";openModal("Registrar movimiento","CAJA",body,actionButtons("Cancelar","Guardar movimiento"));$("#modal-form").dataset.action="save-cash";}
   function openStockForm(item=null){const body="<div class=\"form-grid\">"+formField("Nombre *","nombre",item?.nombre||"")+formField("Categoría","categoria",item?.categoria||"Accesorios")+formField("SKU / código de barras","sku",item?.sku||"")+formField("Cantidad inicial","cantidad",item?.cantidad??0,"number")+formField("Costo unitario","costo",item?.costo??0,"number")+formField("Precio de venta","precio",item?.precio??0,"number")+formField("Stock mínimo","minimo",item?.minimo??0,"number")+"</div>";openModal(item?"Editar artículo":"Nuevo artículo","INVENTARIO",body,actionButtons());$("#modal-form").dataset.action="save-stock";$("#modal-form").dataset.id=item?.id||"";const sku=$("#f-sku");const scan=document.createElement("button");scan.type="button";scan.className="button";scan.textContent="Escanear código de barras";scan.addEventListener("click",startStockBarcodeScanner);sku.parentElement.appendChild(scan);}
   async function startStockBarcodeScanner(){
@@ -827,7 +860,7 @@
     $("#modal-form").addEventListener("submit", runAction); $("#cfg-save").addEventListener("click",saveE30Settings); $("#theme-toggle").addEventListener("click",()=>{const dark=document.body.classList.toggle("theme-dark");localStorage.setItem("e30_theme",dark?"dark":"light");$("#theme-toggle").textContent=dark?"☀ Activar modo claro":"☾ Activar modo noche";});
     $("#modal").addEventListener("click", (event) => { if (event.target === $("#modal") || event.target.closest("[data-close]")) closeModal(); });
     document.addEventListener("click", (event) => {
-      const target = event.target.closest("[data-quick-state],[data-more-prices],[data-stock-move],[data-stock-edit],[data-claim-edit],[data-empty-add-price],[data-empty-bulk-price],[data-order],[data-client],[data-edit-client],[data-client-new-order],[data-edit-order],[data-open-order],[data-payment],[data-trash],[data-restore],[data-ticket],[data-edit-price],[data-toggle-price],[data-copy-price],[data-update-state],[data-costs],[data-add-photo]");
+      const target = event.target.closest("[data-quick-state],[data-more-prices],[data-stock-move],[data-stock-edit],[data-claim-edit],[data-empty-add-price],[data-empty-bulk-price],[data-order],[data-client],[data-edit-client],[data-client-new-order],[data-edit-order],[data-open-order],[data-payment],[data-trash],[data-restore],[data-ticket],[data-edit-price],[data-toggle-price],[data-copy-price],[data-update-state],[data-costs],[data-add-photo],[data-sale-ticket]");
       if (!target) return;
       if (target.dataset.quickState) openQuickStatePicker(target.dataset.quickState);
       else if (target.dataset.morePrices) { renderPrices.limit = (renderPrices.limit || 80) + 80; renderPrices($("#price-search").value); }
@@ -843,6 +876,7 @@
       else if (target.dataset.trash) trashOrder(target.dataset.trash);
       else if (target.dataset.restore) restoreOrder(target.dataset.restore);
       else if (target.dataset.ticket) printTicket(target.dataset.ticket, target.dataset.ticketType || "recepcion");
+      else if (target.dataset.saleTicket) printSaleTicket(target.dataset.saleTicket);
       else if (target.dataset.updateState) updateOrderState(target.dataset.updateState);
       else if (target.dataset.costs) { const order=data.orders.find(x=>String(x.id)===target.dataset.costs)||data.currentOrder; if(order)openCostsForm(order); }
       else if (target.dataset.addPhoto) addOrderPhoto(target.dataset.addPhoto);

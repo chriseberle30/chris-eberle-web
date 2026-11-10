@@ -484,13 +484,75 @@
     if (error) return notice(error.message, true); await refresh(); notice(active ? "Tarifa pausada." : "Tarifa activada.");
   }
 
-  async function printTicketWithQZ() {
+  let e30QueueTimer = null;
+  let e30QueueBusy = false;
+  let e30QueueStarting = false;
+
+  function isMobilePrintClient() {
+    return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+  }
+
+  async function processRemotePrintQueue() {
+    if (e30QueueBusy || !window.qz || !qz.websocket.isActive()) return;
+    e30QueueBusy = true;
     try {
-      if (!window.qz) throw new Error("QZ Tray no está cargado en esta página.");
+      const { data: job, error } = await sb.from("print_jobs")
+        .select("id,payload,job_name")
+        .eq("status", "pending")
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      if (!job) return;
+      const { data: claimed, error: claimError } = await sb.from("print_jobs")
+        .update({ status: "printing", last_error: null })
+        .eq("id", job.id).eq("status", "pending")
+        .select("id");
+      if (claimError) throw claimError;
+      if (!claimed?.length) return;
+      try {
+        const printer = await qz.printers.find("XP-80");
+        if (!printer) throw new Error("No se encontró la XP-80.");
+        const config = qz.configs.create(printer, { margins: 0, jobName: job.job_name || "E30 comprobante" });
+        await qz.print(config, [{ type: "html", format: "plain", data: job.payload }]);
+        await qz.print(config, [{ type: "raw", format: "command", flavor: "plain", data: "\x1B" + "d" + "\x07" + "\x1D" + "V" + "\x00" }]);
+        const { error: doneError } = await sb.from("print_jobs")
+          .update({ status: "done", printed_at: new Date().toISOString(), last_error: null })
+          .eq("id", job.id);
+        if (doneError) throw doneError;
+        notice("Comprobante recibido del celular e impreso.", false);
+      } catch (printError) {
+        await sb.from("print_jobs").update({ status: "pending", last_error: String(printError?.message || printError).slice(0, 500) }).eq("id", job.id);
+        throw printError;
+      }
+    } catch (error) {
+      console.error("E30 cola de impresión", error);
+    } finally {
+      e30QueueBusy = false;
+    }
+  }
+
+  async function startRemotePrintReceiver() {
+    if (isMobilePrintClient() || e30QueueStarting || e30QueueTimer) return;
+    e30QueueStarting = true;
+    try {
+      if (!window.qz) throw new Error("QZ Tray todavía no está cargado.");
       if (!qz.websocket.isActive()) await qz.websocket.connect();
       const printer = await qz.printers.find("XP-80");
-      if (!printer) throw new Error("No se encontró la impresora XP-80.");
-      const config = qz.configs.create(printer, { margins: 0, jobName: "E30 Comprobante" });
+      if (!printer) throw new Error("No se encontró la XP-80.");
+      await processRemotePrintQueue();
+      e30QueueTimer = setInterval(processRemotePrintQueue, 1500);
+      console.info("E30: receptor remoto de impresión activo.");
+    } catch (error) {
+      console.warn("E30: no se pudo iniciar el receptor remoto; se reintentará.", error);
+      setTimeout(startRemotePrintReceiver, 5000);
+    } finally {
+      e30QueueStarting = false;
+    }
+  }
+
+  async function printTicketWithQZ() {
+    try {
       const ticket = document.querySelector("#print-area").innerHTML;
       const styles = `
         <style>
@@ -508,13 +570,25 @@
           .ticket-tracking small { display:block; font-size:9px; margin-top:3px; }
         </style>`;
       const doc = "<html><head><meta charset='utf-8'>" + styles + "</head><body>" + ticket + "</body></html>";
+
+      if (isMobilePrintClient()) {
+        const { error } = await sb.from("print_jobs").insert({ payload: doc, job_name: "E30 comprobante" });
+        if (error) throw error;
+        notice("Comprobante enviado a la notebook. Se imprimirá automáticamente.", false);
+        return;
+      }
+
+      if (!window.qz) throw new Error("QZ Tray no está cargado en esta página.");
+      if (!qz.websocket.isActive()) await qz.websocket.connect();
+      const printer = await qz.printers.find("XP-80");
+      if (!printer) throw new Error("No se encontró la impresora XP-80.");
+      const config = qz.configs.create(printer, { margins: 0, jobName: "E30 Comprobante" });
       await qz.print(config, [{ type: "html", format: "plain", data: doc }]);
-      // Alimenta y ejecuta el corte completo al finalizar el comprobante.
       await qz.print(config, [{ type: "raw", format: "command", flavor: "plain", data: "\x1B" + "d" + "\x07" + "\x1D" + "V" + "\x00" }]);
       notice("Comprobante enviado a la XP-80.", false);
     } catch (err) {
       console.error("E30 QZ print", err);
-      notice("No se pudo imprimir por QZ Tray: " + (err?.message || err), true);
+      notice("No se pudo enviar/imprimir: " + (err?.message || err), true);
     }
   }
 
@@ -718,12 +792,12 @@
     const saved=getE30Settings(); for(const [id,key] of [["cfg-e30-name","e30Name"],["cfg-i30-name","i30Name"],["cfg-e30-address","e30Address"],["cfg-i30-address","i30Address"],["cfg-phone","phone"],["cfg-warranty-days","warrantyDays"],["cfg-warranty-terms","warrantyTerms"]])if(saved[key]!=null)$("#"+id).value=saved[key];
     sb.auth.onAuthStateChange((event, session) => {
       if (event === "INITIAL_SESSION") return; // getSession() below owns the first load; avoid duplicate initial refresh.
-      if (session) { showApp(session); setTimeout(() => refresh(), 0); } else showLogin();
+      if (session) { showApp(session); setTimeout(() => { refresh(); startRemotePrintReceiver(); }, 0); } else showLogin();
     });
     sb.auth.getSession().then(({ data: sessionData, error }) => {
       if (error) return showLogin(error.message);
       if (!sessionData.session) return showLogin();
-      showApp(sessionData.session); refresh();
+      showApp(sessionData.session); refresh(); startRemotePrintReceiver();
     }).catch((error) => showLogin(error.message));
   }
   initialize();

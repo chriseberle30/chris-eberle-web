@@ -565,8 +565,8 @@
           p { margin:2px 0 5px; overflow-wrap:anywhere; }
           hr { border:0; border-top:1px dashed #000; margin:4px 0; }
           b { font-weight:700; }
-          .ticket-tracking { text-align:center; margin:4px 0; }
-          .ticket-tracking img { display:block; width:20mm; height:20mm; margin:3px auto; }
+          .ticket-tracking { text-align:center; margin:5px 0; padding:1mm 0; }
+          .ticket-tracking img { display:block; width:30mm; height:30mm; margin:3px auto; image-rendering:pixelated; background:#fff; padding:2mm; }
           .ticket-tracking small { display:block; font-size:9px; margin-top:3px; }
         </style>`;
       const doc = "<html><head><meta charset='utf-8'>" + styles + "</head><body>" + ticket + "</body></html>";
@@ -628,7 +628,7 @@
       <p style="margin-top:10px">Firma: ____________________</p><hr><p>Gracias por confiar en ${esc(order.negocio)}.</p>
     </div>`;
     if (trackingUrl && window.QRCode) {
-      new QRCode($("#tracking-qr"), { text: trackingUrl, width: 76, height: 76, correctLevel: QRCode.CorrectLevel.M });
+      new QRCode($("#tracking-qr"), { text: trackingUrl, width: 120, height: 120, correctLevel: QRCode.CorrectLevel.L });
       await new Promise((resolve) => setTimeout(resolve, 300));
     }
     await printTicketWithQZ();

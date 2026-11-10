@@ -231,11 +231,11 @@
         <button type="button" class="button" id="quick-client-cancel">Cancelar alta rápida</button>
       </div>
       <div class="field span-2" id="guild-name-wrap" hidden>${formField("Técnico / comercio *", "gremio", order?.gremio || "")}</div>
-      ${formField("Marca *", "marca", order?.marca || "")}
+      ${formField("Marca (opcional)", "marca", order?.marca || "Apple")}
       ${formField("Modelo del equipo *", "modelo", order?.modelo || "")}
       ${formField("Total acordado ($)", "total", order?.total ?? "", "number", "span-2")}
       <div class="field span-2"><label for="f-falla">Falla / trabajo solicitado *</label><textarea id="f-falla" name="falla" required>${esc(order?.falla || "")}</textarea><div class="fault-quick-picks" aria-label="Fall as frecuentes">${["Pantalla","Batería","No carga","Pin de carga","Cámara","Face ID","Audio","No enciende","Se reinicia","Software","Otro"].map(x=>`<button type="button" class="fault-chip" data-fault="${x}">${x}</button>`).join("")}</div></div>
-      <div class="field span-2"><label for="f-estado_ingreso">Cómo ingresa el equipo *</label><textarea id="f-estado_ingreso" name="estado_ingreso" required placeholder="Golpes, rayas, pantalla, tapa, cámaras, accesorios que entrega...">${esc(order?.estado_ingreso || "")}</textarea></div>
+      <div class="field span-2"><label for="f-estado_ingreso">Observaciones de recepción <span class="muted">· opcional</span></label><textarea id="f-estado_ingreso" name="estado_ingreso" placeholder="Golpes, rayas o accesorios que deja...">${esc(order?.estado_ingreso || "")}</textarea></div>
       ${!isEditing ? formField("Seña inicial ($)", "sena", "0", "number", "span-2") : ""}
       <details class="order-advanced span-2">
         <summary>Datos adicionales <span>Opcionales</span></summary>
@@ -305,8 +305,9 @@
     ]);
     if (historyError || paymentsError) return notice(`No se pudo cargar el historial: ${(historyError || paymentsError).message}`, true);
     const due = Rules.balance({ ...order, pagos: payments || [] });
+    let photoUrl = ""; if (order.foto_path) { const signed = await sb.storage.from("ordenes-fotos").createSignedUrl(order.foto_path, 300); photoUrl = signed.data?.signedUrl || ""; }
     const stateOptions = Rules.ORDER_STATES.map((state) => `<option value="${esc(state)}" ${state === order.estado ? "selected" : ""}>${esc(state)}</option>`).join("");
-    const body = `<div class="detail-grid"><div class="detail-item"><small>Cliente</small><b>${esc(order.clientes?.nombre || order.cliente || order.gremio || "Sin nombre")}</b></div><div class="detail-item"><small>Equipo · sucursal</small><b>${esc(order.modelo)} · ${esc(order.negocio)}</b></div><div class="detail-item"><small>Estado</small><b>${esc(order.estado)}</b></div><div class="detail-item"><small>Total · saldo</small><b>${money(order.total)} · ${money(due)}</b></div><div class="detail-item"><small>Falla / trabajo</small><b>${esc(order.falla || "—")}</b></div><div class="detail-item"><small>Teléfono</small><b>${esc(order.telefono || order.clientes?.telefono || "—")}</b></div><div class="detail-item"><small>IMEI / serie</small><b>${esc(order.imei || "—")}</b></div><div class="detail-item"><small>Creada</small><b>${date(order.creada)}</b></div></div><div class="quick-actions">${due > 0 ? `<button class="button primary" data-payment="${order.id}" data-balance="${due}">＋ Registrar pago / seña</button>` : ""}<button class="button" data-edit-order="${order.id}">Editar orden</button><button class="button" data-ticket="${order.id}" data-ticket-type="recepcion">Imprimir recepción</button><button class="button" data-ticket="${order.id}" data-ticket-type="entrega">Imprimir entrega</button>${order.borrada ? `<button class="button" data-restore="${order.id}">Restaurar</button>` : `<button class="button danger" data-trash="${order.id}">Enviar a papelera</button>`}</div><div class="field state-editor"><label for="detail-state">Cambiar estado</label><select id="detail-state">${stateOptions}</select><button class="button primary" type="button" data-update-state="${order.id}">Guardar estado</button></div><h3 class="section-title">Pagos registrados</h3>${(payments || []).map((payment) => `<div class="payment-row"><span>${date(payment.creado)} · ${esc(payment.medio || "Efectivo")}</span><b>${money(payment.importe)}</b></div>`).join("") || `<p class="muted">Todavía no hay pagos registrados.</p>`}<h3 class="section-title">Historial de la reparación</h3>${(history || []).map((entry) => `<div class="history-item"><b>${esc(entry.evento)}</b>${entry.detalle ? ` · ${esc(entry.detalle)}` : ""}<small>${date(entry.creado)}</small></div>`).join("") || `<p class="muted">Sin eventos de historial.</p>`}`;
+    const body = `<div class="detail-grid"><div class="detail-item"><small>Cliente</small><b>${esc(order.clientes?.nombre || order.cliente || order.gremio || "Sin nombre")}</b></div><div class="detail-item"><small>Equipo · sucursal</small><b>${esc(order.modelo)} · ${esc(order.negocio)}</b></div><div class="detail-item"><small>Estado</small><b>${esc(order.estado)}</b></div><div class="detail-item"><small>Total · saldo</small><b>${money(order.total)} · ${money(due)}</b></div><div class="detail-item"><small>Falla / trabajo</small><b>${esc(order.falla || "—")}</b></div><div class="detail-item"><small>Teléfono</small><b>${esc(order.telefono || order.clientes?.telefono || "—")}</b></div><div class="detail-item"><small>IMEI / serie</small><b>${esc(order.imei || "—")}</b></div><div class="detail-item"><small>Creada</small><b>${date(order.creada)}</b></div></div><div class="quick-actions">${due > 0 ? `<button class="button primary" data-payment="${order.id}" data-balance="${due}">＋ Registrar pago / seña</button>` : ""}<button class="button" data-edit-order="${order.id}">Editar orden</button><button class="button" data-costs="${order.id}">Cargar costos</button><button class="button" data-add-photo="${order.id}">${order.foto_path ? "Cambiar foto" : "Agregar foto opcional"}</button><button class="button" data-ticket="${order.id}" data-ticket-type="recepcion">Imprimir recepción</button><button class="button" data-ticket="${order.id}" data-ticket-type="entrega">Imprimir entrega</button>${order.borrada ? `<button class="button" data-restore="${order.id}">Restaurar</button>` : `<button class="button danger" data-trash="${order.id}">Enviar a papelera</button>`}</div><div class="field state-editor"><label for="detail-state">Cambiar estado</label><select id="detail-state">${stateOptions}</select><button class="button primary" type="button" data-update-state="${order.id}">Guardar estado</button></div>${photoUrl ? `<div class="order-photo-preview"><img src="${esc(photoUrl)}" alt="Foto del equipo recibido"><small>Foto privada de la orden</small></div>` : ""}<h3 class="section-title">Pagos registrados</h3>${(payments || []).map((payment) => `<div class="payment-row"><span>${date(payment.creado)} · ${esc(payment.medio || "Efectivo")}</span><b>${money(payment.importe)}</b></div>`).join("") || `<p class="muted">Todavía no hay pagos registrados.</p>`}<h3 class="section-title">Historial de la reparación</h3>${(history || []).map((entry) => `<div class="history-item"><b>${esc(entry.evento)}</b>${entry.detalle ? ` · ${esc(entry.detalle)}` : ""}<small>${date(entry.creado)}</small></div>`).join("") || `<p class="muted">Sin eventos de historial.</p>`}`;
     openModal(`Orden #${order.id}`, "DETALLE DE REPARACIÓN", body, `<button class="button" type="button" data-close>Cerrar</button>`);
     $("#modal-form").dataset.action = "dismiss";
   }
@@ -317,6 +318,38 @@
     const orders = linked || [];
     const body = `<div class="detail-grid"><div class="detail-item"><small>Teléfono</small><b>${esc(client.telefono || "—")}</b></div><div class="detail-item"><small>Email</small><b>${esc(client.email || "—")}</b></div></div><p>${esc(client.notas || "Sin notas")}</p><h3 class="section-title">Historial de reparaciones · ${orders.length}</h3>${orders.map((order) => `<div class="history-item" data-open-order="${order.id}"><b>#${order.id} · ${esc(order.modelo || "Equipo")}</b> · ${esc(order.borrada ? "En papelera" : order.estado)} · ${money(order.total)}<small>${date(order.creada)} · ${esc(order.negocio)}</small></div>`).join("") || `<p class="muted">Este cliente todavía no tiene órdenes asociadas.</p>`}<div class="quick-actions"><button class="button" data-edit-client="${esc(client.id)}">Editar cliente</button><button class="button primary" data-client-new-order="${esc(client.id)}">＋ Crear orden</button></div>`;
     openModal(client.nombre, "CLIENTE E HISTORIAL", body, `<button class="button" type="button" data-close>Cerrar</button>`);
+  }
+  function openCostsForm(order) {
+    const body = `<p class="muted">Completá estos datos cuando tengas un rato. No hace falta cargarlos al recibir el equipo.</p><div class="form-grid">
+      ${formField("Costo del repuesto ($)", "costo_repuesto", order.costo_repuesto ?? 0, "number")}
+      ${formField("Mano de obra ($)", "costo_mano_obra", order.costo_mano_obra ?? 0, "number")}
+      ${formField("Otros gastos ($)", "costo_otros", order.costo_otros ?? 0, "number")}
+      <p class="muted span-2">No modifica caja ni stock. Solo calcula la rentabilidad de la reparación.</p>
+    </div>`;
+    openModal("Completar costos", `ORDEN #${order.id} · ${esc(order.modelo || "")}`, body, actionButtons("Después", "Guardar costos"));
+    $("#modal-form").dataset.action = "save-order-costs"; $("#modal-form").dataset.id = order.id;
+  }
+  async function addOrderPhoto(orderId) {
+    const input=document.createElement("input"); input.type="file"; input.accept="image/*"; input.capture="environment";
+    input.addEventListener("change",async()=>{
+      const file=input.files?.[0]; if(!file)return;
+      try{
+        if(!file.type.startsWith("image/"))throw new Error("Elegí una imagen.");
+        const image=new Image(); const objectUrl=URL.createObjectURL(file);
+        await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=()=>reject(new Error("No se pudo leer la imagen."));image.src=objectUrl;});
+        const scale=Math.min(1,1280/Math.max(image.width,image.height)); const canvas=document.createElement("canvas");
+        canvas.width=Math.max(1,Math.round(image.width*scale));canvas.height=Math.max(1,Math.round(image.height*scale));
+        canvas.getContext("2d").drawImage(image,0,0,canvas.width,canvas.height);URL.revokeObjectURL(objectUrl);
+        let blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/jpeg",0.68));if(!blob)throw new Error("No se pudo comprimir la foto.");
+        let quality=0.58;while(blob.size>240*1024&&quality>=0.38){blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/jpeg",quality));quality-=0.08;}
+        if(blob.size>256*1024)throw new Error("La foto sigue siendo pesada. Probá con otra imagen.");
+        const {data:userData,error:userError}=await sb.auth.getUser();if(userError||!userData.user)throw new Error("La sesión expiró. Volvé a ingresar.");
+        const path=userData.user.id+"/"+orderId+".jpg";
+        const uploaded=await sb.storage.from("ordenes-fotos").upload(path,blob,{contentType:"image/jpeg",upsert:true});if(uploaded.error)throw uploaded.error;
+        const saved=await sb.from("ordenes").update({foto_path:path}).eq("id",orderId);if(saved.error)throw saved.error;
+        notice("Foto comprimida y guardada (máximo 256 KB).");await refresh();await openOrder(orderId);
+      }catch(error){notice("No se pudo guardar la foto: "+(error.message||error),true);}
+    },{once:true});input.click();
   }
   function openPayment(orderId, balance) {
     const body = `<div class="form-grid">${formField("Importe del pago *", "importe", balance, "number")}${selectField("Medio de pago", "medio", Rules.PAYMENT_METHODS, "Efectivo")}<p class="muted span-2">Saldo actual: ${money(balance)}. El registro queda asociado a la orden.</p></div>`;
@@ -344,9 +377,9 @@
         }
         if (tipo === "Particular" && !client) throw new Error("Elegí un cliente o crealo desde esta misma pantalla.");
         if (tipo === "Gremio" && !values.gremio?.trim()) throw new Error("Ingresá el nombre del técnico o comercio.");
-        if(!values.estado_ingreso?.trim())throw new Error("Describí el estado físico del equipo al ingresar.");
+        
         const valid = Rules.validateOrder({ ...values, sena: action === "create-order" ? values.sena : 0 });
-        const payload = { cliente_id: tipo === "Particular" ? client.id : null, cliente: tipo === "Particular" ? client.nombre : values.gremio.trim(), telefono: tipo === "Particular" ? client.telefono : values.nuevo_telefono || null, negocio: valid.negocio, tipo, gremio: tipo === "Gremio" ? values.gremio.trim() : null, marca: values.marca || "iPhone", modelo: valid.modelo, falla: valid.falla, estado: values.estado || "Recibido", total: valid.total, notas: values.notas || null, estado_ingreso: values.estado_ingreso.trim(), imei: values.imei || null, garantia_dias: values.garantia_dias === "A definir" || !values.garantia_dias ? null : values.garantia_dias === "Sin garantía" ? 0 : Number(values.garantia_dias), garantia_condiciones: getE30Settings().warrantyTerms || "La garantía cubre el trabajo realizado y el repuesto instalado. No cubre golpes, humedad ni manipulación de terceros.", trabajo_realizado: values.trabajo_realizado || null };
+        const payload = { cliente_id: tipo === "Particular" ? client.id : null, cliente: tipo === "Particular" ? client.nombre : values.gremio.trim(), telefono: tipo === "Particular" ? client.telefono : values.nuevo_telefono || null, negocio: valid.negocio, tipo, gremio: tipo === "Gremio" ? values.gremio.trim() : null, marca: values.marca || "iPhone", modelo: valid.modelo, falla: valid.falla, estado: values.estado || "Recibido", total: valid.total, notas: values.notas || null, estado_ingreso: values.estado_ingreso?.trim() || null, imei: values.imei || null, garantia_dias: values.garantia_dias === "A definir" || !values.garantia_dias ? null : values.garantia_dias === "Sin garantía" ? 0 : Number(values.garantia_dias), garantia_condiciones: getE30Settings().warrantyTerms || "La garantía cubre el trabajo realizado y el repuesto instalado. No cubre golpes, humedad ni manipulación de terceros.", trabajo_realizado: values.trabajo_realizado || null };
         if (action === "create-order") {
           const result = await sb.rpc("e30_crear_orden", { p_orden: payload, p_sena: valid.sena, p_medio: "Efectivo" });
           if (result.error) throw result.error;
@@ -361,6 +394,11 @@
           if (result.error) throw result.error;
         }
         notice(action === "create-order" ? `Orden #${data.lastCreatedOrderId} creada.` : "Orden actualizada.");
+      } else if (action === "save-order-costs") {
+        const fields=["costo_repuesto","costo_mano_obra","costo_otros"];const costs={};
+        for(const key of fields){const n=Number(values[key]||0);if(!Number.isFinite(n)||n<0)throw new Error("Los costos deben ser números iguales o mayores a cero.");costs[key]=n;}
+        costs.costo=costs.costo_repuesto+costs.costo_mano_obra+costs.costo_otros;costs.costos_cargados=true;
+        const {error}=await sb.from("ordenes").update(costs).eq("id",form.dataset.id);if(error)throw error;notice("Costos guardados.");
       } else if (action === "save-price") {
         const existingPrice = data.prices.find((row) => String(row.id) === String(form.dataset.id));
         const price = { marca: values.marca || "iPhone", modelo: values.modelo.trim(), servicio: values.servicio.trim(), precio: Number(values.precio), activo: existingPrice ? existingPrice.activo : true };
@@ -513,6 +551,7 @@
     $("#report-revenue").textContent = money(collected);
     $("#report-cost").textContent = money(cost);
     $("#report-sales").textContent = money(sales.reduce((sum, row) => sum + Number(row.total || 0), 0));
+    $("#pending-costs-list").innerHTML = data.orders.filter(x=>x.estado==="Entregado"&&!x.costos_cargados).sort((a,b)=>new Date(b.entregada||b.creada)-new Date(a.entregada||a.creada)).map(x=>`<article class="order-row"><div class="row-main"><b>Orden #${x.id} · ${esc(x.modelo||"Equipo")}</b><small>${esc(x.cliente||x.gremio||"Cliente")} · ${esc(x.negocio)} · Entregada ${date(x.entregada)}</small></div><span class="state-pill pending">Costos pendientes</span><button class="button" data-costs="${x.id}">Completar costos</button></article>`).join("") || `<div class="empty-state">No hay costos pendientes de completar.</div>`;
     $("#branch-report").innerHTML = Rules.BRANCHES.map((branch) => {
       const branchOrders = orders.filter((x) => x.negocio === branch);
       const branchPayments = paidOrders.filter((x) => x.negocio === branch);
@@ -576,7 +615,7 @@
     $("#modal-form").addEventListener("submit", runAction); $("#cfg-save").addEventListener("click",saveE30Settings); $("#theme-toggle").addEventListener("click",()=>{const dark=document.body.classList.toggle("theme-dark");localStorage.setItem("e30_theme",dark?"dark":"light");$("#theme-toggle").textContent=dark?"☀ Activar modo claro":"☾ Activar modo noche";});
     $("#modal").addEventListener("click", (event) => { if (event.target === $("#modal") || event.target.closest("[data-close]")) closeModal(); });
     document.addEventListener("click", (event) => {
-      const target = event.target.closest("[data-more-prices],[data-stock-move],[data-stock-edit],[data-claim-edit],[data-empty-add-price],[data-empty-bulk-price],[data-order],[data-client],[data-edit-client],[data-client-new-order],[data-edit-order],[data-open-order],[data-payment],[data-trash],[data-restore],[data-ticket],[data-edit-price],[data-toggle-price],[data-copy-price],[data-update-state]");
+      const target = event.target.closest("[data-more-prices],[data-stock-move],[data-stock-edit],[data-claim-edit],[data-empty-add-price],[data-empty-bulk-price],[data-order],[data-client],[data-edit-client],[data-client-new-order],[data-edit-order],[data-open-order],[data-payment],[data-trash],[data-restore],[data-ticket],[data-edit-price],[data-toggle-price],[data-copy-price],[data-update-state],[data-costs],[data-add-photo]");
       if (!target) return;
       if (target.dataset.morePrices) { renderPrices.limit = (renderPrices.limit || 80) + 80; renderPrices($("#price-search").value); }
       else if (target.dataset.emptyAddPrice) openPriceForm();
@@ -592,6 +631,8 @@
       else if (target.dataset.restore) restoreOrder(target.dataset.restore);
       else if (target.dataset.ticket) printTicket(target.dataset.ticket, target.dataset.ticketType || "recepcion");
       else if (target.dataset.updateState) updateOrderState(target.dataset.updateState);
+      else if (target.dataset.costs) { const order=data.orders.find(x=>String(x.id)===target.dataset.costs)||data.currentOrder; if(order)openCostsForm(order); }
+      else if (target.dataset.addPhoto) addOrderPhoto(target.dataset.addPhoto);
       else if (target.dataset.editPrice) openPriceForm(data.prices.find((row) => String(row.id) === target.dataset.editPrice));
       else if (target.dataset.copyPrice) { const price=data.prices.find((row)=>String(row.id)===target.dataset.copyPrice); if(price){const value=`${price.marca||""} ${price.modelo} · ${price.servicio}: ${money(price.precio)}`.trim(); if(navigator.clipboard?.writeText){navigator.clipboard.writeText(value).then(()=>notice("Precio copiado."),()=>notice("No se pudo copiar el precio.",true));}else{notice("Tu navegador no permite copiar desde esta página.",true);}} }
       else if (target.dataset.togglePrice) togglePrice(target.dataset.togglePrice, target.dataset.active === "true");

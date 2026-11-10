@@ -937,3 +937,7 @@ body.theme-dark .state-pill.received,body.theme-dark .state-pill.closed{backgrou
 /* El estado de la orden en Inicio funciona como acceso directo para cambiarlo. */
 .state-pill-action{font:inherit;font-size:inherit;line-height:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:6px;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .state-pill-action:focus-visible{outline:2px solid #46648a;outline-offset:2px}
+
+/* Estado terminal: equipo diagnosticado como no reparable */
+.state-pill.unrepairable{background:#fce8e8;color:#9b1c1c;border:1px solid #efb5b5}
+body.theme-dark .state-pill.unrepairable{background:#4b2028;color:#ffb4bd;border-color:#74303b}

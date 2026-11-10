@@ -921,3 +921,15 @@ body.theme-dark .modal::backdrop{background:#020611cc}
   dialog.modal .modal-heading,dialog.modal .modal-actions{flex:0 0 auto}
   dialog.modal .modal-body{flex:1 1 auto;min-height:0;max-height:none;height:auto;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 }
+
+
+/* Estados claros en Inicio: cada etapa tiene un color propio. */
+.state-pill.waiting{background:#fff0d8;color:#9a5b08;border:1px solid #f3d5a3}
+.state-pill.delayed{background:#fde8e8;color:#b42332;border:1px solid #f5c2c7}
+.state-pill.received{background:#eef1f5;color:#596579;border:1px solid #dce2ea}
+.state-pill.closed{background:#eceff3;color:#687386;border:1px solid #dce1e8}
+.home-order-copy .home-device-model{font-size:17px!important;font-weight:850;letter-spacing:-.025em}
+.home-order-copy .home-device-fault{font-size:14px;font-weight:720}
+body.theme-dark .state-pill.waiting{background:#49351c;color:#ffd08a;border-color:#6a4b23}
+body.theme-dark .state-pill.delayed{background:#4b2028;color:#ffb4bd;border-color:#74303b}
+body.theme-dark .state-pill.received,body.theme-dark .state-pill.closed{background:#293548;color:#c4cedb;border-color:#3a485c}

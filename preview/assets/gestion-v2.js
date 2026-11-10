@@ -550,6 +550,7 @@
     const cost = orders.reduce((sum, row) => sum + Number(row.costo || 0), 0);
     $("#report-revenue").textContent = money(collected);
     $("#report-cost").textContent = money(cost);
+    $("#report-profit").textContent = money(data.orders.filter(x=>x.costos_cargados).reduce((sum,x)=>sum+Number(x.total||0)-Number(x.costo||0),0));
     $("#report-sales").textContent = money(sales.reduce((sum, row) => sum + Number(row.total || 0), 0));
     $("#pending-costs-list").innerHTML = data.orders.filter(x=>x.estado==="Entregado"&&!x.costos_cargados).sort((a,b)=>new Date(b.entregada||b.creada)-new Date(a.entregada||a.creada)).map(x=>`<article class="order-row"><div class="row-main"><b>Orden #${x.id} · ${esc(x.modelo||"Equipo")}</b><small>${esc(x.cliente||x.gremio||"Cliente")} · ${esc(x.negocio)} · Entregada ${date(x.entregada)}</small></div><span class="state-pill pending">Costos pendientes</span><button class="button" data-costs="${x.id}">Completar costos</button></article>`).join("") || `<div class="empty-state">No hay costos pendientes de completar.</div>`;
     $("#branch-report").innerHTML = Rules.BRANCHES.map((branch) => {

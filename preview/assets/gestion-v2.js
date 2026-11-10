@@ -103,11 +103,14 @@
       const phone = formatPhone(order.telefono || order.clientes?.telefono || "");
       const model = order.modelo || "Equipo sin modelo"; const fault = order.falla || "Trabajo sin descripción";
       const balance = Rules.balance(order);
+      const totalLabel = Number(order.total || 0) > 0 ? money(order.total) : "A PRESUPUESTAR";
       return `<article class="order-row home-order-row" data-order="${order.id}">
         <span class="home-order-number">#${order.id}</span>
-        <div class="row-main home-order-copy"><b class="home-device-model">${esc(model)}</b><span class="home-device-fault">${esc(fault)}</span><small>${esc(client)} · ${esc(phone || "Sin teléfono")} · ${date(order.creada)}</small></div>
+        <div class="row-main home-order-copy"><b class="home-device-model">${esc(model)}</b><span class="home-device-fault">${esc(fault)}</span></div>
+        <div class="home-order-client"><b>${esc(client)}</b><small>${esc(phone || "Sin teléfono")}</small></div>
         <div class="home-order-meta"><button type="button" class="state-pill state-pill-action ${stateClass(order.estado)}" data-quick-state="${order.id}" aria-label="Cambiar estado de la orden ${order.id}">${esc(order.estado || "Pendiente")} <span aria-hidden="true">▾</span></button><span class="branch-pill">${esc(order.negocio || "")}</span></div>
-        <div class="home-order-balance"><b>${money(balance > 0 ? balance : order.total)}</b><small>${balance > 0 ? "Saldo pendiente" : "Total"}</small></div>
+        <div class="home-order-balance"><b>${balance > 0 ? money(balance) : totalLabel}</b><small>${balance > 0 ? "Saldo pendiente" : (Number(order.total || 0) > 0 ? "Total" : "Sin presupuesto")}</small></div>
+        <time class="home-order-date">${esc(date(order.creada))}</time>
       </article>`;
     }).join("") || '<div class="empty-state">No hay órdenes activas. Cuando ingreses un equipo, aparecerá acá.</div>';
   }
@@ -134,9 +137,16 @@
     $(target).innerHTML = filtered.map((order) => {
       const client = order.clientes?.nombre || order.cliente || order.gremio || "Cliente sin nombre";
       const phone = formatPhone(order.telefono || order.clientes?.telefono || "");
-      const deviceWork = `${order.modelo || "Equipo sin modelo"} · ${order.falla || "Trabajo sin descripción"}`;
       const due = Rules.balance(order);
-      return `<article class="order-row" data-order="${order.id}"><b class="order-no">#${order.id}</b><div class="row-main"><b>${esc(deviceWork)}</b><small>${esc(client)} · ${esc(phone || "Sin teléfono")} · ${date(order.creada)}</small></div><div class="row-main hide-mobile"><b>${esc(order.estado || "")}</b><small>${esc(order.negocio || "")}</small></div><div><span class="state-pill ${stateClass(order.estado)}">${esc(order.estado)}</span><span class="branch-pill">${esc(order.negocio)}</span></div><div class="money"><b>${money(order.total)}</b>${due > 0 ? `<small>Debe ${money(due)}</small>` : "<small style=\"color:#17805f\">Saldo cubierto</small>"}</div></article>`;
+      const totalLabel = Number(order.total || 0) > 0 ? money(order.total) : "A PRESUPUESTAR";
+      return `<article class="order-row order-table-row" data-order="${order.id}">
+        <b class="order-no">#${order.id}</b>
+        <div class="row-main order-device"><b>${esc(order.modelo || "Equipo sin modelo")}</b><small>${esc(order.falla || "Trabajo sin descripción")}</small></div>
+        <div class="order-client"><b>${esc(client)}</b><small>${esc(phone || "Sin teléfono")}</small></div>
+        <div class="order-state"><span class="state-pill ${stateClass(order.estado)}">${esc(order.estado || "Pendiente")}</span><small>${esc(order.negocio || "")}</small></div>
+        <div class="money order-balance"><b>${totalLabel}</b><small>${due > 0 ? "Debe " + money(due) : (Number(order.total || 0) > 0 ? "Saldo cubierto" : "Sin presupuesto")}</small></div>
+        <time class="order-date">${esc(date(order.creada))}</time>
+      </article>`;
     }).join("") || `<div class="empty-state">${rows.length ? "No hay resultados con estos filtros." : "Todavía no hay órdenes para mostrar."}</div>`;
   }
   function renderClients(search = "") {

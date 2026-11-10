@@ -228,14 +228,14 @@
         ${formField("Nombre / comercio *", "nuevo_nombre")}
         ${formField("Teléfono", "nuevo_telefono", "", "tel")}
         ${formField("Email (opcional)", "nuevo_email", "", "email")}
-        <button type="button" class="button" id="quick-client-cancel">Cancelar alta rápida</button>
+        <div class="quick-client-actions"><button type="button" class="button primary" id="quick-client-save">Guardar cliente</button><button type="button" class="button" id="quick-client-cancel">Cancelar</button></div>
       </div>
       <div class="field span-2" id="guild-name-wrap" hidden>${formField("Técnico / comercio *", "gremio", order?.gremio || "")}</div>
-      ${formField("Marca (opcional)", "marca", order?.marca || "Apple")}
       ${formField("Modelo del equipo *", "modelo", order?.modelo || "")}
       ${formField("Total acordado ($)", "total", order?.total ?? "", "number", "span-2")}
       <div class="field span-2"><label for="f-falla">Falla / trabajo solicitado *</label><textarea id="f-falla" name="falla" required>${esc(order?.falla || "")}</textarea><div class="fault-quick-picks" aria-label="Fall as frecuentes">${["Pantalla","Batería","No carga","Pin de carga","Cámara","Face ID","Audio","No enciende","Se reinicia","Software","Otro"].map(x=>`<button type="button" class="fault-chip" data-fault="${x}">${x}</button>`).join("")}</div></div>
       <div class="field span-2"><label for="f-estado_ingreso">Observaciones de recepción <span class="muted">· opcional</span></label><textarea id="f-estado_ingreso" name="estado_ingreso" placeholder="Golpes, rayas o accesorios que deja...">${esc(order?.estado_ingreso || "")}</textarea></div>
+      ${!isEditing ? '<div class="field span-2 reception-photo-field"><label for="f-order-photo">Foto del equipo · opcional</label><input id="f-order-photo" name="order_photo" type="file" accept="image/*" capture="environment"><small>Se comprime antes de guardarse para ocupar poco espacio.</small></div>' : ""}
       ${!isEditing ? formField("Seña inicial ($)", "sena", "0", "number", "span-2") : ""}
       <details class="order-advanced span-2">
         <summary>Datos adicionales <span>Opcionales</span></summary>
@@ -276,6 +276,23 @@
       $("#f-cliente_id").disabled = true;
       $("#f-nuevo_nombre").required = true;
       $("#f-nuevo_nombre").focus();
+    });
+    $("#quick-client-save")?.addEventListener("click", async () => {
+      const button = $("#quick-client-save"), name = $("#f-nuevo_nombre").value.trim();
+      if (!name) { notice("Ingresá el nombre del cliente.", true); $("#f-nuevo_nombre").focus(); return; }
+      if (button.disabled) return; button.disabled = true; button.textContent = "Guardando…";
+      try {
+        const payload = Rules.validateClient({ nombre: name, telefono: $("#f-nuevo_telefono").value, email: $("#f-nuevo_email").value });
+        const created = await sb.from("clientes").insert(payload).select("id,nombre,telefono,email,notas").single();
+        if (created.error) throw created.error;
+        data.clients.push(created.data);
+        const option = document.createElement("option"); option.value = created.data.id; option.textContent = created.data.nombre + (created.data.telefono ? " · " + created.data.telefono : "");
+        $("#f-cliente_id").append(option); $("#f-cliente_id").value = String(created.data.id);
+        $("#f-cliente_id").disabled = false; $("#f-cliente_id").required = true;
+        $("#quick-client-fields").hidden = true; $("#quick-client-toggle").hidden = false; $("#f-nuevo_nombre").required = false;
+        notice("Cliente dado de alta. Ya quedó seleccionado para esta orden.");
+      } catch (error) { notice("No se pudo guardar el cliente: " + (error.message || error), true); }
+      finally { button.disabled = false; button.textContent = "Guardar cliente"; }
     });
     $("#quick-client-cancel")?.addEventListener("click", () => {
       $("#quick-client-fields").hidden = true;
@@ -329,27 +346,26 @@
     openModal("Completar costos", `ORDEN #${order.id} · ${esc(order.modelo || "")}`, body, actionButtons("Después", "Guardar costos"));
     $("#modal-form").dataset.action = "save-order-costs"; $("#modal-form").dataset.id = order.id;
   }
+  async function storeOrderPhoto(orderId, file) {
+    if (!file || !file.type.startsWith("image/")) throw new Error("Elegí una imagen válida.");
+    const image = new Image(), objectUrl = URL.createObjectURL(file);
+    try {
+      await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=()=>reject(new Error("No se pudo leer la foto."));image.src=objectUrl;});
+      const scale=Math.min(1,1280/Math.max(image.width,image.height)), canvas=document.createElement("canvas");
+      canvas.width=Math.max(1,Math.round(image.width*scale));canvas.height=Math.max(1,Math.round(image.height*scale));
+      canvas.getContext("2d").drawImage(image,0,0,canvas.width,canvas.height);
+      let blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/jpeg",0.68));if(!blob)throw new Error("No se pudo comprimir la foto.");
+      let quality=0.58;while(blob.size>240*1024&&quality>=0.38){blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/jpeg",quality));quality-=0.08;}
+      if(blob.size>256*1024)throw new Error("La foto sigue siendo pesada. Probá con otra imagen.");
+      const {data:userData,error:userError}=await sb.auth.getUser();if(userError||!userData.user)throw new Error("La sesión expiró. Volvé a ingresar.");
+      const path=userData.user.id+"/"+orderId+".jpg";
+      const uploaded=await sb.storage.from("ordenes-fotos").upload(path,blob,{contentType:"image/jpeg",upsert:true});if(uploaded.error)throw uploaded.error;
+      const saved=await sb.from("ordenes").update({foto_path:path}).eq("id",orderId);if(saved.error)throw saved.error;
+    } finally { URL.revokeObjectURL(objectUrl); }
+  }
   async function addOrderPhoto(orderId) {
-    const input=document.createElement("input"); input.type="file"; input.accept="image/*"; input.capture="environment";
-    input.addEventListener("change",async()=>{
-      const file=input.files?.[0]; if(!file)return;
-      try{
-        if(!file.type.startsWith("image/"))throw new Error("Elegí una imagen.");
-        const image=new Image(); const objectUrl=URL.createObjectURL(file);
-        await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=()=>reject(new Error("No se pudo leer la imagen."));image.src=objectUrl;});
-        const scale=Math.min(1,1280/Math.max(image.width,image.height)); const canvas=document.createElement("canvas");
-        canvas.width=Math.max(1,Math.round(image.width*scale));canvas.height=Math.max(1,Math.round(image.height*scale));
-        canvas.getContext("2d").drawImage(image,0,0,canvas.width,canvas.height);URL.revokeObjectURL(objectUrl);
-        let blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/jpeg",0.68));if(!blob)throw new Error("No se pudo comprimir la foto.");
-        let quality=0.58;while(blob.size>240*1024&&quality>=0.38){blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/jpeg",quality));quality-=0.08;}
-        if(blob.size>256*1024)throw new Error("La foto sigue siendo pesada. Probá con otra imagen.");
-        const {data:userData,error:userError}=await sb.auth.getUser();if(userError||!userData.user)throw new Error("La sesión expiró. Volvé a ingresar.");
-        const path=userData.user.id+"/"+orderId+".jpg";
-        const uploaded=await sb.storage.from("ordenes-fotos").upload(path,blob,{contentType:"image/jpeg",upsert:true});if(uploaded.error)throw uploaded.error;
-        const saved=await sb.from("ordenes").update({foto_path:path}).eq("id",orderId);if(saved.error)throw saved.error;
-        notice("Foto comprimida y guardada (máximo 256 KB).");await refresh();await openOrder(orderId);
-      }catch(error){notice("No se pudo guardar la foto: "+(error.message||error),true);}
-    },{once:true});input.click();
+    const input=document.createElement("input");input.type="file";input.accept="image/*";input.capture="environment";
+    input.addEventListener("change",async()=>{const file=input.files?.[0];if(!file)return;try{await storeOrderPhoto(orderId,file);notice("Foto comprimida y guardada (máximo 256 KB).");await refresh();await openOrder(orderId);}catch(error){notice("No se pudo guardar la foto: "+(error.message||error),true);}},{once:true});input.click();
   }
   function openPayment(orderId, balance) {
     const body = `<div class="form-grid">${formField("Importe del pago *", "importe", balance, "number")}${selectField("Medio de pago", "medio", Rules.PAYMENT_METHODS, "Efectivo")}<p class="muted span-2">Saldo actual: ${money(balance)}. El registro queda asociado a la orden.</p></div>`;
@@ -379,11 +395,13 @@
         if (tipo === "Gremio" && !values.gremio?.trim()) throw new Error("Ingresá el nombre del técnico o comercio.");
         
         const valid = Rules.validateOrder({ ...values, sena: action === "create-order" ? values.sena : 0 });
-        const payload = { cliente_id: tipo === "Particular" ? client.id : null, cliente: tipo === "Particular" ? client.nombre : values.gremio.trim(), telefono: tipo === "Particular" ? client.telefono : values.nuevo_telefono || null, negocio: valid.negocio, tipo, gremio: tipo === "Gremio" ? values.gremio.trim() : null, marca: values.marca || "iPhone", modelo: valid.modelo, falla: valid.falla, estado: values.estado || "Recibido", total: valid.total, notas: values.notas || null, estado_ingreso: values.estado_ingreso?.trim() || null, imei: values.imei || null, garantia_dias: values.garantia_dias === "A definir" || !values.garantia_dias ? null : values.garantia_dias === "Sin garantía" ? 0 : Number(values.garantia_dias), garantia_condiciones: getE30Settings().warrantyTerms || "La garantía cubre el trabajo realizado y el repuesto instalado. No cubre golpes, humedad ni manipulación de terceros.", trabajo_realizado: values.trabajo_realizado || null };
+        const payload = { cliente_id: tipo === "Particular" ? client.id : null, cliente: tipo === "Particular" ? client.nombre : values.gremio.trim(), telefono: tipo === "Particular" ? client.telefono : values.nuevo_telefono || null, negocio: valid.negocio, tipo, gremio: tipo === "Gremio" ? values.gremio.trim() : null, marca: "Apple", modelo: valid.modelo, falla: valid.falla, estado: values.estado || "Recibido", total: valid.total, notas: values.notas || null, estado_ingreso: values.estado_ingreso?.trim() || null, imei: values.imei || null, garantia_dias: values.garantia_dias === "A definir" || !values.garantia_dias ? null : values.garantia_dias === "Sin garantía" ? 0 : Number(values.garantia_dias), garantia_condiciones: getE30Settings().warrantyTerms || "La garantía cubre el trabajo realizado y el repuesto instalado. No cubre golpes, humedad ni manipulación de terceros.", trabajo_realizado: values.trabajo_realizado || null };
         if (action === "create-order") {
           const result = await sb.rpc("e30_crear_orden", { p_orden: payload, p_sena: valid.sena, p_medio: "Efectivo" });
           if (result.error) throw result.error;
           data.lastCreatedOrderId = result.data;
+           const receptionPhoto = $("#f-order-photo")?.files?.[0];
+           if (receptionPhoto) { try { await storeOrderPhoto(data.lastCreatedOrderId, receptionPhoto); } catch (photoError) { notice("La orden se creó, pero no se pudo guardar la foto: " + (photoError.message || photoError), true); } }
         } else {
           const existing = await sb.from("ordenes").select("pagos(importe)").eq("id", form.dataset.id).single();
           if (existing.error) throw existing.error;

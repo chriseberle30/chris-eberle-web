@@ -101,11 +101,11 @@
     $("#home-orders-list").innerHTML = recent.map(order => {
       const client = order.clientes?.nombre || order.cliente || order.gremio || "Cliente sin nombre";
       const phone = formatPhone(order.telefono || order.clientes?.telefono || "");
-      const work = `${order.modelo || "Equipo sin modelo"} · ${order.falla || "Trabajo sin descripción"}`;
+      const model = order.modelo || "Equipo sin modelo"; const fault = order.falla || "Trabajo sin descripción";
       const balance = Rules.balance(order);
       return `<article class="order-row home-order-row" data-order="${order.id}">
         <span class="home-order-number">#${order.id}</span>
-        <div class="row-main"><b>${esc(work)}</b><small>${esc(client)} · ${esc(phone || "Sin teléfono")} · ${date(order.creada)}</small></div>
+        <div class="row-main home-order-copy"><b class="home-device-model">${esc(model)}</b><span class="home-device-fault">${esc(fault)}</span><small>${esc(client)} · ${esc(phone || "Sin teléfono")} · ${date(order.creada)}</small></div>
         <div class="home-order-meta"><span class="state-pill ${stateClass(order.estado)}">${esc(order.estado || "Pendiente")}</span><span class="branch-pill">${esc(order.negocio || "")}</span></div>
         <div class="home-order-balance"><b>${money(balance > 0 ? balance : order.total)}</b><small>${balance > 0 ? "Saldo pendiente" : "Total"}</small></div>
       </article>`;
@@ -231,10 +231,10 @@
         <button type="button" class="button" id="quick-client-cancel">Cancelar alta rápida</button>
       </div>
       <div class="field span-2" id="guild-name-wrap" hidden>${formField("Técnico / comercio *", "gremio", order?.gremio || "")}</div>
-      ${formField("Marca *", "marca", order?.marca || "iPhone")}
+      ${formField("Marca *", "marca", order?.marca || "")}
       ${formField("Modelo del equipo *", "modelo", order?.modelo || "")}
       ${formField("Total acordado ($)", "total", order?.total ?? "", "number", "span-2")}
-      <div class="field span-2"><label for="f-falla">Falla / trabajo solicitado *</label><textarea id="f-falla" name="falla" required>${esc(order?.falla || "")}</textarea></div>
+      <div class="field span-2"><label for="f-falla">Falla / trabajo solicitado *</label><textarea id="f-falla" name="falla" required>${esc(order?.falla || "")}</textarea><div class="fault-quick-picks" aria-label="Fall as frecuentes">${["Pantalla","Batería","No carga","Pin de carga","Cámara","Face ID","Audio","No enciende","Se reinicia","Software","Otro"].map(x=>`<button type="button" class="fault-chip" data-fault="${x}">${x}</button>`).join("")}</div></div>
       <div class="field span-2"><label for="f-estado_ingreso">Cómo ingresa el equipo *</label><textarea id="f-estado_ingreso" name="estado_ingreso" required placeholder="Golpes, rayas, pantalla, tapa, cámaras, accesorios que entrega...">${esc(order?.estado_ingreso || "")}</textarea></div>
       ${!isEditing ? formField("Seña inicial ($)", "sena", "0", "number", "span-2") : ""}
       <details class="order-advanced span-2">
@@ -249,6 +249,12 @@
     openModal(isEditing ? `Editar orden #${order.id}` : "Nueva orden", "ORDEN DE TRABAJO", body, actionButtons("Cancelar", isEditing ? "Guardar cambios" : "Crear orden"));
     $("#modal-form").dataset.action = isEditing ? "update-order" : "create-order";
     $("#modal-form").dataset.id = isEditing ? order.id : "";
+    $(".fault-chip").forEach((button) => button.addEventListener("click", () => {
+      const field=$("#f-falla"); const value=button.dataset.fault;
+      const parts=field.value.split(/[,;\n]/).map(x=>x.trim()).filter(Boolean);
+      if(!parts.some(x=>x.toLocaleLowerCase("es-AR")===value.toLocaleLowerCase("es-AR"))) parts.push(value);
+      field.value=parts.join(", "); field.focus(); button.classList.add("selected");
+    }));
     const type = $("#f-tipo");
     const toggleType = () => {
       const guild = (type?.value || order?.tipo || "Particular") === "Gremio";
@@ -567,7 +573,7 @@
     // El acceso «Más» ya no forma parte de la barra móvil.
     backdrop.addEventListener("click", () => toggleSidebar(false));
     document.addEventListener("keydown", (event) => { if (event.key === "Escape") toggleSidebar(false); });
-    $("#modal-form").addEventListener("submit", runAction); $("#cfg-save").addEventListener("click",saveE30Settings); $("#theme-toggle").addEventListener("click",()=>{document.body.classList.toggle("theme-dark");localStorage.setItem("e30_theme",document.body.classList.contains("theme-dark")?"dark":"light");});
+    $("#modal-form").addEventListener("submit", runAction); $("#cfg-save").addEventListener("click",saveE30Settings); $("#theme-toggle").addEventListener("click",()=>{const dark=document.body.classList.toggle("theme-dark");localStorage.setItem("e30_theme",dark?"dark":"light");$("#theme-toggle").textContent=dark?"☀ Activar modo claro":"☾ Activar modo noche";});
     $("#modal").addEventListener("click", (event) => { if (event.target === $("#modal") || event.target.closest("[data-close]")) closeModal(); });
     document.addEventListener("click", (event) => {
       const target = event.target.closest("[data-more-prices],[data-stock-move],[data-stock-edit],[data-claim-edit],[data-empty-add-price],[data-empty-bulk-price],[data-order],[data-client],[data-edit-client],[data-client-new-order],[data-edit-order],[data-open-order],[data-payment],[data-trash],[data-restore],[data-ticket],[data-edit-price],[data-toggle-price],[data-copy-price],[data-update-state]");
@@ -605,7 +611,7 @@
   }
   function initialize() {
     $("#state-filter").insertAdjacentHTML("beforeend", Rules.ORDER_STATES.map((state) => `<option>${esc(state)}</option>`).join(""));
-    bindEvents(); if(localStorage.getItem("e30_theme")==="dark")document.body.classList.add("theme-dark");
+    bindEvents(); if(localStorage.getItem("e30_theme")==="dark"){document.body.classList.add("theme-dark");$("#theme-toggle").textContent="☀ Activar modo claro";}
     const saved=getE30Settings(); for(const [id,key] of [["cfg-e30-name","e30Name"],["cfg-i30-name","i30Name"],["cfg-e30-address","e30Address"],["cfg-i30-address","i30Address"],["cfg-phone","phone"],["cfg-warranty-days","warrantyDays"],["cfg-warranty-terms","warrantyTerms"]])if(saved[key]!=null)$("#"+id).value=saved[key];
     sb.auth.onAuthStateChange((event, session) => {
       if (event === "INITIAL_SESSION") return; // getSession() below owns the first load; avoid duplicate initial refresh.

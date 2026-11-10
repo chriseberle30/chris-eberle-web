@@ -477,9 +477,9 @@
   function openStockForm(item=null){const body="<div class=\"form-grid\">"+formField("Nombre *","nombre",item?.nombre||"")+formField("Categoría","categoria",item?.categoria||"Accesorios")+formField("SKU / código de barras","sku",item?.sku||"")+formField("Cantidad inicial","cantidad",item?.cantidad??0,"number")+formField("Costo unitario","costo",item?.costo??0,"number")+formField("Precio de venta","precio",item?.precio??0,"number")+formField("Stock mínimo","minimo",item?.minimo??0,"number")+"</div>";openModal(item?"Editar artículo":"Nuevo artículo","INVENTARIO",body,actionButtons());$("#modal-form").dataset.action="save-stock";$("#modal-form").dataset.id=item?.id||"";const sku=$("#f-sku");const scan=document.createElement("button");scan.type="button";scan.className="button";scan.textContent="Escanear código de barras";scan.addEventListener("click",startStockBarcodeScanner);sku.parentElement.appendChild(scan);}
   async function startStockBarcodeScanner(){
     let scanner=null;let closed=false;
-    const wrap=document.createElement("div");wrap.style.cssText="position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;color:white;gap:14px";
+    const wrap=document.createElement("dialog");wrap.style.cssText="position:fixed;inset:0;width:100vw;height:100dvh;max-width:none;max-height:none;margin:0;border:0;padding:20px;background:rgba(0,0,0,.96);color:white;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:2147483647";
     wrap.innerHTML='<h3>Escanear código de barras</h3><div id="e30-barcode-reader" style="width:min(92vw,560px);background:#111;border-radius:12px;overflow:hidden"></div><p>Apuntá la cámara al código de barras</p><button type="button" class="button">Cancelar</button>';document.body.appendChild(wrap);
-    const close=async()=>{if(closed)return;closed=true;try{if(scanner)await scanner.stop();}catch(e){}try{if(scanner)await scanner.clear();}catch(e){}wrap.remove();};
+    const close=async()=>{if(closed)return;closed=true;try{if(scanner)await scanner.stop();}catch(e){}try{if(scanner)await scanner.clear();}catch(e){}try{wrap.close();}catch(e){}wrap.remove();};
     wrap.querySelector("button").addEventListener("click",close);
     try{
       if(!navigator.mediaDevices?.getUserMedia)throw new Error("La cámara no está disponible. Abrí Gestión desde Safari con conexión segura.");
@@ -487,6 +487,7 @@
         await new Promise((resolve,reject)=>{const script=document.createElement("script");script.src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js";script.onload=resolve;script.onerror=()=>reject(new Error("No se pudo cargar el lector de códigos. Revisá la conexión."));document.head.appendChild(script);});
       }
       if(closed)return;
+      wrap.showModal();
       scanner=new Html5Qrcode("e30-barcode-reader");
       const formatsToSupport=[Html5QrcodeSupportedFormats.EAN_13,Html5QrcodeSupportedFormats.EAN_8,Html5QrcodeSupportedFormats.UPC_A,Html5QrcodeSupportedFormats.UPC_E,Html5QrcodeSupportedFormats.CODE_128,Html5QrcodeSupportedFormats.CODE_39,Html5QrcodeSupportedFormats.ITF];
       await scanner.start({facingMode:"environment"},{fps:10,qrbox:{width:Math.min(300,Math.floor(window.innerWidth*.72)),height:130},formatsToSupport},async(decodedText)=>{const field=document.querySelector("#f-sku");if(field)field.value=decodedText;notice("Código leído: "+decodedText);await close();},()=>{});

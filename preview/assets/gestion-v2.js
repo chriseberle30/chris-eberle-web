@@ -231,18 +231,18 @@
         <button type="button" class="button" id="quick-client-cancel">Cancelar alta rápida</button>
       </div>
       <div class="field span-2" id="guild-name-wrap" hidden>${formField("Técnico / comercio *", "gremio", order?.gremio || "")}</div>
-      \${formField("Marca *", "marca", order?.marca || "iPhone")}
-      \${formField("Modelo del equipo *", "modelo", order?.modelo || "")}
-      \${formField("Total acordado ($)", "total", order?.total ?? "", "number", "span-2")}
-      <div class="field span-2"><label for="f-falla">Falla / trabajo solicitado *</label><textarea id="f-falla" name="falla" required>\${esc(order?.falla || "")}</textarea></div>
-      <div class="field span-2"><label for="f-estado_ingreso">Cómo ingresa el equipo *</label><textarea id="f-estado_ingreso" name="estado_ingreso" required placeholder="Golpes, rayas, pantalla, tapa, cámaras, accesorios que entrega...">\${esc(order?.estado_ingreso || "")}</textarea></div>
-      \${!isEditing ? formField("Seña inicial ($)", "sena", "0", "number", "span-2") : ""}
+      ${formField("Marca *", "marca", order?.marca || "iPhone")}
+      ${formField("Modelo del equipo *", "modelo", order?.modelo || "")}
+      ${formField("Total acordado ($)", "total", order?.total ?? "", "number", "span-2")}
+      <div class="field span-2"><label for="f-falla">Falla / trabajo solicitado *</label><textarea id="f-falla" name="falla" required>${esc(order?.falla || "")}</textarea></div>
+      <div class="field span-2"><label for="f-estado_ingreso">Cómo ingresa el equipo *</label><textarea id="f-estado_ingreso" name="estado_ingreso" required placeholder="Golpes, rayas, pantalla, tapa, cámaras, accesorios que entrega...">${esc(order?.estado_ingreso || "")}</textarea></div>
+      ${!isEditing ? formField("Seña inicial ($)", "sena", "0", "number", "span-2") : ""}
       <details class="order-advanced span-2">
         <summary>Datos adicionales <span>Opcionales</span></summary>
         <div class="form-grid">
-          \${formField("IMEI / número de serie", "imei", order?.imei || "")}
-          \${selectField("Garantía", "garantia_dias", ["A definir", "Sin garantía", "30", "60", "90", "180"], order?.garantia_dias == null ? "A definir" : String(order.garantia_dias))}
-          <div class="field span-2"><label for="f-notas">Notas internas</label><textarea id="f-notas" name="notas">\${esc(order?.notas || "")}</textarea></div>
+          ${formField("IMEI / número de serie", "imei", order?.imei || "")}
+          ${selectField("Garantía", "garantia_dias", ["A definir", "Sin garantía", "30", "60", "90", "180"], order?.garantia_dias == null ? "A definir" : String(order.garantia_dias))}
+          <div class="field span-2"><label for="f-notas">Notas internas</label><textarea id="f-notas" name="notas">${esc(order?.notas || "")}</textarea></div>
         </div>
       </details>
     </div>`;

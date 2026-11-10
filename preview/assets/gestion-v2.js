@@ -483,6 +483,41 @@
     const { error } = await sb.from("precios").update({ activo: !active }).eq("id", priceId);
     if (error) return notice(error.message, true); await refresh(); notice(active ? "Tarifa pausada." : "Tarifa activada.");
   }
+
+  async function printTicketWithQZ() {
+    try {
+      if (!window.qz) throw new Error("QZ Tray no está cargado en esta página.");
+      if (!qz.websocket.isActive()) await qz.websocket.connect();
+      const printer = await qz.printers.find("XP-80");
+      if (!printer) throw new Error("No se encontró la impresora XP-80.");
+      const config = qz.configs.create(printer, { margins: 0, jobName: "E30 Comprobante" });
+      const ticket = document.querySelector("#print-area").innerHTML;
+      const styles = `
+        <style>
+          @page { size: 80mm auto; margin: 4mm; }
+          html,body { margin:0; padding:0; width:72mm; color:#000; background:#fff; }
+          body { font:11px/1.4 Arial,sans-serif; }
+          .ticket { width:100%; }
+          h2 { text-align:center; font-size:16px; margin:0 0 3px; }
+          h3 { text-align:center; font-size:13px; margin:8px 0; }
+          p { margin:4px 0 8px; overflow-wrap:anywhere; }
+          hr { border:0; border-top:1px dashed #000; margin:7px 0; }
+          b { font-weight:700; }
+          .ticket-tracking { text-align:center; margin:8px 0; }
+          .ticket-tracking img { display:block; width:28mm; height:28mm; margin:6px auto; }
+          .ticket-tracking small { display:block; font-size:9px; margin-top:3px; }
+        </style>`;
+      const doc = "<html><head><meta charset='utf-8'>" + styles + "</head><body>" + ticket + "</body></html>";
+      await qz.print(config, [{ type: "html", format: "plain", data: doc }]);
+      // Alimenta y ejecuta el corte completo al finalizar el comprobante.
+      await qz.print(config, [{ type: "raw", format: "command", flavor: "plain", data: "\\x1B" + "d" + "\\x07" + "\\x1D" + "V" + "\\x00" }]);
+      notice("Comprobante enviado a la XP-80.", false);
+    } catch (err) {
+      console.error("E30 QZ print", err);
+      notice("No se pudo imprimir por QZ Tray: " + (err?.message || err), true);
+    }
+  }
+
   async function printTicket(orderId, type = "recepcion") {
     let order = data.orders.find((row) => String(row.id) === String(orderId)) || data.trash.find((row) => String(row.id) === String(orderId));
     if (!order) {
@@ -522,7 +557,7 @@
       new QRCode($("#tracking-qr"), { text: trackingUrl, width: 112, height: 112, correctLevel: QRCode.CorrectLevel.M });
       await new Promise((resolve) => setTimeout(resolve, 300));
     }
-    window.print();
+    await printTicketWithQZ();
   }
   function monthStart(){const d=new Date();return new Date(d.getFullYear(),d.getMonth(),1);}
   function renderCash(){if(!$("#cash-list"))return;const start=monthStart();const month=data.cash.filter(x=>new Date(x.creado)>=start);const income=month.filter(x=>x.tipo==="Ingreso").reduce((a,x)=>a+Number(x.importe),0);const expense=month.filter(x=>x.tipo==="Egreso").reduce((a,x)=>a+Number(x.importe),0);$("#cash-income").textContent=money(income);$("#cash-expense").textContent=money(expense);$("#cash-net").textContent=money(income-expense);const branch=$("#cash-branch")?.value||"";const rows=data.cash.filter(x=>!branch||x.sucursal===branch);$("#cash-list").innerHTML=rows.map(x=>"<article class=\"order-row cash-row\"><div class=\"row-main\"><b>"+esc(x.concepto)+"</b><small>"+date(x.creado)+" · "+esc(x.categoria)+" · "+esc(x.medio)+"</small></div><span class=\"branch-pill\">"+esc(x.sucursal)+"</span><b class=\"money\" style=\"color:"+(x.tipo==="Ingreso"?"#16805d":"#b42318")+"\">"+(x.tipo==="Ingreso"?"+":"−")+money(x.importe)+"</b></article>").join("")||"<div class=\"empty-state\">Todavía no hay movimientos de caja.</div>";}

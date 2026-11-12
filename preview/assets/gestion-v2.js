@@ -563,9 +563,9 @@
         <style>
           @page { size:80mm auto; margin:3mm; }
           * { box-sizing:border-box; }
-          html,body { margin:0; padding:0; width:74mm; color:#000; background:#fff; }
-          body { font:11px/1.38 Arial,Helvetica,sans-serif; }
-          .ticket { width:100%; color:#000; font-family:Arial,Helvetica,sans-serif; }
+          html,body { margin:0; padding:0; width:70mm; color:#000; background:#fff; }
+          body { font:10.5px/1.32 Arial,Helvetica,sans-serif; }
+          .ticket { width:100%; max-width:70mm; padding:0 1mm; color:#000; font-family:Arial,Helvetica,sans-serif; }
           .ticket-brand { text-align:center; font-size:15px; line-height:1.2; font-weight:800; margin:0 0 2px; }
           .ticket-address { text-align:center; font-size:10px; margin:0 0 6px; }
           .ticket-kind { text-align:center; font-size:11px; font-weight:800; letter-spacing:.7px; border-top:2px solid #000; border-bottom:1px solid #000; padding:5px 0; margin:6px 0; }
@@ -576,18 +576,20 @@
           .ticket-value { font-size:11px; line-height:1.35; font-weight:600; overflow-wrap:anywhere; margin:0; }
           .ticket-sub { font-size:10px; font-weight:400; margin-top:2px; }
           .ticket-rule { border:0; border-top:1px dashed #000; margin:7px 0; }
-          .ticket-money { border-top:1px solid #000; border-bottom:1px solid #000; padding:5px 0; margin:7px 0; }
-          .ticket-money-row { display:flex; justify-content:space-between; gap:8px; font-size:11px; padding:2px 0; }
-          .ticket-money-row strong { white-space:nowrap; }
-          .ticket-balance { font-size:14px; font-weight:900; border-top:1px dashed #000; margin-top:3px; padding-top:5px; }
-          .ticket-terms { font-size:10px; line-height:1.35; overflow-wrap:anywhere; margin:0 0 4px; }
-          .ticket-terms-list { margin:3px 0 0; padding-left:15px; font-size:9.5px; line-height:1.35; }
-          .ticket-terms-list li { margin:0 0 3px; padding-left:1px; }
-          .ticket-sign { margin-top:18px; text-align:center; font-size:10px; }
-          .ticket-sign-line { border-top:1px solid #000; width:72%; margin:22px auto 4px; }
+          .ticket-money { border-top:1px solid #000; border-bottom:1px solid #000; padding:4px 0; margin:6px 0; }
+          .ticket-money-row { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:baseline; column-gap:5px; width:100%; font-size:10px; padding:2px 0; }
+          .ticket-money-row span { min-width:0; }
+          .ticket-money-row strong { display:block; min-width:0; max-width:100%; text-align:right; white-space:nowrap; font-size:10px; font-variant-numeric:tabular-nums; }
+          .ticket-balance { font-size:12px; font-weight:800; border-top:1px dashed #000; margin-top:3px; padding-top:4px; }
+          .ticket-balance strong { font-size:12px; }
+          .ticket-terms { font-size:9.5px; line-height:1.25; overflow-wrap:anywhere; margin:0 0 3px; }
+          .ticket-terms-list { margin:2px 0 0; padding-left:13px; font-size:8.5px; line-height:1.22; }
+          .ticket-terms-list li { margin:0 0 2px; padding-left:1px; }
+          .ticket-sign { margin-top:10px; text-align:center; font-size:9px; }
+          .ticket-sign-line { border-top:1px solid #000; width:72%; margin:12px auto 3px; }
           .ticket-thanks { text-align:center; font-size:9px; margin:8px 0 0; }
           .ticket-tracking { text-align:center; margin:8px 0 2px; padding:2mm 0 0; }
-          .ticket-tracking img { display:block; width:30mm; height:30mm; margin:4px auto; image-rendering:pixelated; background:#fff; padding:2mm; }
+          .ticket-tracking img { display:block; width:25mm; height:25mm; margin:3px auto; image-rendering:pixelated; background:#fff; padding:1mm; }
           .ticket-tracking small { display:block; font-size:9px; margin-top:3px; }
         </style>`;
       const doc = "<html><head><meta charset='utf-8'>" + styles + "</head><body>" + ticket + "</body></html>";
@@ -639,12 +641,12 @@
     const fault = isDelivery ? (order.trabajo_realizado || order.falla || "") : (order.falla || "");
     const terms = [warrantyDays === 0 ? "Trabajo sin garantía." : `Garantía: ${warrantyDays} días.`, order.garantia_condiciones || ""].filter(Boolean).join(" ");
     const standardTerms = [
-      "El presente comprobante es el único válido para el retiro del equipo.",
-      "Pasados 30 días desde la notificación de que la reparación está lista, podrá cobrarse estadía. Transcurridos 90 días, el equipo podrá quedar sujeto a las acciones legales correspondientes para cubrir gastos.",
-      "El diagnóstico puede requerir el desarme del equipo. Los equipos con daños por líquidos o golpes pueden presentar fallas adicionales.",
-      "La garantía cubre exclusivamente la reparación realizada; no cubre otras fallas ni daños posteriores.",
-      "El cliente declara que el equipo es de su propiedad y autoriza su revisión y reparación.",
-      "No nos responsabilizamos por pérdida de información o datos del equipo. Se recomienda realizar una copia de seguridad antes de cualquier intervención."
+      "Este comprobante es el único válido para retirar el equipo.",
+      "Pasados 30 días desde el aviso de reparación lista, podrá cobrarse estadía. A los 90 días, podrán iniciarse acciones legales para cubrir gastos.",
+      "El diagnóstico puede requerir desarme. Golpes o líquidos pueden ocasionar otras fallas.",
+      "La garantía cubre solo el trabajo realizado; no cubre fallas ajenas a la reparación.",
+      "El cliente declara ser propietario del equipo y autoriza su revisión y reparación.",
+      "No nos responsabilizamos por pérdida de datos. Se recomienda hacer una copia de seguridad antes de intervenir."
     ];
     const trackingUrl = order.tracking_token ? (() => { const u = new URL("seguimiento.html", location.href); u.searchParams.set("t", order.tracking_token); return u.href; })() : "";
     const equipo = [order.marca && !/^apple$/i.test(String(order.marca).trim()) ? order.marca : "", order.modelo].filter(Boolean).join(" ");

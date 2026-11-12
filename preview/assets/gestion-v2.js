@@ -580,7 +580,9 @@
           .ticket-money-row { display:flex; justify-content:space-between; gap:8px; font-size:11px; padding:2px 0; }
           .ticket-money-row strong { white-space:nowrap; }
           .ticket-balance { font-size:14px; font-weight:900; border-top:1px dashed #000; margin-top:3px; padding-top:5px; }
-          .ticket-terms { font-size:10.5px; line-height:1.4; overflow-wrap:anywhere; margin:0; }
+          .ticket-terms { font-size:10px; line-height:1.35; overflow-wrap:anywhere; margin:0 0 4px; }
+          .ticket-terms-list { margin:3px 0 0; padding-left:15px; font-size:9.5px; line-height:1.35; }
+          .ticket-terms-list li { margin:0 0 3px; padding-left:1px; }
           .ticket-sign { margin-top:18px; text-align:center; font-size:10px; }
           .ticket-sign-line { border-top:1px solid #000; width:72%; margin:22px auto 4px; }
           .ticket-thanks { text-align:center; font-size:9px; margin:8px 0 0; }
@@ -636,6 +638,14 @@
     const isDelivery = type === "entrega";
     const fault = isDelivery ? (order.trabajo_realizado || order.falla || "") : (order.falla || "");
     const terms = [warrantyDays === 0 ? "Trabajo sin garantía." : `Garantía: ${warrantyDays} días.`, order.garantia_condiciones || ""].filter(Boolean).join(" ");
+    const standardTerms = [
+      "El presente comprobante es el único válido para el retiro del equipo.",
+      "Pasados 30 días desde la notificación de que la reparación está lista, podrá cobrarse estadía. Transcurridos 90 días, el equipo podrá quedar sujeto a las acciones legales correspondientes para cubrir gastos.",
+      "El diagnóstico puede requerir el desarme del equipo. Los equipos con daños por líquidos o golpes pueden presentar fallas adicionales.",
+      "La garantía cubre exclusivamente la reparación realizada; no cubre otras fallas ni daños posteriores.",
+      "El cliente declara que el equipo es de su propiedad y autoriza su revisión y reparación.",
+      "No nos responsabilizamos por pérdida de información o datos del equipo. Se recomienda realizar una copia de seguridad antes de cualquier intervención."
+    ];
     const trackingUrl = order.tracking_token ? (() => { const u = new URL("seguimiento.html", location.href); u.searchParams.set("t", order.tracking_token); return u.href; })() : "";
     const equipo = [order.marca && !/^apple$/i.test(String(order.marca).trim()) ? order.marca : "", order.modelo].filter(Boolean).join(" ");
     const orderDate = date(isDelivery ? (order.entregada || new Date().toISOString()) : order.creada);
@@ -659,7 +669,10 @@
         <div class="ticket-money-row"><span>Pagado / seña</span><strong>${money(paid)}</strong></div>
         <div class="ticket-money-row ticket-balance"><span>Saldo</span><strong>${money(due)}</strong></div>
       </div>
-      ${terms || (isDelivery && warrantyEnd) ? `<section class="ticket-section"><span class="ticket-label">GARANTÍA Y CONDICIONES</span><p class="ticket-terms">${esc(terms)}${isDelivery && warrantyEnd ? `<br><strong>Vencimiento de garantía: ${warrantyEnd}</strong>` : ""}</p></section>` : ""}
+      <section class="ticket-section"><span class="ticket-label">GARANTÍA Y CONDICIONES</span>
+        <p class="ticket-terms">${esc(terms)}${isDelivery && warrantyEnd ? `<br><strong>Vencimiento de garantía: ${warrantyEnd}</strong>` : ""}</p>
+        <ol class="ticket-terms-list">${standardTerms.map((term) => `<li>${esc(term)}</li>`).join("")}</ol>
+      </section>
       <div class="ticket-sign"><div class="ticket-sign-line"></div>Firma y aclaración de conformidad</div>
       ${trackingUrl ? `<hr class="ticket-rule"><div class="ticket-tracking"><div id="tracking-qr"></div><b>SEGUIMIENTO ONLINE</b><small>Escaneá para consultar el estado de tu equipo</small></div>` : ""}
       <p class="ticket-thanks">Gracias por confiar en ${esc(order.negocio || brand)}.</p>

@@ -94,12 +94,22 @@
   }
   function renderBlueQuote(quote, stale = false) {
     if (!quote || !Number(quote.compra) || !Number(quote.venta)) return;
-    $("#home-blue-buy").textContent = formatBlue(quote.compra);
     $("#home-blue-sell").textContent = formatBlue(quote.venta);
+    updateBlueConversion();
     const updated = quote.fechaActualizacion ? new Date(quote.fechaActualizacion) : null;
     $("#home-blue-updated").textContent = (stale ? "Último dato guardado · " : "Actualizado · ") +
       (updated && !Number.isNaN(updated.getTime()) ? updated.toLocaleString("es-AR", { dateStyle:"short", timeStyle:"short" }) : "hora no informada") +
       (stale ? " · sin conexión" : "");
+  }
+  function updateBlueConversion() {
+    const input = $("#home-blue-usd");
+    const output = $("#home-blue-ars");
+    if (!input || !output) return;
+    const usd = Number(String(input.value || "").replace(",", "."));
+    const cached = localStorage.getItem("e30_blue_quote");
+    let rate = 0;
+    if (cached) { try { rate = Number(JSON.parse(cached).venta) || 0; } catch (_) {} }
+    output.textContent = usd > 0 && rate > 0 ? formatBlue(usd * rate) : "Ingresá dólares";
   }
   async function loadBlueQuote() {
     const cached = localStorage.getItem("e30_blue_quote");
@@ -918,6 +928,7 @@
     $("#new-order").addEventListener("click", () => openOrderForm());
     $("#home-new-order").addEventListener("click", () => openOrderForm());
     $("#home-price-search").addEventListener("input", (event) => renderHomePriceSearch(event.target.value));
+    $("#home-blue-usd").addEventListener("input", updateBlueConversion);
     $("#home-backup").addEventListener("click", downloadDataBackup);
     $("#home-view-orders").addEventListener("click", () => setView("ordenes"));
     $("#budget-add").addEventListener("click", () => notice("El formulario de presupuestos se incorpora en la siguiente etapa."));

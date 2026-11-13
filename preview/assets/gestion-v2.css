@@ -1100,9 +1100,13 @@ body.theme-dark #view-inicio .home-order-balance b{color:#e7edf7}
 .home-blue-heading b { font-size:14px; }
 .home-blue-heading small,.home-blue-values small { color:var(--muted,#78839a); font-size:11px; }
 .home-blue-source { color:var(--muted,#78839a); font-size:10px; margin-left:auto; align-self:flex-start; }
-.home-blue-values { display:flex; gap:22px; }
+.home-blue-values { display:flex; align-items:center; gap:18px; }
 .home-blue-values > div { display:grid; gap:3px; min-width:72px; }
 .home-blue-values strong { font-size:16px; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.home-blue-converter { min-width:110px!important; }
+.home-blue-converter label { color:var(--muted,#78839a); font-size:11px; }
+.home-blue-converter input { width:110px; max-width:100%; border:1px solid var(--border,#e5e7eb); border-radius:9px; padding:6px 8px; font:inherit; font-size:13px; background:var(--surface,#fff); color:var(--text,#182033); }
+.home-blue-converter strong { font-size:14px; }
 .home-backup-status { flex-basis:100%; margin-top:-7px; font-size:10px; }
 @media(max-width:600px) {
  .home-blue-card { padding:12px; gap:8px; }

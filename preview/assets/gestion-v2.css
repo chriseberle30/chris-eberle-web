@@ -1075,3 +1075,20 @@ body.theme-dark #view-inicio .home-order-client b{color:#dce4ef}
 body.theme-dark #view-inicio .home-order-client small,
 body.theme-dark #view-inicio .home-order-balance small{color:#9eacbf}
 body.theme-dark #view-inicio .home-order-balance b{color:#e7edf7}
+
+.home-price-search { margin-bottom:16px; padding:18px; }
+.home-price-search .panel-heading { margin-bottom:12px; }
+.home-price-results { display:grid; gap:7px; margin-top:10px; }
+.home-price-result { display:grid; grid-template-columns:minmax(0,1fr) auto auto; align-items:center; gap:10px; padding:9px 0; border-top:1px solid var(--border,#e5e7eb); }
+.home-price-result > div { min-width:0; display:grid; gap:3px; }
+.home-price-result b { font-size:13px; }
+.home-price-result small { color:var(--muted,#78839a); font-size:11px; }
+.home-price-result > strong { white-space:nowrap; font-size:14px; }
+.home-price-result .icon-copy { min-width:50px; width:auto; padding:5px 8px; font-size:11px; }
+.home-backup-status { align-self:center; font-size:11px; }
+@media(max-width:600px) {
+ .home-price-search { padding:14px; }
+ .home-price-result { grid-template-columns:minmax(0,1fr) auto; }
+ .home-price-result .icon-copy { grid-column:2; justify-self:end; }
+ .home-backup-status { flex-basis:100%; }
+}

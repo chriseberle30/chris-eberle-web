@@ -1118,3 +1118,45 @@ body.theme-dark #view-inicio .home-order-balance b{color:#e7edf7}
  .home-blue-source { display:none; }
  .home-backup-status { margin-top:0; }
 }
+
+
+/* Modo noche: unificar todos los bloques del Inicio */
+body.theme-dark #view-inicio .home-price-search .panel-heading,
+body.theme-dark #view-inicio .dashboard-recent .panel-heading {
+  background:#111c2d!important;
+  color:#e7edf7!important;
+  border-color:#29364a!important;
+}
+body.theme-dark #view-inicio .home-price-search .panel-heading h2,
+body.theme-dark #view-inicio .dashboard-recent .panel-heading h2,
+body.theme-dark #view-inicio .home-price-search .panel-heading p,
+body.theme-dark #view-inicio .dashboard-recent .panel-heading p {
+  color:#e7edf7!important;
+}
+body.theme-dark #view-inicio .home-price-search .panel-heading .muted,
+body.theme-dark #view-inicio .dashboard-recent .panel-heading .muted {
+  color:#a5b1c2!important;
+}
+body.theme-dark #view-inicio>.stats-row .stat-card {
+  background:#111c2d!important;
+  color:#e7edf7!important;
+  border-color:#29364a!important;
+  box-shadow:0 8px 22px #0002!important;
+}
+body.theme-dark #view-inicio>.stats-row .stat-card span { color:#a5b1c2!important; }
+body.theme-dark #view-inicio>.stats-row .stat-card b { color:#f1f5fb!important; }
+body.theme-dark #view-inicio .dashboard-recent,
+body.theme-dark #view-inicio .dashboard-recent .panel-heading,
+body.theme-dark #view-inicio .dashboard-recent .home-order-row {
+  background:#111c2d!important;
+  color:#e7edf7!important;
+}
+body.theme-dark #view-inicio .dashboard-recent .home-order-row { border-color:#29364a!important; }
+body.theme-dark #view-inicio .home-backup-status { color:#a5b1c2!important; }
+body.theme-dark #view-inicio .home-blue-card,
+body.theme-dark #view-inicio .home-price-search {
+  background:#111c2d!important;
+  color:#e7edf7!important;
+  border-color:#29364a!important;
+}
+body.theme-dark #view-inicio .topbar h1 { color:#f1f5fb!important; }

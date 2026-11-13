@@ -89,6 +89,33 @@
       notice(message, true);
     }
   }
+  function formatBlue(value) {
+    return new Intl.NumberFormat("es-AR", { style:"currency", currency:"ARS", maximumFractionDigits:0 }).format(Number(value));
+  }
+  function renderBlueQuote(quote, stale = false) {
+    if (!quote || !Number(quote.compra) || !Number(quote.venta)) return;
+    $("#home-blue-buy").textContent = formatBlue(quote.compra);
+    $("#home-blue-sell").textContent = formatBlue(quote.venta);
+    const updated = quote.fechaActualizacion ? new Date(quote.fechaActualizacion) : null;
+    $("#home-blue-updated").textContent = (stale ? "Último dato guardado · " : "Actualizado · ") +
+      (updated && !Number.isNaN(updated.getTime()) ? updated.toLocaleString("es-AR", { dateStyle:"short", timeStyle:"short" }) : "hora no informada") +
+      (stale ? " · sin conexión" : "");
+  }
+  async function loadBlueQuote() {
+    const cached = localStorage.getItem("e30_blue_quote");
+    if (cached) { try { renderBlueQuote(JSON.parse(cached), true); } catch (_) {} }
+    try {
+      const response = await fetch("https://dolarapi.com/v1/dolares/blue", { cache:"no-store" });
+      if (!response.ok) throw new Error("Cotización no disponible");
+      const quote = await response.json();
+      if (!Number(quote.compra) || !Number(quote.venta)) throw new Error("Datos de cotización inválidos");
+      localStorage.setItem("e30_blue_quote", JSON.stringify(quote));
+      renderBlueQuote(quote, false);
+    } catch (_) {
+      if (!cached) $("#home-blue-updated").textContent = "No se pudo consultar la cotización";
+    }
+  }
+
   function renderHomePriceSearch(search = "") {
     const target = $("#home-price-results");
     if (!target) return;
@@ -966,7 +993,7 @@
     $("#price-search").addEventListener("blur", () => document.body.classList.remove("price-searching"));
     $("#price-search").addEventListener("input", (event) => { renderPrices.limit = 80; renderPrices(event.target.value); }); $$(".filter-chip").forEach((chip) => chip.addEventListener("click", () => { $$(".filter-chip").forEach(x => x.classList.toggle("active", x === chip)); renderPrices.limit = 80; renderPrices($("#price-search").value); }));
     document.addEventListener("click", (event) => { const row = event.target.closest(".price-row"); if (row && !event.target.closest("button")) row.classList.toggle("open"); });
-    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && $("#app").hidden === false && Date.now() - (refresh.last || 0) > 20000) refresh(); });
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && $("#app").hidden === false) { loadBlueQuote(); if (Date.now() - (refresh.last || 0) > 20000) refresh(); } });
   }
   function initialize() {
     $("#state-filter").insertAdjacentHTML("beforeend", Rules.ORDER_STATES.map((state) => `<option>${esc(state)}</option>`).join(""));
@@ -974,12 +1001,12 @@
     const saved=getE30Settings(); for(const [id,key] of [["cfg-e30-name","e30Name"],["cfg-i30-name","i30Name"],["cfg-e30-address","e30Address"],["cfg-i30-address","i30Address"],["cfg-e30-phone","e30Phone"],["cfg-i30-phone","i30Phone"],["cfg-e30-social","e30Social"],["cfg-i30-social","i30Social"],["cfg-warranty-days","warrantyDays"],["cfg-warranty-terms","warrantyTerms"]])if(saved[key]!=null)$("#"+id).value=saved[key];
     sb.auth.onAuthStateChange((event, session) => {
       if (event === "INITIAL_SESSION") return; // getSession() below owns the first load; avoid duplicate initial refresh.
-      if (session) { showApp(session); setTimeout(() => { refresh(); startRemotePrintReceiver(); }, 0); } else showLogin();
+      if (session) { showApp(session); setTimeout(() => { refresh(); loadBlueQuote(); startRemotePrintReceiver(); }, 0); } else showLogin();
     });
     sb.auth.getSession().then(({ data: sessionData, error }) => {
       if (error) return showLogin(error.message);
       if (!sessionData.session) return showLogin();
-      showApp(sessionData.session); refresh(); startRemotePrintReceiver();
+      showApp(sessionData.session); refresh(); loadBlueQuote(); startRemotePrintReceiver();
     }).catch((error) => showLogin(error.message));
   }
   initialize();

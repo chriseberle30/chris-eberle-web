@@ -67,6 +67,13 @@ qz.security.setSignaturePromise(function(toSign){
       <header class="topbar"><button id="menu-toggle" class="icon-button mobile-only" aria-label="Abrir menú"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><div><p class="eyebrow brand-identity">E30 · i30</p><h1 id="page-title">Inicio</h1></div><div class="top-actions"><span id="user-label" class="user-chip"></span><button id="new-order" class="button primary" hidden>＋ Nueva orden</button></div></header>
       <main class="content">
         <section id="view-inicio" class="view">
+          <div class="home-blue-card panel" aria-live="polite">
+            <div class="home-blue-heading"><span class="home-blue-icon">US$</span><div><b>Dólar blue</b><small id="home-blue-updated">Consultando cotización…</small></div><span class="home-blue-source">DolarAPI</span></div>
+            <div class="home-blue-values">
+              <div><small>Compra</small><strong id="home-blue-buy">—</strong></div>
+              <div><small>Venta</small><strong id="home-blue-sell">—</strong></div>
+            </div>
+          </div>
           <div class="home-price-search panel">
             <div class="panel-heading"><div><h2>Buscar precio</h2><p class="muted">Consultá una tarifa sin salir del Inicio</p></div></div>
             <div class="search-wrap"><span>⌕</span><input id="home-price-search" type="search" placeholder="Ej.: iPhone 13 pantalla" autocomplete="off"></div>
@@ -77,7 +84,7 @@ qz.security.setSignaturePromise(function(toSign){
             <article class="stat-card"><span><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 18h6"/></svg>Órdenes activas</span><b id="home-active">0</b></article>
             <article class="stat-card"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>Listas para entregar</span><b id="home-ready">0</b></article>
           </div>
-          <div class="dashboard-actions"><button class="button primary" id="home-new-order">＋ Nueva orden</button><button class="button" id="home-backup">Descargar respaldo</button><span id="home-backup-status" class="muted home-backup-status">Todavía no descargaste un respaldo</span></div>
+          <div class="dashboard-actions"><button class="button primary" id="home-new-order">＋ Nueva orden</button><button class="button" id="home-backup">Descargar respaldo</button><span id="home-backup-status" class="muted home-backup-status">Respaldo: todavía no descargado</span></div>
           <div class="panel table-panel dashboard-recent"><div class="panel-heading"><div><h2>Órdenes recientes</h2><p class="muted">Equipos en curso y listos para entregar</p></div><button type="button" class="button" id="home-view-orders">Ver todas</button></div><div id="home-orders-list" class="orders-list"></div></div>
         </section>
         <section id="view-presupuestos" class="view" hidden>

@@ -80,7 +80,7 @@
       if (cash.error) throw cash.error; if (stockItems.error) throw stockItems.error; if (sales.error) throw sales.error; if (claims.error) throw claims.error;
       data.orders = orders; data.clients = clients.data || []; data.prices = prices.data || []; data.trash = trash;
       data.cash = cash.data || []; data.stockItems = stockItems.data || []; data.sales = sales.data || []; data.claims = claims.data || [];
-      setConnected("ok", "Conectado"); renderCurrent(); renderStats(); renderDashboard(); renderCash(); renderStock(); renderSales(); renderClaims(); renderReports();
+      setConnected("ok", "Conectado"); renderCurrent(); renderStats(); renderHomePriceSearch($("#home-price-search")?.value || ""); updateBackupStatus(); renderDashboard(); renderCash(); renderStock(); renderSales(); renderClaims(); renderReports();
     } catch (error) {
       setConnected("bad", "Revisar configuración");
       const message = /clientes|schema cache|relation/i.test(error.message || "")
@@ -89,6 +89,43 @@
       notice(message, true);
     }
   }
+  function renderHomePriceSearch(search = "") {
+    const target = $("#home-price-results");
+    if (!target) return;
+    const query = search.trim().toLocaleLowerCase("es-AR").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    if (!query) { target.innerHTML = '<p class="muted">Escribí un modelo o servicio para buscar.</p>'; return; }
+    const words = query.split(/\s+/).filter(Boolean);
+    const rows = data.prices.filter((price) => {
+      const haystack = [price.marca || "", price.modelo || "", price.servicio || ""].join(" ").toLocaleLowerCase("es-AR").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      return words.every((word) => haystack.includes(word));
+    }).sort((a,b) => Number(b.activo) - Number(a.activo)).slice(0,8);
+    target.innerHTML = rows.map((price) => {
+      const brand = String(price.marca || "iPhone"), model = String(price.modelo || "");
+      const title = model.toLowerCase().startsWith(brand.toLowerCase()) ? model : (brand + " " + model).trim();
+      return '<article class="home-price-result"><div><b>' + esc(title) + '</b><small>' + esc(price.servicio) + (price.activo ? "" : " · En pausa") + '</small></div><strong>' + money(price.precio) + '</strong><button class="icon-copy" type="button" data-copy-price="' + price.id + '" aria-label="Copiar precio">Copiar</button></article>';
+    }).join("") || '<p class="muted">No encontramos tarifas con esa búsqueda.</p>';
+  }
+  function updateBackupStatus() {
+    const label = $("#home-backup-status");
+    if (!label) return;
+    const stamp = localStorage.getItem("e30_last_backup_download");
+    label.textContent = stamp ? "Último respaldo descargado: " + new Date(stamp).toLocaleString("es-AR") : "Todavía no descargaste un respaldo desde este dispositivo";
+  }
+  function downloadDataBackup() {
+    const backup = { app: "E30 Gestión", version: 1, createdAt: new Date().toISOString(), data: {
+      clients: data.clients, orders: data.orders, prices: data.prices, trash: data.trash,
+      cash: data.cash, stockItems: data.stockItems, sales: data.sales, claims: data.claims
+    }};
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url; link.download = "e30-respaldo-" + new Date().toISOString().slice(0,10) + ".json";
+    document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url);
+    localStorage.setItem("e30_last_backup_download", backup.createdAt);
+    updateBackupStatus();
+    notice("Respaldo descargado. Guardalo también en otro lugar seguro.");
+  }
+
   function renderDashboard() {
     if (!$("#home-orders-list")) return;
     const today = new Date(); today.setHours(0,0,0,0);
@@ -853,7 +890,8 @@
     $("#sign-out").addEventListener("click", async () => { await sb.auth.signOut(); });
     $("#new-order").addEventListener("click", () => openOrderForm());
     $("#home-new-order").addEventListener("click", () => openOrderForm());
-    $("#home-prices").addEventListener("click", () => setView("precios"));
+    $("#home-price-search").addEventListener("input", (event) => renderHomePriceSearch(event.target.value));
+    $("#home-backup").addEventListener("click", downloadDataBackup);
     $("#home-view-orders").addEventListener("click", () => setView("ordenes"));
     $("#budget-add").addEventListener("click", () => notice("El formulario de presupuestos se incorpora en la siguiente etapa."));
     $("#new-client").addEventListener("click", () => openClientForm());

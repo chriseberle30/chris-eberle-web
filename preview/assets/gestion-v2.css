@@ -1077,7 +1077,7 @@ body.theme-dark #view-inicio .home-order-balance small{color:#9eacbf}
 body.theme-dark #view-inicio .home-order-balance b{color:#e7edf7}
 
 .home-price-search { margin-bottom:16px; padding:18px; }
-.home-price-search .panel-heading { margin-bottom:12px; }
+.home-price-search .panel-heading { margin:0 0 12px; padding:0 0 12px; border-bottom:1px solid var(--line,#e5eaf1); }
 .home-price-results { display:grid; gap:7px; margin-top:10px; }
 .home-price-result { display:grid; grid-template-columns:minmax(0,1fr) auto auto; align-items:center; gap:10px; padding:9px 0; border-top:1px solid var(--border,#e5e7eb); }
 .home-price-result > div { min-width:0; display:grid; gap:3px; }

@@ -1160,3 +1160,85 @@ body.theme-dark #view-inicio .home-price-search {
   border-color:#29364a!important;
 }
 body.theme-dark #view-inicio .topbar h1 { color:#f1f5fb!important; }
+
+
+/* Modo noche global: todas las secciones, no solo Inicio */
+body.theme-dark .topbar h1,
+body.theme-dark .topbar .section-title { color:#f1f5fb!important; }
+body.theme-dark .view .stat-card,
+body.theme-dark .view .panel,
+body.theme-dark .view .client-card,
+body.theme-dark .view .table-panel,
+body.theme-dark .view .table-panel .panel-heading {
+  background:#111c2d!important;
+  color:#e7edf7!important;
+  border-color:#29364a!important;
+}
+body.theme-dark .view .stat-card span,
+body.theme-dark .view .muted,
+body.theme-dark .view .panel-heading p { color:#a5b1c2!important; }
+body.theme-dark .view .stat-card b,
+body.theme-dark .view .money b,
+body.theme-dark .view .money strong,
+body.theme-dark .view .row-main b,
+body.theme-dark .view .order-client b,
+body.theme-dark .view .order-device b { color:#f1f5fb!important; }
+body.theme-dark .view .toolbar .search-wrap,
+body.theme-dark .view .toolbar .search-wrap input,
+body.theme-dark .view .toolbar select,
+body.theme-dark .view input,
+body.theme-dark .view select,
+body.theme-dark .view textarea {
+  background:#0b1423!important;
+  color:#e7edf7!important;
+  border-color:#35445a!important;
+  color-scheme:dark;
+}
+body.theme-dark .view .toolbar .search-wrap { border:1px solid #35445a!important; }
+body.theme-dark .view .toolbar .search-wrap input { border:0!important; box-shadow:none!important; }
+body.theme-dark .view .panel-heading { border-bottom-color:#29364a!important; }
+body.theme-dark .view .order-row,
+body.theme-dark .view .price-row,
+body.theme-dark .view .client-card {
+  background:#111c2d!important;
+  color:#e7edf7!important;
+  border-color:#29364a!important;
+}
+body.theme-dark .view .order-row .order-no { color:#8fb0ff!important; }
+body.theme-dark .view .order-row .order-client small,
+body.theme-dark .view .order-row .order-device small,
+body.theme-dark .view .order-row .order-state small,
+body.theme-dark .view .order-row .money small,
+body.theme-dark .view .order-row .order-date { color:#a5b1c2!important; }
+body.theme-dark .view .order-row .money b { color:#f1f5fb!important; }
+body.theme-dark .view .count-label { background:#1a2940!important;color:#c5d2e4!important; }
+body.theme-dark .view .empty-state { background:#111c2d!important;color:#a5b1c2!important;border-color:#29364a!important; }
+body.theme-dark .view .filter-chip { background:#152238!important;color:#c4d0e0!important;border-color:#35445a!important; }
+body.theme-dark .view .filter-chip.active { background:#243d68!important;color:#fff!important;border-color:#668fe5!important; }
+
+/* Órdenes en móvil: cada dato ocupa su propia fila, sin pisarse */
+@media(max-width:760px){
+  body.theme-dark #view-ordenes #orders-list .order-row.order-table-row,
+  #view-ordenes #orders-list .order-row.order-table-row {
+    display:grid!important;
+    grid-template-columns:38px minmax(0,1fr) auto!important;
+    grid-template-areas:
+      "number device state"
+      ". client state"
+      ". balance state"!important;
+    align-items:start!important;
+    column-gap:10px!important;
+    row-gap:8px!important;
+    min-height:0!important;
+    padding:15px 12px!important;
+  }
+  #view-ordenes #orders-list .order-table-row .order-no { grid-area:number!important; align-self:start; }
+  #view-ordenes #orders-list .order-table-row .order-device { grid-area:device!important; min-width:0; }
+  #view-ordenes #orders-list .order-table-row .order-client { grid-area:client!important; min-width:0; display:flex; flex-direction:column; gap:3px; }
+  #view-ordenes #orders-list .order-table-row .order-state { grid-area:state!important; display:flex; flex-direction:column; align-items:flex-end; gap:6px; min-width:0; }
+  #view-ordenes #orders-list .order-table-row .order-balance { grid-area:balance!important; min-width:0; text-align:left!important; }
+  #view-ordenes #orders-list .order-table-row .order-date { display:none!important; }
+  #view-ordenes #orders-list .order-table-row .order-state .state-pill { white-space:nowrap; }
+  #view-ordenes #orders-list .order-table-row .order-client b,
+  #view-ordenes #orders-list .order-table-row .order-device b { overflow-wrap:anywhere; }
+}

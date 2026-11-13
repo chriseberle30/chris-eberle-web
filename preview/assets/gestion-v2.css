@@ -1092,3 +1092,25 @@ body.theme-dark #view-inicio .home-order-balance b{color:#e7edf7}
  .home-price-result .icon-copy { grid-column:2; justify-self:end; }
  .home-backup-status { flex-basis:100%; }
 }
+
+.home-blue-card { display:flex; align-items:center; justify-content:space-between; gap:18px; padding:15px 18px; margin-bottom:14px; }
+.home-blue-heading { display:flex; align-items:center; gap:11px; min-width:0; }
+.home-blue-icon { display:grid; place-items:center; width:42px; height:42px; border-radius:13px; background:rgba(70,100,138,.12); color:#46648A; font-weight:800; font-size:13px; flex:none; }
+.home-blue-heading > div { display:grid; gap:3px; }
+.home-blue-heading b { font-size:14px; }
+.home-blue-heading small,.home-blue-values small { color:var(--muted,#78839a); font-size:11px; }
+.home-blue-source { color:var(--muted,#78839a); font-size:10px; margin-left:auto; align-self:flex-start; }
+.home-blue-values { display:flex; gap:22px; }
+.home-blue-values > div { display:grid; gap:3px; min-width:72px; }
+.home-blue-values strong { font-size:16px; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.home-backup-status { flex-basis:100%; margin-top:-7px; font-size:10px; }
+@media(max-width:600px) {
+ .home-blue-card { padding:12px; gap:8px; }
+ .home-blue-heading { gap:8px; }
+ .home-blue-icon { width:36px; height:36px; }
+ .home-blue-values { gap:12px; }
+ .home-blue-values > div { min-width:62px; }
+ .home-blue-values strong { font-size:14px; }
+ .home-blue-source { display:none; }
+ .home-backup-status { margin-top:0; }
+}

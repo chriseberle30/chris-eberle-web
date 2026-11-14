@@ -1318,3 +1318,28 @@ body.theme-dark .view .filter-chip.active { background:#243d68!important;color:#
   #print-area.pdf-mode .ticket-tracking small { color:#667085!important; font-size:8pt!important; }
   #print-area.pdf-mode .ticket-thanks { color:#46648a!important; text-align:center!important; margin:12px 0 0!important; font-size:9pt!important; }
 }
+
+
+/* iOS Safari: activar el layout A4 por clase directa en body (sin :has) */
+@media print {
+  body.pdf-ticket-mode > * { display:none!important; }
+  body.pdf-ticket-mode > #print-area.pdf-mode {
+    display:block!important; position:static!important; visibility:visible!important;
+    width:100%!important; max-width:none!important; height:auto!important; min-height:0!important;
+    overflow:visible!important; margin:0!important; padding:0!important;
+    background:#fff!important; color:#172033!important;
+    -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important;
+  }
+  body.pdf-ticket-mode > #print-area.pdf-mode .ticket {
+    display:block!important; width:100%!important; max-width:none!important; min-width:0!important;
+    height:auto!important; max-height:none!important; overflow:visible!important;
+  }
+  body.pdf-ticket-mode > #print-area.pdf-mode .ticket-brand,
+  body.pdf-ticket-mode > #print-area.pdf-mode .ticket-address,
+  body.pdf-ticket-mode > #print-area.pdf-mode .ticket-kind,
+  body.pdf-ticket-mode > #print-area.pdf-mode .ticket-section,
+  body.pdf-ticket-mode > #print-area.pdf-mode .ticket-money,
+  body.pdf-ticket-mode > #print-area.pdf-mode .ticket-tracking {
+    -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important;
+  }
+}

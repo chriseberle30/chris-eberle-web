@@ -1242,3 +1242,14 @@ body.theme-dark .view .filter-chip.active { background:#243d68!important;color:#
   #view-ordenes #orders-list .order-table-row .order-client b,
   #view-ordenes #orders-list .order-table-row .order-device b { overflow-wrap:anywhere; }
 }
+
+
+.ticket-output-options{display:grid;gap:10px;margin-top:16px}
+.ticket-output-options .button{width:100%;min-height:48px;justify-content:center}
+@media print{
+  @page{size:80mm auto;margin:4mm}
+  html,body{background:#fff!important}
+  body>*{display:none!important}
+  body>#print-area{display:block!important;width:72mm!important;margin:0 auto!important;padding:0!important;background:#fff!important;color:#000!important}
+  #print-area .ticket{width:100%!important;max-width:72mm!important;color:#000!important}
+}

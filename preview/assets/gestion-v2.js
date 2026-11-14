@@ -734,7 +734,7 @@
     const equipo = [order.marca && !/^apple$/i.test(String(order.marca).trim()) ? order.marca : "", order.modelo].filter(Boolean).join(" ");
     const orderDate = date(isDelivery ? (order.entregada || new Date().toISOString()) : order.creada);
     $("#print-area").innerHTML = `<div class="ticket">
-      <div class="ticket-brand">${esc(brand)}</div>
+      <div class="ticket-brand">${esc(output === "pdf" && order.negocio === "i30" ? "i30 | iPhone Service" : brand)}</div>
       ${address ? `<p class="ticket-address">${esc(address)}</p>` : ""}
       ${branchPhone ? `<p class="ticket-address">Tel. ${esc(branchPhone)}</p>` : ""}
       ${branchSocial ? `<p class="ticket-address">${esc(branchSocial)}</p>` : ""}

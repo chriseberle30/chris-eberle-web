@@ -768,9 +768,13 @@
     if (output === "pdf") {
       const printArea = $("#print-area");
       printArea.classList.add("pdf-mode");
-      const cleanupPdfMode = () => printArea.classList.remove("pdf-mode");
+      document.body.classList.add("pdf-ticket-mode");
+      const cleanupPdfMode = () => {
+        printArea.classList.remove("pdf-mode");
+        document.body.classList.remove("pdf-ticket-mode");
+      };
       window.addEventListener("afterprint", cleanupPdfMode, { once: true });
-      window.setTimeout(() => window.print(), 350);
+      window.setTimeout(() => window.print(), 500);
       return;
     }
     await printTicketWithQZ();

@@ -766,7 +766,11 @@
       await new Promise((resolve) => setTimeout(resolve, 300));
     }
     if (output === "pdf") {
-      window.setTimeout(() => window.print(), 250);
+      const printArea = $("#print-area");
+      printArea.classList.add("pdf-mode");
+      const cleanupPdfMode = () => printArea.classList.remove("pdf-mode");
+      window.addEventListener("afterprint", cleanupPdfMode, { once: true });
+      window.setTimeout(() => window.print(), 350);
       return;
     }
     await printTicketWithQZ();

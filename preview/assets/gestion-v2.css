@@ -1253,3 +1253,68 @@ body.theme-dark .view .filter-chip.active { background:#243d68!important;color:#
   body>#print-area{display:block!important;width:72mm!important;margin:0 auto!important;padding:0!important;background:#fff!important;color:#000!important}
   #print-area .ticket{width:100%!important;max-width:72mm!important;color:#000!important}
 }
+
+
+/* PDF de recepción/entrega: documento A4 independiente del ticket térmico */
+@media print {
+  @page { size:A4 portrait; margin:12mm; }
+  html,body { width:auto!important; min-height:0!important; margin:0!important; padding:0!important; background:#fff!important; }
+  body:has(#print-area.pdf-mode) > * { display:none!important; }
+  body:has(#print-area.pdf-mode) > #print-area.pdf-mode {
+    display:block!important; position:static!important; width:100%!important; max-width:none!important;
+    margin:0!important; padding:0!important; background:#fff!important; color:#172033!important;
+    font:10pt/1.35 Arial,Helvetica,sans-serif!important; -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important;
+  }
+  #print-area.pdf-mode .ticket {
+    width:100%!important; max-width:none!important; margin:0 auto!important; padding:0!important;
+    color:#172033!important; font:10pt/1.35 Arial,Helvetica,sans-serif!important;
+  }
+  #print-area.pdf-mode .ticket-brand {
+    color:#fff!important; background:#14104c!important; padding:17px 20px 7px!important;
+    margin:0!important; text-align:left!important; font-size:21pt!important; line-height:1.15!important;
+    border-radius:10px 10px 0 0!important;
+  }
+  #print-area.pdf-mode .ticket-address {
+    color:#e6edff!important; background:#14104c!important; text-align:left!important;
+    padding:0 20px 5px!important; margin:0!important; font-size:9pt!important;
+  }
+  #print-area.pdf-mode .ticket-address:last-of-type { padding-bottom:15px!important; border-radius:0 0 10px 10px!important; }
+  #print-area.pdf-mode .ticket-kind {
+    color:#46648a!important; background:#eef3fb!important; border:0!important; border-left:4px solid #168bff!important;
+    text-align:left!important; padding:9px 13px!important; margin:15px 0 10px!important;
+    font-size:9pt!important; letter-spacing:1.1px!important; border-radius:4px!important;
+  }
+  #print-area.pdf-mode .ticket-order {
+    color:#14104c!important; text-align:left!important; font-size:25pt!important; margin:8px 0 2px!important;
+  }
+  #print-area.pdf-mode .ticket-date { color:#667085!important; text-align:left!important; margin:0 0 13px!important; font-size:9pt!important; }
+  #print-area.pdf-mode .ticket-rule { border:0!important; border-top:1px solid #dce3ed!important; margin:10px 0!important; }
+  #print-area.pdf-mode .ticket-section {
+    margin:8px 0!important; padding:9px 11px!important; background:#f5f7fb!important;
+    border:1px solid #e5eaf2!important; border-radius:7px!important; break-inside:avoid!important;
+  }
+  #print-area.pdf-mode .ticket-label { color:#46648a!important; font-size:8pt!important; letter-spacing:.8px!important; margin-bottom:4px!important; }
+  #print-area.pdf-mode .ticket-value { color:#172033!important; font-size:10pt!important; line-height:1.35!important; }
+  #print-area.pdf-mode .ticket-sub { color:#667085!important; font-size:9pt!important; }
+  #print-area.pdf-mode .ticket-money {
+    border:1px solid #dce3ed!important; border-radius:8px!important; padding:8px 12px!important; margin:8px 0 12px!important;
+    background:#fff!important; break-inside:avoid!important;
+  }
+  #print-area.pdf-mode .ticket-money-row { display:flex!important; justify-content:space-between!important; gap:12px!important; padding:5px 0!important; font-size:10pt!important; }
+  #print-area.pdf-mode .ticket-money-row strong { color:#172033!important; font-size:10pt!important; }
+  #print-area.pdf-mode .ticket-balance { color:#14104c!important; border-top:1px solid #dce3ed!important; margin-top:4px!important; padding-top:8px!important; font-size:12pt!important; }
+  #print-area.pdf-mode .ticket-balance strong { color:#14104c!important; font-size:13pt!important; }
+  #print-area.pdf-mode .ticket-terms { color:#344054!important; font-size:8.3pt!important; line-height:1.3!important; }
+  #print-area.pdf-mode .ticket-terms-list { color:#344054!important; font-size:8.1pt!important; line-height:1.28!important; padding-left:18px!important; margin:5px 0!important; }
+  #print-area.pdf-mode .ticket-terms-list li { padding:2px 0!important; break-inside:avoid!important; }
+  #print-area.pdf-mode .ticket-sign { color:#667085!important; text-align:center!important; margin:20px auto 10px!important; font-size:9pt!important; break-inside:avoid!important; }
+  #print-area.pdf-mode .ticket-sign-line { border-top:1px solid #98a2b3!important; width:65%!important; margin:0 auto 5px!important; }
+  #print-area.pdf-mode .ticket-tracking {
+    text-align:center!important; margin:10px auto!important; padding:10px!important; background:#f5f7fb!important;
+    border-radius:8px!important; break-inside:avoid!important;
+  }
+  #print-area.pdf-mode .ticket-tracking img { width:25mm!important; height:25mm!important; }
+  #print-area.pdf-mode .ticket-tracking b { display:block!important; color:#14104c!important; font-size:9pt!important; margin-top:5px!important; }
+  #print-area.pdf-mode .ticket-tracking small { color:#667085!important; font-size:8pt!important; }
+  #print-area.pdf-mode .ticket-thanks { color:#46648a!important; text-align:center!important; margin:12px 0 0!important; font-size:9pt!important; }
+}

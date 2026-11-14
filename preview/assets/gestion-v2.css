@@ -1343,3 +1343,123 @@ body.theme-dark .view .filter-chip.active { background:#243d68!important;color:#
     -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important;
   }
 }
+
+
+/* PDF i30 compacto: una sola página A4 */
+@media print {
+  @page { size:A4 portrait; margin:8mm 10mm; }
+  body.pdf-ticket-mode > #print-area.pdf-mode,
+  body.pdf-ticket-mode > #print-area.pdf-mode .ticket {
+    font-size:8.2pt!important;
+    line-height:1.18!important;
+  }
+  body.pdf-ticket-mode > #print-area.pdf-mode .ticket-brand {
+    font-size:16pt!important;
+    line-height:1.05!important;
+    padding:8px 13px 4px!important;
+    border-radius:6px 6px 0 0!important;
+  }
+  body.pdf-ticket-mode > #print-area.pdf-mode .ticket-address {
+    font-size:7.2pt!important;
+    line-height:1.1!important;
+    padding:0 13px 2px!important;
+  }
+  body.pdf-ticket-mode > #print-area.pdf-mode .ticket-address:last-of-type {
+    padding-bottom:7px!important;
+  }
+  body.pdf-ticket-mode > #print-area.pdf-mode .ticket-kind {
+    font-size:7.5pt!important;
+    padding:5px 9px!important;
+    margin:7px 0 5px!important;
+  }
+  body.pdf-ticket-mode > #print-area.pdf-mode .ticket-order {
+    font-size:20pt!important;
+    margin:4px 0 1px!important;
+  }
+  body.pdf-ticket-mode > #print-area.pdf-mode .ticket-date {
+    font-size:7.2pt!important;
+    margin:0 0 6px!important;
+  }
+  body.pdf-ticket-mode > #print-area.pdf-mode .ticket-rule {
+    margin:5px 0!important;
+  }
+  body.pdf-ticket-mode > #print-area.pdf-mode .ticket-section {
+    margin:4px 0!important;
+    padding:5px 8px!important;
+    border-radius:5px!important;
+  }
+  body.pdf-ticket-mode > #print-area.pdf-mode .ticket-label {
+    font-size:6.8pt!important;
+    margin-bottom:2px!important;
+  }
+  body.pdf-ticket-mode > #print-area.pdf-mode .ticket-value {
+    font-size:8.2pt!important;
+    line-height:1.18!important;
+  }
+  body.pdf-ticket-mode > #print-area.pdf-mode .ticket-sub {
+    font-size:7.2pt!important;
+  }
+  body.pdf-ticket-mode > #print-area.pdf-mode .ticket-money {
+    padding:4px 8px!important;
+    margin:4px 0 6px!important;
+    border-radius:5px!important;
+  }
+  body.pdf-ticket-mode > #print-area.pdf-mode .ticket-money-row {
+    font-size:8pt!important;
+    padding:2px 0!important;
+  }
+  body.pdf-ticket-mode > #print-area.pdf-mode .ticket-money-row strong {
+    font-size:8pt!important;
+  }
+  body.pdf-ticket-mode > #print-area.pdf-mode .ticket-balance {
+    font-size:9.5pt!important;
+    margin-top:2px!important;
+    padding-top:4px!important;
+  }
+  body.pdf-ticket-mode > #print-area.pdf-mode .ticket-balance strong {
+    font-size:10pt!important;
+  }
+  body.pdf-ticket-mode > #print-area.pdf-mode .ticket-terms {
+    font-size:6.9pt!important;
+    line-height:1.12!important;
+    margin-bottom:2px!important;
+  }
+  body.pdf-ticket-mode > #print-area.pdf-mode .ticket-terms-list {
+    font-size:6.5pt!important;
+    line-height:1.12!important;
+    padding-left:14px!important;
+    margin:2px 0!important;
+  }
+  body.pdf-ticket-mode > #print-area.pdf-mode .ticket-terms-list li {
+    padding:0!important;
+    margin:0 0 1px!important;
+  }
+  body.pdf-ticket-mode > #print-area.pdf-mode .ticket-sign {
+    font-size:7pt!important;
+    margin:8px auto 4px!important;
+  }
+  body.pdf-ticket-mode > #print-area.pdf-mode .ticket-sign-line {
+    margin:0 auto 3px!important;
+  }
+  body.pdf-ticket-mode > #print-area.pdf-mode .ticket-tracking {
+    padding:4px!important;
+    margin:4px auto!important;
+    border-radius:5px!important;
+  }
+  body.pdf-ticket-mode > #print-area.pdf-mode .ticket-tracking img {
+    width:17mm!important;
+    height:17mm!important;
+    margin:1px auto!important;
+  }
+  body.pdf-ticket-mode > #print-area.pdf-mode .ticket-tracking b {
+    font-size:7pt!important;
+    margin-top:2px!important;
+  }
+  body.pdf-ticket-mode > #print-area.pdf-mode .ticket-tracking small {
+    font-size:6.5pt!important;
+  }
+  body.pdf-ticket-mode > #print-area.pdf-mode .ticket-thanks {
+    font-size:7pt!important;
+    margin:5px 0 0!important;
+  }
+}

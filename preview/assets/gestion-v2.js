@@ -690,7 +690,15 @@
     }
   }
 
-  async function printTicket(orderId, type = "recepcion") {
+  function openTicketOutputPicker(orderId, type = "recepcion") {
+    const label = type === "entrega" ? "comprobante de entrega" : "comprobante de recepción";
+    const body = `<p class="muted">¿Cómo querés generar el ${label} de la orden #${esc(orderId)}?</p><div class="ticket-output-options"><button type="button" class="button primary" id="ticket-output-pdf">Guardar / compartir PDF</button><button type="button" class="button" id="ticket-output-print">Imprimir en XP-80</button></div>`;
+    openModal(`Orden #${orderId}`, "COMPROBANTE", body, '<button class="button" type="button" data-close>Cancelar</button>');
+    $("#ticket-output-pdf").addEventListener("click", () => { closeModal(); printTicket(orderId, type, "pdf"); });
+    $("#ticket-output-print").addEventListener("click", () => { closeModal(); printTicket(orderId, type, "printer"); });
+  }
+
+  async function printTicket(orderId, type = "recepcion", output = "printer") {
     let order = data.orders.find((row) => String(row.id) === String(orderId)) || data.trash.find((row) => String(row.id) === String(orderId));
     if (!order) {
       const result = await sb.from("ordenes").select("*,pagos(id,importe,medio,creado),clientes(id,nombre,telefono)").eq("id", orderId).maybeSingle();
@@ -756,6 +764,10 @@
     if (trackingUrl && window.QRCode) {
       new QRCode($("#tracking-qr"), { text: trackingUrl, width: 120, height: 120, correctLevel: QRCode.CorrectLevel.L });
       await new Promise((resolve) => setTimeout(resolve, 300));
+    }
+    if (output === "pdf") {
+      window.setTimeout(() => window.print(), 250);
+      return;
     }
     await printTicketWithQZ();
   }
@@ -984,7 +996,7 @@
         const message = `Hola ${customer}, te escribimos por tu reparación.\nOrden #${order.id} · ${order.modelo || "Equipo"}\nEstado: ${order.estado || "En revisión"}.`;
         window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank", "noopener");
       }
-      else if (target.dataset.ticket) printTicket(target.dataset.ticket, target.dataset.ticketType || "recepcion");
+      else if (target.dataset.ticket) openTicketOutputPicker(target.dataset.ticket, target.dataset.ticketType || "recepcion");
       else if (target.dataset.saleTicket) printSaleTicket(target.dataset.saleTicket);
       else if (target.dataset.updateState) updateOrderState(target.dataset.updateState);
       else if (target.dataset.costs) { const order=data.orders.find(x=>String(x.id)===target.dataset.costs)||data.currentOrder; if(order)openCostsForm(order); }

@@ -1684,3 +1684,79 @@ body.theme-dark .view .filter-chip.active { background:#243d68!important;color:#
   }
   #view-inicio .home-blue-source { display: none; }
 }
+
+@media (max-width: 600px) {
+  #view-inicio .home-blue-card {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: center !important;
+    gap: 10px !important;
+    padding: 13px 15px !important;
+    text-align: center !important;
+  }
+  #view-inicio .home-blue-heading {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 10px !important;
+    width: 100% !important;
+  }
+  #view-inicio .home-blue-icon {
+    width: 34px !important;
+    height: 34px !important;
+    flex: 0 0 34px !important;
+    border-radius: 10px !important;
+    font-size: 12px !important;
+  }
+  #view-inicio .home-blue-heading > div {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 2px !important;
+    text-align: left !important;
+  }
+  #view-inicio .home-blue-heading b { font-size: 15px !important; line-height: 1.15 !important; }
+  #view-inicio .home-blue-heading small { font-size: 10px !important; line-height: 1.2 !important; text-align: left !important; }
+  #view-inicio .home-blue-values {
+    display: grid !important;
+    grid-template-columns: minmax(0,1fr) minmax(0,1fr) !important;
+    align-items: start !important;
+    gap: 10px !important;
+    width: 100% !important;
+    padding-top: 10px !important;
+    border-top: 1px solid var(--line,#e4e8ef) !important;
+  }
+  #view-inicio .home-blue-values > div {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 4px !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    text-align: center !important;
+  }
+  #view-inicio .home-blue-values small,
+  #view-inicio .home-blue-converter label {
+    display: block !important;
+    width: 100% !important;
+    font-size: 10px !important;
+    line-height: 1.2 !important;
+    text-align: center !important;
+  }
+  #view-inicio .home-blue-values strong { font-size: 16px !important; line-height: 1.15 !important; text-align: center !important; }
+  #view-inicio .home-blue-converter { min-width: 0 !important; width: 100% !important; }
+  #view-inicio .home-blue-converter input {
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 36px !important;
+    padding: 5px 8px !important;
+    font-size: 15px !important;
+    text-align: center !important;
+  }
+  #view-inicio .home-blue-converter strong { font-size: 13px !important; overflow-wrap: anywhere !important; }
+  #view-inicio .home-blue-source { display: none !important; }
+}

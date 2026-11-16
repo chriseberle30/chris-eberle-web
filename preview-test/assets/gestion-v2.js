@@ -109,7 +109,7 @@
     const cached = localStorage.getItem("e30_blue_quote");
     let rate = 0;
     if (cached) { try { rate = Number(JSON.parse(cached).venta) || 0; } catch (_) {} }
-    output.textContent = usd > 0 && rate > 0 ? formatBlue(usd * rate) : "Ingresá dólares";
+    output.textContent = usd > 0 && rate > 0 ? formatBlue(usd * rate) : "";
   }
   async function loadBlueQuote() {
     const cached = localStorage.getItem("e30_blue_quote");

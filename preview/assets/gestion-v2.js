@@ -882,6 +882,59 @@
     $("#report-cost").textContent = money(cost);
     $("#report-profit").textContent = money(profit);
     $("#report-sales").textContent = money(sales.reduce((sum, row) => sum + Number(row.total || 0), 0));
+    // Desglose de medios de pago: pagos explícitos de órdenes + ventas registradas.
+    const paymentTotals = new Map();
+    const addPayment = (method, value) => {
+      const key = String(method || "No especificado").trim() || "No especificado";
+      paymentTotals.set(key, (paymentTotals.get(key) || 0) + Number(value || 0));
+    };
+    monthPayments.forEach((payment) => addPayment(payment.medio, payment.importe));
+    sales.forEach((sale) => addPayment(sale.medio, sale.total));
+    const deliveryWithoutMethod = Math.max(0, deliveryCollections);
+    if (deliveryWithoutMethod) addPayment("Cierre al entregar · medio no registrado", deliveryWithoutMethod);
+    const paymentRows = [...paymentTotals.entries()].filter(([,value]) => value > 0).sort((a,b) => b[1]-a[1]);
+    const paymentMax = Math.max(1, ...paymentRows.map(([,value]) => value));
+    $("#report-payment-mix").innerHTML = paymentRows.map(([method,value]) =>
+      '<div class="report-bar-row"><div class="report-bar-label"><span>' + esc(method) + '</span><b>' + money(value) + '</b></div><div class="report-bar-track"><span style="width:' + Math.max(2, value/paymentMax*100) + '%"></span></div></div>'
+    ).join("") || '<p class="muted">Todavía no hay cobros registrados este mes.</p>';
+
+    // Flujo de caja real registrado, agrupado por fecha local.
+    const today = new Date(); today.setHours(0,0,0,0);
+    const week = Array.from({length:7}, (_,index) => {
+      const day = new Date(today); day.setDate(today.getDate() - (6-index));
+      const key = day.getFullYear()+"-"+String(day.getMonth()+1).padStart(2,"0")+"-"+String(day.getDate()).padStart(2,"0");
+      const rows = data.cash.filter((item) => {
+        const d = new Date(item.creado);
+        return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0") === key;
+      });
+      return {day, income:rows.filter(x=>x.tipo==="Ingreso").reduce((sum,x)=>sum+Number(x.importe||0),0), expense:rows.filter(x=>x.tipo==="Egreso").reduce((sum,x)=>sum+Number(x.importe||0),0)};
+    });
+    const weekMax = Math.max(1, ...week.flatMap(x=>[x.income,x.expense]));
+    $("#report-daily-cash").innerHTML = week.map((item) =>
+      '<div class="week-day"><span>' + item.day.toLocaleDateString("es-AR",{weekday:"short"}).replace(".","") + '</span><div class="week-bars"><i class="week-income" style="height:' + Math.max(item.income?3:0,item.income/weekMax*58) + 'px" title="Ingresos ' + money(item.income) + '"></i><i class="week-expense" style="height:' + Math.max(item.expense?3:0,item.expense/weekMax*58) + 'px" title="Egresos ' + money(item.expense) + '"></i></div><small>' + item.day.getDate() + '/' + (item.day.getMonth()+1) + '</small></div>'
+    ).join("");
+
+    // Rankings informativos basados en los registros existentes; no se inventan ventas.
+    const modelCounts = new Map();
+    orders.forEach((order) => {
+      const model = String(order.modelo || "Modelo no informado").trim();
+      modelCounts.set(model, (modelCounts.get(model) || 0) + 1);
+    });
+    const topModels = [...modelCounts.entries()].sort((a,b)=>b[1]-a[1]).slice(0,5);
+    $("#report-top-models").innerHTML = topModels.map(([name,count],index) =>
+      '<div class="report-top-row"><span><i>' + (index+1) + '</i>' + esc(name) + '</span><b>' + count + ' órdenes</b></div>'
+    ).join("") || '<p class="muted">No hay órdenes este mes.</p>';
+    const accessoryCounts = new Map();
+    sales.forEach((sale) => (sale.venta_items || []).forEach((line) => {
+      const stock = data.stockItems.find((item)=>String(item.id)===String(line.item_id));
+      const name = String(line.nombre || line.concepto || stock?.nombre || "Artículo").trim();
+      accessoryCounts.set(name, (accessoryCounts.get(name) || 0) + Number(line.cantidad || 1));
+    }));
+    const topAccessories = [...accessoryCounts.entries()].sort((a,b)=>b[1]-a[1]).slice(0,5);
+    $("#report-top-accessories").innerHTML = topAccessories.map(([name,count],index) =>
+      '<div class="report-top-row"><span><i>' + (index+1) + '</i>' + esc(name) + '</span><b>' + count + ' u.</b></div>'
+    ).join("") || '<p class="muted">Las ventas existentes no tienen detalle de artículos para armar este ranking.</p>';
+
 
     $("#pending-costs-list").innerHTML = data.orders
       .filter((x) => x.estado === "Entregado" && !x.costos_cargados)

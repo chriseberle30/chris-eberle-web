@@ -33,7 +33,8 @@
     const key = event.key;
     if (key === "F2") {
       event.preventDefault();
-      const button = $("#new-order") || $("#home-new-order");
+      const primary = $("#new-order");
+      const button = primary && !primary.hidden ? primary : $("#home-new-order");
       if (button) button.click();
     } else if (key === "F4") {
       event.preventDefault(); focusAfterView("precios", "#price-search");

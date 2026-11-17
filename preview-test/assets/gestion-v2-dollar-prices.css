@@ -1934,3 +1934,77 @@ kbd{border:1px solid #dce3ed;border-bottom-width:2px;border-radius:6px;backgroun
 @media(max-width:700px){.content{padding:18px 14px 90px}.topbar{height:68px;padding:0 15px}.settings-card{padding:17px}.settings-intro h2{font-size:23px}.settings-aside{grid-template-columns:1fr}.settings-actions{align-items:stretch}.settings-actions>*{width:100%}.shortcut-settings{grid-template-columns:1fr}}
 
 .ticket-logo{display:block;max-width:44mm;max-height:17mm;object-fit:contain;margin:0 auto 3mm}
+
+
+/* Mobile refinement: compact home dashboard, narrower drawer, three-point navigation */
+@media(max-width:700px){
+  body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+  .sidebar{width:min(82vw,320px);max-width:320px;padding:20px 15px}
+  .sidebar .brand{padding:2px 6px 18px}
+  .sidebar .side-nav{gap:3px}
+  .sidebar .nav-item{min-height:41px;padding:9px 11px}
+  .sidebar-bottom{padding:8px 5px 3px}
+  .mobile-nav{
+    display:grid!important;
+    grid-template-columns:1fr 1fr 1fr!important;
+    align-items:end;
+    gap:8px;
+    position:fixed;
+    inset:auto 0 0;
+    min-height:72px;
+    padding:7px 22px calc(8px + env(safe-area-inset-bottom));
+    background:rgba(255,255,255,.94);
+    border-top:1px solid #e7eaf1;
+    box-shadow:0 -8px 28px rgba(19,28,48,.075);
+    backdrop-filter:blur(18px);
+    z-index:30;
+    overflow:visible;
+  }
+  .mobile-nav button{
+    min-width:0;width:100%;height:49px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:4px;padding:4px 3px;border:0;border-radius:13px;
+    background:transparent;color:#8a94a7;
+    font-size:18px;line-height:1;transition:transform .18s ease,color .18s ease,background .18s ease;
+  }
+  .mobile-nav button svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .mobile-nav button span{font-size:10px;font-weight:650;letter-spacing:-.01em}
+  .mobile-nav button.active:not(.mobile-nav-home){color:var(--blue);background:color-mix(in srgb,var(--blue) 8%,white)}
+  .mobile-nav button.mobile-nav-home{
+    height:62px;margin-top:-22px;align-self:end;
+    border-radius:17px;background:var(--blue);color:#fff;
+    box-shadow:0 9px 22px color-mix(in srgb,var(--blue) 30%,transparent);
+    transform:translateY(-3px);
+  }
+  .mobile-nav button.mobile-nav-home svg{width:24px;height:24px;stroke-width:2}
+  .mobile-nav button.mobile-nav-home span{font-size:11px;font-weight:750}
+  .mobile-nav button.mobile-nav-home.active{background:var(--blue);color:#fff}
+  .home-blue-card{
+    display:block;padding:12px 14px;margin-bottom:11px;border-radius:15px;
+  }
+  .home-blue-heading{gap:9px;margin-bottom:9px}
+  .home-blue-icon{width:34px;height:34px;border-radius:11px;font-size:11px}
+  .home-blue-heading b{font-size:13px}
+  .home-blue-heading small{font-size:10px}
+  .home-blue-values{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding-top:9px;border-top:1px solid var(--line)}
+  .home-blue-values>div{min-width:0;gap:4px}
+  .home-blue-values small,.home-blue-converter label{font-size:10px}
+  .home-blue-values strong{font-size:15px}
+  .home-blue-converter{min-width:0!important}
+  .home-blue-converter input{width:100%;height:34px;padding:5px 8px;font-size:12px}
+  .home-blue-converter strong{font-size:12px}
+  .home-price-search{padding:14px;border-radius:15px}
+  .home-price-search .panel-heading{padding:0 0 10px;margin-bottom:10px;border-bottom:1px solid var(--line)}
+  .home-price-search .panel-heading h2{font-size:14px}
+  .home-price-search .panel-heading p{font-size:10px}
+  .home-price-search .search-wrap{height:43px}
+  .home-price-search .search-wrap input{font-size:13px}
+  .home-price-results{font-size:11px}
+  .dashboard-stats{gap:7px;margin:11px 0}
+  .dashboard-stats .stat-card{padding:11px 9px;border-radius:13px}
+  .dashboard-stats .stat-card span{font-size:9px;min-height:24px}
+  .dashboard-stats .stat-card b{font-size:17px}
+  .dashboard-actions{gap:8px}
+  .dashboard-actions .button{min-height:43px;padding:10px 12px;font-size:11px}
+  .dashboard-recent{margin-bottom:10px}
+}

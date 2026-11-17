@@ -2008,3 +2008,23 @@ kbd{border:1px solid #dce3ed;border-bottom-width:2px;border-radius:6px;backgroun
   .dashboard-actions .button{min-height:43px;padding:10px 12px;font-size:11px}
   .dashboard-recent{margin-bottom:10px}
 }
+
+
+/* Ordenes: accion principal visible y respaldo fuera del Inicio */
+.orders-heading{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.orders-heading-actions{display:flex;align-items:center;gap:12px}
+.orders-heading-actions .button{white-space:nowrap;min-height:40px}
+.backup-settings-row{display:flex;align-items:center;gap:15px;padding:15px;border:1px solid var(--line);border-radius:13px;background:var(--surface-2,#f8fafc)}
+.backup-settings-icon{width:42px;height:42px;flex:none;display:grid;place-items:center;border-radius:12px;background:color-mix(in srgb,var(--blue) 10%,white);color:var(--blue);font-size:22px;font-weight:800}
+.backup-settings-copy{flex:1;min-width:0}
+.backup-settings-copy b{font-size:12px}
+.backup-settings-copy p{font-size:11px;margin:4px 0}
+.backup-settings-copy small{font-size:10px;color:var(--muted)}
+@media(max-width:700px){
+ .orders-heading{align-items:flex-start;flex-wrap:wrap}
+ .orders-heading-actions{width:100%;justify-content:space-between}
+ .orders-heading-actions .button{min-height:42px}
+ .backup-settings-row{align-items:flex-start;flex-wrap:wrap}
+ .backup-settings-copy{flex-basis:calc(100% - 60px)}
+ .backup-settings-row>.button{width:100%;min-height:43px}
+}

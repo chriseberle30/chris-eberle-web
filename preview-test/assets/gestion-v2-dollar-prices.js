@@ -154,7 +154,7 @@
     }).join("") || '<p class="muted">No encontramos tarifas con esa búsqueda.</p>';
   }
   function updateBackupStatus() {
-    const label = $("#home-backup-status");
+    const label = $("#config-backup-status");
     if (!label) return;
     const stamp = localStorage.getItem("e30_last_backup_download");
     label.textContent = stamp ? "Último respaldo descargado: " + new Date(stamp).toLocaleString("es-AR") : "Todavía no descargaste un respaldo desde este dispositivo";
@@ -296,7 +296,7 @@
     $$(".view").forEach((section) => { section.hidden = section.id !== `view-${view}`; });
     $$('[data-view]').forEach((button) => button.classList.toggle("active", button.dataset.view === view));
     const titles = { inicio: "Inicio", presupuestos: "Presupuestos", ordenes: "Órdenes de reparación", clientes: "Clientes", precios: "Precios de reparación", caja: "Caja y movimientos", stock: "Inventario y accesorios", ventas: "Ventas", garantias: "Garantías y reclamos", reportes: "Reportes del negocio", costos: "Costos pendientes", papelera: "Papelera de órdenes" };
-    $("#new-order").hidden = view === "inicio";
+    $("#new-order").hidden = view === "inicio" || view === "ordenes";
         $("#page-title").textContent = titles[view]; $(".sidebar").classList.remove("open"); $("#sidebar-backdrop").classList.remove("visible"); $("#menu-toggle").setAttribute("aria-expanded","false"); $("#menu-toggle").setAttribute("aria-label","Abrir menú"); $("#menu-toggle").textContent="☰";
     if (view === "inicio") renderDashboard();
     if (view === "ordenes") loadOrders({ search: $("#order-search").value }).then((rows) => { data.orders = rows; renderOrders(rows); renderStats(); }).catch((error) => notice(error.message, true));
@@ -1061,9 +1061,10 @@
     $("#sign-out").addEventListener("click", async () => { await sb.auth.signOut(); });
     $("#new-order").addEventListener("click", () => openOrderForm());
     $("#home-new-order").addEventListener("click", () => openOrderForm());
+    $("#orders-new-order").addEventListener("click", () => openOrderForm());
     $("#home-price-search").addEventListener("input", (event) => renderHomePriceSearch(event.target.value));
     $("#home-blue-usd").addEventListener("input", updateBlueConversion);
-    $("#home-backup").addEventListener("click", downloadDataBackup);
+    $("#config-backup").addEventListener("click", downloadDataBackup);
     $("#home-view-orders").addEventListener("click", () => setView("ordenes"));
     $("#budget-add").addEventListener("click", () => notice("El formulario de presupuestos se incorpora en la siguiente etapa."));
     $("#new-client").addEventListener("click", () => openClientForm());

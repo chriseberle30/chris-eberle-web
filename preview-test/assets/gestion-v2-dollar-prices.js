@@ -14,6 +14,8 @@
   const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
   const date = (value) => value ? new Date(value).toLocaleString("es-AR", { dateStyle: "short", timeStyle: "short", hour12: false }) : "—";
   const stateClass = (state) => ({ "Listo":"ready", "En reparación":"repair", "Esperando repuesto":"waiting", "Pendiente":"delayed", "Recibido":"received", "Entregado":"closed", "No reparable":"unrepairable", "Cancelado":"closed" }[state] || "");
+  let activeUserId = null;
+  let accountSettings = {};
   const data = { clients: [], orders: [], prices: [], trash: [], cash: [], stockItems: [], sales: [], claims: [], view: "inicio", busy: false, queryTimer: null };
 
   function notice(message, error = false) {
@@ -306,7 +308,44 @@
     $("#modal-form").dataset.action = "save-client"; $("#modal-form").dataset.id = client?.id || "";
   }
   function getE30Settings(){try{return JSON.parse(localStorage.getItem("e30_settings")||"{}")}catch(e){return {}}}
-  function saveE30Settings(){const s={e30Name:$("#cfg-e30-name").value,i30Name:$("#cfg-i30-name").value,e30Address:$("#cfg-e30-address").value,i30Address:$("#cfg-i30-address").value,e30Phone:$("#cfg-e30-phone").value,i30Phone:$("#cfg-i30-phone").value,e30Social:$("#cfg-e30-social").value,i30Social:$("#cfg-i30-social").value,warrantyDays:Number($("#cfg-warranty-days").value||30),warrantyTerms:$("#cfg-warranty-terms").value};localStorage.setItem("e30_settings",JSON.stringify(s));notice("Configuración guardada en este dispositivo.");}
+  function applyAccountSettings(s={}){
+    accountSettings=s||{};
+    const legacy=s.legacy||getE30Settings();
+    const values={"cfg-business-name":s.businessName||"Mi negocio","cfg-business-logo":s.logoUrl||"","cfg-e30-name":s.primaryBranch?.name||legacy.e30Name||"Mi sucursal","cfg-e30-logo":s.primaryBranch?.logoUrl||"","cfg-e30-address":s.primaryBranch?.address||legacy.e30Address||"","cfg-e30-phone":s.primaryBranch?.phone||legacy.e30Phone||"","cfg-e30-social":s.primaryBranch?.social||legacy.e30Social||"","cfg-i30-name":s.secondaryBranch?.name||legacy.i30Name||"Segunda sucursal","cfg-i30-logo":s.secondaryBranch?.logoUrl||"","cfg-i30-address":s.secondaryBranch?.address||legacy.i30Address||"","cfg-i30-phone":s.secondaryBranch?.phone||legacy.i30Phone||"","cfg-i30-social":s.secondaryBranch?.social||legacy.i30Social||"","cfg-warranty-days":s.warrantyDays??legacy.warrantyDays??30,"cfg-warranty-terms":s.warrantyTerms||legacy.warrantyTerms||""};
+    for(const [id,value] of Object.entries(values)){const el=$("#"+id);if(el)el.value=value}
+    const multi=s.multiBranch??Boolean(legacy.i30Name||legacy.i30Address||legacy.i30Phone);
+    $("#cfg-multi-branch").checked=multi;$("#secondary-branch-settings").hidden=!multi;
+    if(s.primaryColor)document.documentElement.style.setProperty("--blue",s.primaryColor);
+    if(s.primaryColor)localStorage.setItem("e30_preview_primary_color",s.primaryColor);
+    if(s.businessName)$("#preview-business-name").textContent=s.businessName;
+    if(s.logoUrl)applyLogo(s.logoUrl);
+    document.querySelectorAll("[data-theme-color]").forEach(b=>{const active=b.dataset.themeColor===(s.primaryColor||"#4268ed");b.classList.toggle("active",active);b.setAttribute("aria-pressed",String(active))});
+  }
+  function applyLogo(url){
+    const mark=$(".brand-mark");if(!mark)return;
+    if(url&&/^https:\/\//i.test(url)){mark.innerHTML='<img alt="Logo del negocio" src="'+esc(url)+'">';mark.classList.add("has-logo")}else{mark.textContent="M";mark.classList.remove("has-logo")}
+  }
+  async function loadAccountSettings(userId){
+    activeUserId=userId;
+    const {data:row,error}=await sb.from("business_settings").select("settings").eq("owner_id",userId).maybeSingle();
+    if(error){console.warn("No se pudieron leer preferencias de cuenta:",error.message);applyAccountSettings(getE30Settings());return}
+    const stored=row?.settings||{};
+    const merged=stored.businessName?stored:{...stored,legacy:stored.legacy||getE30Settings()};
+    applyAccountSettings(merged);
+  }
+  async function saveE30Settings(){
+    const old=accountSettings||{};
+    const settings={version:2,businessName:$("#cfg-business-name").value.trim()||"Mi negocio",logoUrl:$("#cfg-business-logo").value.trim(),primaryColor:localStorage.getItem("e30_preview_primary_color")||"#4268ed",multiBranch:$("#cfg-multi-branch").checked,
+      primaryBranch:{name:$("#cfg-e30-name").value.trim()||"Sucursal principal",logoUrl:$("#cfg-e30-logo").value.trim(),address:$("#cfg-e30-address").value.trim(),phone:$("#cfg-e30-phone").value.trim(),social:$("#cfg-e30-social").value.trim()},
+      secondaryBranch:$("#cfg-multi-branch").checked?{name:$("#cfg-i30-name").value.trim()||"Segunda sucursal",logoUrl:$("#cfg-i30-logo").value.trim(),address:$("#cfg-i30-address").value.trim(),phone:$("#cfg-i30-phone").value.trim(),social:$("#cfg-i30-social").value.trim()}:null,
+      warrantyDays:Number($("#cfg-warranty-days").value||30),warrantyTerms:$("#cfg-warranty-terms").value};
+    if(!activeUserId){notice("Iniciá sesión para guardar la configuración.",true);return}
+    const {error}=await sb.from("business_settings").upsert({owner_id:activeUserId,settings,updated_at:new Date().toISOString()},{onConflict:"owner_id"});
+    if(error){notice("No se pudo guardar en tu cuenta: "+error.message,true);return}
+    accountSettings=settings;notice("Configuración guardada en tu cuenta.");
+    const name=$("#cfg-business-name").value.trim()||"Mi negocio";$("#preview-business-name").textContent=name;
+    applyLogo(settings.logoUrl);
+  }
   function openOrderForm(order = null) {
     const isEditing = Boolean(order?.id);
     const clientOptions = data.clients.map((client) => `<option value="${esc(client.id)}" ${String(client.id) === String(order?.cliente_id) ? "selected" : ""}>${esc(client.nombre)}${client.telefono ? ` · ${esc(client.telefono)}` : ""}</option>`).join("");
@@ -1100,15 +1139,15 @@
   function initialize() {
     $("#state-filter").insertAdjacentHTML("beforeend", Rules.ORDER_STATES.map((state) => `<option>${esc(state)}</option>`).join(""));
     bindEvents(); if(localStorage.getItem("e30_theme")==="dark"){document.body.classList.add("theme-dark");$("#theme-toggle").textContent="☀ Activar modo claro";}
-    const saved=getE30Settings(); for(const [id,key] of [["cfg-e30-name","e30Name"],["cfg-i30-name","i30Name"],["cfg-e30-address","e30Address"],["cfg-i30-address","i30Address"],["cfg-e30-phone","e30Phone"],["cfg-i30-phone","i30Phone"],["cfg-e30-social","e30Social"],["cfg-i30-social","i30Social"],["cfg-warranty-days","warrantyDays"],["cfg-warranty-terms","warrantyTerms"]])if(saved[key]!=null)$("#"+id).value=saved[key];
+    const saved=getE30Settings(); applyAccountSettings({legacy:saved,multiBranch:Boolean(saved.i30Name||saved.i30Address||saved.i30Phone)}); $("#cfg-multi-branch").addEventListener("change",()=>{$("#secondary-branch-settings").hidden=!$("#cfg-multi-branch").checked;}); $("#cfg-business-name").addEventListener("input",()=>$("#preview-business-name").textContent=$("#cfg-business-name").value||"Mi negocio");
     sb.auth.onAuthStateChange((event, session) => {
       if (event === "INITIAL_SESSION") return; // getSession() below owns the first load; avoid duplicate initial refresh.
-      if (session) { showApp(session); setTimeout(() => { refresh(); loadBlueQuote(); startRemotePrintReceiver(); }, 0); } else showLogin();
+      if (session) { showApp(session); setTimeout(() => { loadAccountSettings(session.user.id); refresh(); loadBlueQuote(); startRemotePrintReceiver(); }, 0); } else { activeUserId=null; showLogin(); }
     });
     sb.auth.getSession().then(({ data: sessionData, error }) => {
       if (error) return showLogin(error.message);
       if (!sessionData.session) return showLogin();
-      showApp(sessionData.session); refresh(); loadBlueQuote(); startRemotePrintReceiver();
+      showApp(sessionData.session); loadAccountSettings(sessionData.session.user.id); refresh(); loadBlueQuote(); startRemotePrintReceiver();
     }).catch((error) => showLogin(error.message));
   }
   initialize();

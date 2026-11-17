@@ -1932,3 +1932,5 @@ kbd{border:1px solid #dce3ed;border-bottom-width:2px;border-radius:6px;backgroun
 .theme-dark .branch-toggle,.theme-dark .shortcut-settings span{background:#1c2a40;border-color:#2a3850}
 @media(max-width:1050px){.settings-layout{grid-template-columns:1fr}.settings-aside{position:static;grid-template-columns:1fr 1fr}.settings-preview{max-width:none}}
 @media(max-width:700px){.content{padding:18px 14px 90px}.topbar{height:68px;padding:0 15px}.settings-card{padding:17px}.settings-intro h2{font-size:23px}.settings-aside{grid-template-columns:1fr}.settings-actions{align-items:stretch}.settings-actions>*{width:100%}.shortcut-settings{grid-template-columns:1fr}}
+
+.ticket-logo{display:block;max-width:44mm;max-height:17mm;object-fit:contain;margin:0 auto 3mm}

@@ -2090,3 +2090,32 @@ kbd{border:1px solid #dce3ed;border-bottom-width:2px;border-radius:6px;backgroun
   .dashboard-actions{grid-template-columns:minmax(0,1fr)!important}
   .dashboard-actions>#home-new-order{width:min(100%,360px)!important}
 }
+
+
+/* v6: center home CTA regardless of legacy grid/flex rules */
+#view-inicio .dashboard-actions{
+  display:flex!important;
+  width:100%!important;
+  justify-content:center!important;
+  align-items:center!important;
+  flex-wrap:nowrap!important;
+  text-align:center!important;
+}
+#view-inicio .dashboard-actions>#home-new-order{
+  display:inline-flex!important;
+  flex:0 1 420px!important;
+  width:min(100%,420px)!important;
+  max-width:420px!important;
+  min-width:0!important;
+  margin:0 auto!important;
+  justify-content:center!important;
+  align-items:center!important;
+  justify-self:auto!important;
+}
+@media(max-width:700px){
+  #view-inicio .dashboard-actions{justify-content:center!important}
+  #view-inicio .dashboard-actions>#home-new-order{
+    flex-basis:min(100%,420px)!important;
+    width:min(100%,420px)!important;
+  }
+}

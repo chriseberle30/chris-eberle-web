@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#101828">
   <title>Gestión E30 · Vista de prueba</title>
-  <link rel="stylesheet" href="assets/gestion-v2-dollar-prices.css?v=3">
+  <link rel="stylesheet" href="assets/gestion-v2-dollar-prices.css?v=4">
 <script>window.addEventListener("error",function(e){var p=document.querySelector("#loading-screen p");if(p)p.textContent="No se pudo iniciar Gestión: "+(e.message||"error al cargar un archivo");});window.addEventListener("unhandledrejection",function(e){var p=document.querySelector("#loading-screen p");var r=e.reason;if(p)p.textContent="Error al conectar: "+(r&&r.message?r.message:String(r||"error desconocido"));});</script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" defer onerror="this.onerror=null;this.src=&#39;https://unpkg.com/@supabase/supabase-js@2.45.4/dist/umd/supabase.js&#39;"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" defer></script>
   <script src="assets/e30-gestion-domain.js?v=e30-paid-1" defer></script>
-  <script src="assets/gestion-v2-dollar-prices.js?v=3" defer></script>
-  <script src="assets/gestion-v2-personalization.js?v=3" defer></script>
+  <script src="assets/gestion-v2-dollar-prices.js?v=4" defer></script>
+  <script src="assets/gestion-v2-personalization.js?v=4" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.3.0/qz-tray.js"></script>
 <script>
 const E30_QZ_CERT = '-----BEGIN CERTIFICATE-----\nMIIEMDCCAxigAwIBAgIGAaEh/jiIMA0GCSqGSIb3DQEBCwUAMIGiMQswCQYDVQQG\nEwJVUzELMAkGA1UECAwCTlkxEjAQBgNVBAcMCUNhbmFzdG90YTEbMBkGA1UECgwS\nUVogSW5kdXN0cmllcywgTExDMRswGQYDVQQLDBJRWiBJbmR1c3RyaWVzLCBMTEMx\nHDAaBgkqhkiG9w0BCQEWDXN1cHBvcnRAcXouaW8xGjAYBgNVBAMMEVFaIFRyYXkg\nRGVtbyBDZXJ0MB4XDTI2MTAwODE4NDc1MVoXDTQ2MTAwODE4NDc1MVowgaIxCzAJ\nBgNVBAYTAlVTMQswCQYDVQQIDAJOWTESMBAGA1UEBwwJQ2FuYXN0b3RhMRswGQYD\nVQQKDBJRWiBJbmR1c3RyaWVzLCBMTEMxGzAZBgNVBAsMElFaIEluZHVzdHJpZXMs\nIExMQzEcMBoGCSqGSIb3DQEJARYNc3VwcG9ydEBxei5pbzEaMBgGA1UEAwwRUVog\nVHJheSBEZW1vIENlcnQwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDA\nA/kw8a05Q5B3ghHnR3YUAdzwGdYQi+9GAmpNSdSBaL5lzP/4/9HF+bFutGNMRVzP\n8UCRy93Ny8nEGbGAY3mG0qaOasgRGMYW+rBPf06rqpa00W+hdrpq0rXfu2l3+D4A\n2FFqxsynrZixT+D3uhmDX1yKNgiRN2rKDR3Lzys7U7C8YP6DwI5Px6g0S+EqRK5P\n/ynIRyOMtOgKPHd9W3VLw3CUCi9OCcjM7DuGLvisyIt67u0Kr+BQKTidm69oUEiV\nqNKu72t5/wcSWFT7AgPes/l5f4gjRuu9glMufIi8+4livOp+u2oQxKt2ZI2tZp8J\nA7I4RZRBplMCitvE5Q5dAgMBAAGjajBoMBIGA1UdEwEB/wQIMAYBAf8CAQEwDgYD\nVR0PAQH/BAQDAgEGMB0GA1UdDgQWBBStZ7qt6RY8yEb8Yl61Zl8UKLQAGzAjBgNV\nHR4BAf8EGTAXoBUwE4IRUVogVHJheSBEZW1vIENlcnQwDQYJKoZIhvcNAQELBQAD\nggEBAAYFeV0EF/sQkB64Zd1JRif2kYxEjK8wl2WR90Yoq8XRwSYJ+4aJRNSEfSs1\nUD0MBIMfl1n6eGCKeonckOQRGXEg1O96OsSS+nkcYT4+fmr9zdRCbm1reuj3RAgD\npw1rMEbC/NAmV2xjHIoTebiyPbHeeiEmhWZbx2QAaNz+X6OTiv8W0Qfm0MLwDk01\nYZVcVx5AxIQ6J3yNhDbdZ447fowdePuOqxe1EjOVShJ3CMpSKhDikAiKYCU9MNu7\nWZU42Fs+L+ICo74CeSaK3UubuPZSHd2Ldu25UFGQHC5o8BKua8uVAzGnDbfkGxk/\nezU21Yr1H4XPnWyNo08Ga9smM+c=\n-----END CERTIFICATE-----';
@@ -85,7 +85,7 @@ qz.security.setSignaturePromise(function(toSign){
             <article class="stat-card"><span><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 18h6"/></svg>Órdenes activas</span><b id="home-active">0</b></article>
             <article class="stat-card"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>Listas para entregar</span><b id="home-ready">0</b></article>
           </div>
-          <div class="dashboard-actions"><button class="button primary" id="home-new-order">＋ Nueva orden</button><button class="button" id="home-backup">Descargar respaldo</button><span id="home-backup-status" class="muted home-backup-status">Respaldo: todavía no descargado</span></div>
+          <div class="dashboard-actions"><button class="button primary" id="home-new-order">＋ Nueva orden</button></div>
           <div class="panel table-panel dashboard-recent"><div class="panel-heading"><div><h2>Órdenes recientes</h2><p class="muted">Equipos en curso y listos para entregar</p></div><button type="button" class="button" id="home-view-orders">Ver todas</button></div><div id="home-orders-list" class="orders-list"></div></div>
         </section>
         <section id="view-presupuestos" class="view" hidden>
@@ -94,7 +94,7 @@ qz.security.setSignaturePromise(function(toSign){
         <section id="view-ordenes" class="view" hidden>
           <div class="stats-row"><article class="stat-card"><span>Órdenes activas</span><b id="stat-active">—</b></article><article class="stat-card"><span>Listas para entregar</span><b id="stat-ready">—</b></article><article class="stat-card"><span>Saldos pendientes</span><b id="stat-balance">—</b></article></div>
           <div class="toolbar"><div class="search-wrap"><span>⌕</span><input id="order-search" type="search" placeholder="Buscar por número, cliente, teléfono, equipo…" autocomplete="off"></div><select id="branch-filter" aria-label="Filtrar sucursal"><option value="">Todas las sucursales</option><option>E30</option><option>i30</option></select><select id="state-filter" aria-label="Filtrar estado"><option value="">Todos los estados</option></select></div>
-          <div class="panel table-panel"><div class="panel-heading"><div><h2>Reparaciones</h2><p class="muted">Órdenes actuales y su saldo</p></div><span id="order-count" class="count-label"></span></div><div id="orders-list" class="orders-list"></div></div>
+          <div class="panel table-panel"><div class="panel-heading orders-heading"><div><h2>Reparaciones</h2><p class="muted">Órdenes actuales y su saldo</p></div><div class="orders-heading-actions"><span id="order-count" class="count-label"></span><button type="button" id="orders-new-order" class="button primary">＋ Crear orden</button></div></div><div id="orders-list" class="orders-list"></div></div>
         </section>
         <section id="view-clientes" class="view" hidden>
           <div class="toolbar"><div class="search-wrap"><span>⌕</span><input id="client-search" type="search" placeholder="Buscar por nombre o teléfono…"></div><button id="new-client" class="button primary">＋ Nuevo cliente</button></div>
@@ -159,6 +159,9 @@ qz.security.setSignaturePromise(function(toSign){
 </div></div></section>
 <section class="panel settings-card"><div class="panel-heading"><div><h2>Garantías y comprobantes</h2><p class="muted">Valores predeterminados para las órdenes nuevas.</p></div><span class="settings-step">03</span></div>
 <div class="form-grid"><div class="field"><label for="cfg-warranty-days">Garantía predeterminada (días)</label><input id="cfg-warranty-days" type="number" min="0" value="30"></div><div class="field full"><label for="cfg-warranty-terms">Condiciones de garantía</label><textarea id="cfg-warranty-terms" rows="4" placeholder="Escribí las condiciones que aparecerán en los comprobantes..."></textarea></div></div>
+</section>
+<section class="panel settings-card backup-settings-card"><div class="panel-heading"><div><h2>Respaldo y seguridad</h2><p class="muted">Descargá una copia de tus datos para conservarla en un lugar seguro.</p></div><span class="settings-step">05</span></div>
+<div class="backup-settings-row"><div class="backup-settings-icon">↓</div><div class="backup-settings-copy"><b>Respaldo de información</b><p class="muted">Incluye clientes, órdenes, precios, caja, stock, ventas y garantías.</p><small id="config-backup-status">Todavía no descargaste un respaldo desde este dispositivo.</small></div><button type="button" class="button primary" id="config-backup">Descargar respaldo</button></div>
 </section>
 <section class="panel settings-card"><div class="panel-heading"><div><h2>Productividad</h2><p class="muted">Atajos para trabajar más rápido desde el teclado.</p></div><span class="settings-step">04</span></div><div class="shortcut-settings"><span><kbd>F2</kbd> Nueva orden</span><span><kbd>F4</kbd> Buscar precios</span><span><kbd>F8</kbd> Buscar clientes</span><span><kbd>F9</kbd> Movimiento de caja</span><span><kbd>?</kbd> Ver ayuda</span></div><p class="muted">Los atajos se desactivan mientras escribís en un campo.</p></section>
 <div class="settings-actions"><button id="cfg-save" class="button primary">Guardar configuración</button><button id="theme-toggle" class="button theme-toggle-button" type="button">☾ Activar modo noche</button><span class="muted">Los cambios se guardan en tu cuenta.</span></div>

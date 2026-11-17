@@ -1,39 +1,42 @@
-/* E30 · capa visual (solo CSS). No cambia funciones ni la conexión.
-   Para quitarla: borrar la línea <link> que la carga. */
-:root{--gestion-visual-blue:#14104C;--line:#e6e9f1;--muted:#5f6679;--shadow:0 1px 2px #1018280a,0 6px 20px #1018280a}
-body{background:#f4f6fa}
-/* Tarjetas y paneles: más aire, bordes suaves, menos sombra */
-.panel,.stat-card,.login-card{border-radius:18px;border:1px solid var(--line);box-shadow:var(--shadow)}
-.panel{padding:20px}
-.stat-card{padding:16px 18px}
-.stat-card span{font-size:12.5px;font-weight:600;color:var(--muted)}
-.stat-card b{font-size:26px;letter-spacing:-.6px;font-weight:700}
-.stats-row{gap:12px}
-/* Títulos: jerarquía clara */
-.topbar h1{letter-spacing:-.4px}
-.panel-heading h2,h2{letter-spacing:-.3px;font-weight:700}
-.muted{color:var(--muted)}
-/* Botones: acción principal fuerte, el resto liviano */
-.button{border-radius:12px;min-height:44px;font-weight:600;transition:background .15s,border-color .15s,transform .1s}
-.button:active{transform:scale(.98)}
-.button.primary{background:var(--gestion-visual-blue);border-color:var(--gestion-visual-blue);color:#fff}
-.dashboard-actions{gap:10px}
-.dashboard-actions .button.primary{min-height:52px;font-size:16px;border-radius:14px}
-/* Menú lateral: ítem activo más claro */
-.nav-item{border-radius:11px}
-.nav-item.active{background:#ffffff1f;color:#fff}
-/* Entradas de formulario */
-input,select,textarea{border-radius:12px}
-input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #14104c26;border-color:#7d78b4}
-/* Lista de órdenes */
-.orders-list>*{border-radius:14px}
-/* Barra inferior del celular */
-.mobile-nav{background:#fffffff2;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 -6px 20px #1018280d}
-.mobile-nav button{min-height:48px;border-radius:12px;font-weight:600}
-.mobile-nav button.active{color:var(--gestion-visual-blue)}
+/* Gestion30 · Inicio compacto (solo CSS, no toca funciones ni la conexión).
+   Reemplaza la versión anterior de este archivo.
+   Para quitarlo: borrar la línea <link ...gestion-v2-visual.css> del HTML. */
+
+/* Orden: dólar · buscador · (3 números + Nueva orden) · órdenes recientes */
+#view-inicio:not([hidden]){display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:stretch}
+
+/* 1. Dólar blue: una franja baja, siempre visible */
+#view-inicio>.home-blue-card{order:1;grid-column:1/-1;margin:0;padding:10px 16px;gap:14px}
+#view-inicio .home-blue-icon{width:34px;height:34px;border-radius:10px;font-size:11px}
+#view-inicio .home-blue-heading b{font-size:13px}
+#view-inicio .home-blue-values strong{font-size:15px}
+#view-inicio .home-blue-converter input{padding:4px 8px}
+
+/* 2. Buscar precio: solo el buscador */
+#view-inicio>.home-price-search{order:2;grid-column:1/-1;margin:0;padding:10px 14px}
+#view-inicio .home-price-search .panel-heading{display:none}
+#view-inicio .home-price-search .search-wrap{margin:0}
+#view-inicio .home-price-results{margin-top:8px}
+
+/* 3. Números del día y Nueva orden en la misma fila */
+#view-inicio>.dashboard-stats{display:contents}
+#view-inicio .dashboard-stats .stat-card{order:3;height:auto!important;min-height:0!important;padding:12px 16px!important;display:flex;flex-direction:column;justify-content:center;gap:6px}
+#view-inicio .dashboard-stats .stat-card b{font-size:24px!important;margin:0!important;line-height:1.1}
+#view-inicio>.dashboard-actions{order:4;margin:0!important;display:flex!important;width:auto!important}
+#view-inicio .dashboard-actions #home-new-order{width:100%!important;height:100%;min-height:0!important;font-size:15px!important;grid-column:auto!important}
+
+/* 4. Órdenes recientes */
+#view-inicio>.dashboard-recent{order:5;grid-column:1/-1;margin:0}
+
 @media(max-width:760px){
-  .panel{padding:16px;border-radius:16px}
-  .stat-card b{font-size:22px}
-  .content{padding-bottom:92px}
+  #view-inicio:not([hidden]){grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  #view-inicio>.home-blue-card{padding:8px 12px;gap:6px 12px;flex-wrap:wrap}
+  #view-inicio .home-blue-icon,#view-inicio .home-blue-heading small{display:none}
+  #view-inicio>.home-price-search{padding:8px 10px}
+  /* en el celular: botón arriba y los 3 números abajo */
+  #view-inicio>.dashboard-actions{order:3;grid-column:1/-1}
+  #view-inicio .dashboard-actions #home-new-order{min-height:48px!important}
+  #view-inicio .dashboard-stats .stat-card{order:4;padding:9px 8px!important}
+  #view-inicio .dashboard-stats .stat-card b{font-size:18px!important}
+  #view-inicio .dashboard-stats .stat-card span{font-size:9px!important;min-height:0!important}
 }
-@media(prefers-reduced-motion:reduce){.button{transition:none}}

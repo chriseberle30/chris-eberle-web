@@ -1863,3 +1863,72 @@ kbd{display:inline-grid;place-items:center;min-width:38px;padding:5px 8px;border
   box-shadow:0 5px 14px color-mix(in srgb,var(--blue) 22%,transparent);
 }
 .mobile-nav button.active{color:var(--blue) !important}
+
+
+/* Premium product design system v2 */
+:root{--surface:#fff;--surface-2:#f7f9fc;--radius-lg:18px;--radius-md:12px;--shadow-soft:0 8px 28px rgba(16,24,40,.055);--shadow-card:0 2px 8px rgba(16,24,40,.035)}
+body{background:#f4f6fa;color:#111827;letter-spacing:-.012em}
+.sidebar{background:linear-gradient(180deg,#101b2d 0%,#14243a 100%);padding:25px 17px;box-shadow:8px 0 28px rgba(16,24,40,.08)}
+.brand{padding:4px 8px 24px;gap:13px}.brand-mark{width:46px;height:46px;border-radius:14px;box-shadow:0 7px 18px color-mix(in srgb,var(--blue) 22%,transparent)}
+.brand-mark img{width:100%;height:100%;object-fit:contain;border-radius:inherit;padding:4px}.brand-mark.has-logo{background:#fff!important}
+.brand b{font-size:16px;letter-spacing:-.035em}.brand small{font-size:11px;opacity:.78}
+.side-nav{gap:4px}.nav-group-label{margin:18px 10px 6px;color:#8292a8;font-size:9px;letter-spacing:.15em;font-weight:800}
+.nav-item{min-height:43px;padding:10px 12px;border-radius:11px;font-size:12px;color:#c2ccda;transition:background .18s ease,transform .18s ease}
+.nav-item span{width:20px;display:grid;place-items:center}.nav-item svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.nav-item:hover{transform:translateX(2px);background:#ffffff0e!important}.nav-item.active{background:color-mix(in srgb,var(--blue) 25%,#ffffff0b)!important;box-shadow:inset 3px 0 var(--blue)!important;color:#fff}
+.nav-divider{height:1px;background:#ffffff15;margin:12px 8px 2px}
+.main-column{background:#f5f7fb}.topbar{height:78px;padding:0 36px;background:rgba(255,255,255,.88);border-bottom:1px solid #e8edf4}
+.topbar h1{font-size:21px;letter-spacing:-.045em}.content{padding:30px 36px 64px}
+.panel,.stat-card{border:1px solid #e7ebf2;border-radius:16px;box-shadow:var(--shadow-card);transition:box-shadow .2s ease,border-color .2s ease}
+.panel{padding:21px}.panel-heading{margin-bottom:18px}.panel-heading h2{font-size:15px;letter-spacing:-.025em}.panel-heading p{font-size:12px}
+.stat-card{padding:20px 22px}.stat-card b{font-size:26px;letter-spacing:-.05em}
+.button{border-radius:10px;padding:10px 15px;font-size:12px;font-weight:700;transition:transform .16s ease,box-shadow .16s ease,background .16s ease}
+.button:hover{transform:translateY(-1px);box-shadow:0 7px 16px rgba(16,24,40,.09);filter:none}
+.button.primary{background:var(--blue)!important;border-color:var(--blue)!important;box-shadow:0 6px 16px color-mix(in srgb,var(--blue) 23%,transparent)}
+.button.primary:hover{box-shadow:0 9px 22px color-mix(in srgb,var(--blue) 30%,transparent)}
+.search-wrap,.toolbar select,.field input,.field select,.field textarea{border-radius:10px;border-color:#e0e6ef;transition:border-color .16s ease,box-shadow .16s ease}
+.field input:focus,.field select:focus,.field textarea:focus,.search-wrap:focus-within{border-color:var(--blue);box-shadow:0 0 0 4px color-mix(in srgb,var(--blue) 11%,transparent);outline:0}
+.field label{font-size:11px;font-weight:700;color:#475467;margin-bottom:7px}
+.order-row,.client-row,.sales-row{border:1px solid #e8edf4;border-radius:13px;background:#fff;padding:14px 16px;margin-bottom:9px;transition:border-color .15s ease,box-shadow .15s ease}
+.order-row:hover,.client-row:hover,.sales-row:hover{border-color:#d5deeb;box-shadow:0 5px 16px rgba(16,24,40,.045)}
+.modal{border:1px solid #e7ebf2;border-radius:18px;box-shadow:0 24px 80px rgba(16,24,40,.2);padding:0}
+.modal::backdrop{background:rgba(12,22,38,.48);backdrop-filter:blur(4px)}
+.modal-heading{padding:22px 24px;border-bottom:1px solid #edf0f5}.modal-body{padding:22px 24px}.modal-actions{padding:15px 24px 22px}
+.settings-intro{display:flex;justify-content:space-between;align-items:center;margin:0 0 23px;padding:3px 2px}
+.settings-intro h2{font:800 27px Manrope,sans-serif;letter-spacing:-.055em;margin:4px 0 7px;color:#101828}
+.settings-intro p.muted{margin:0;font-size:13px}.settings-icon{width:48px;height:48px;border-radius:15px;background:color-mix(in srgb,var(--blue) 10%,white);color:var(--blue);display:grid;place-items:center;font-size:22px}
+.settings-layout{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:20px;align-items:start}
+.settings-main{display:grid;gap:16px;min-width:0}.settings-card{padding:23px}
+.settings-card .panel-heading{display:flex;align-items:flex-start;justify-content:space-between}
+.settings-step{font:800 12px Manrope;color:var(--blue);background:color-mix(in srgb,var(--blue) 9%,white);border-radius:9px;padding:7px 9px}
+.theme-palette{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.theme-swatch{border:1px solid #e5eaf1;border-radius:10px;background:#fff;padding:8px 11px;color:#344054;transition:.16s}
+.theme-swatch.active{border-color:var(--blue);background:color-mix(in srgb,var(--blue) 7%,white);box-shadow:0 0 0 2px color-mix(in srgb,var(--blue) 12%,transparent)}
+.theme-swatch span{font-size:11px;font-weight:700}
+.branch-toggle{display:flex;align-items:center;gap:12px;padding:14px 15px;border:1px solid #e8edf4;border-radius:12px;background:#fafbfd;margin:0 0 15px;cursor:pointer}
+.branch-toggle input{accent-color:var(--blue);width:17px;height:17px}
+.branch-toggle b,.branch-toggle small{display:block}.branch-toggle b{font-size:12px}.branch-toggle small{font-size:11px;color:#667085;margin-top:3px}
+.branch-card{border:1px solid #e8edf4;border-radius:13px;padding:17px;margin-top:12px;background:#fff}
+.branch-card-head{display:flex;align-items:center;gap:11px;margin-bottom:16px}
+.branch-avatar{width:34px;height:34px;display:grid;place-items:center;border-radius:10px;background:color-mix(in srgb,var(--blue) 10%,white);color:var(--blue);font:800 11px Manrope}
+.branch-card-head b,.branch-card-head small{display:block}.branch-card-head b{font-size:12px}.branch-card-head small{font-size:10px;color:#98a2b3;margin-top:2px}
+.settings-aside{position:sticky;top:100px;display:grid;gap:13px}
+.settings-preview{background:#111d31;border-radius:17px;padding:17px;color:#fff;box-shadow:0 14px 30px rgba(16,24,40,.12)}
+.settings-preview .eyebrow{color:#8b9ab1}
+.preview-brand{display:flex;align-items:center;gap:10px;padding:9px 0 20px}
+.preview-brand-mark{width:36px;height:36px;display:grid;place-items:center;border-radius:11px;font-size:12px}
+.preview-brand b,.preview-brand small{display:block}.preview-brand b{font:700 12px Manrope}.preview-brand small{font-size:10px;color:#9eacc0;margin-top:3px}
+.preview-nav{display:flex;gap:10px;align-items:center;padding:11px 12px;border-radius:9px;color:#bdc8d8;font-size:11px;margin:4px 0}
+.preview-nav.active{background:color-mix(in srgb,var(--blue) 30%,transparent);color:#fff}
+.preview-cta{width:100%;margin-top:15px}
+.settings-tip{border:1px solid #e7ebf2;background:#fff;border-radius:14px;padding:16px}
+.settings-tip b{font-size:12px}.settings-tip p{font-size:11px;line-height:1.6;color:#667085;margin:7px 0 0}
+.settings-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:3px 1px 12px}
+.settings-actions .muted{font-size:10px}
+.shortcut-settings{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.shortcut-settings span{border:1px solid #edf0f5;border-radius:10px;padding:10px 12px;background:#fafbfd;font-size:11px}
+kbd{border:1px solid #dce3ed;border-bottom-width:2px;border-radius:6px;background:#fff;color:#344054;font-size:10px;min-width:35px}
+.theme-dark .settings-card,.theme-dark .branch-card,.theme-dark .settings-tip{background:#172235;border-color:#2a3850}
+.theme-dark .branch-toggle,.theme-dark .shortcut-settings span{background:#1c2a40;border-color:#2a3850}
+@media(max-width:1050px){.settings-layout{grid-template-columns:1fr}.settings-aside{position:static;grid-template-columns:1fr 1fr}.settings-preview{max-width:none}}
+@media(max-width:700px){.content{padding:18px 14px 90px}.topbar{height:68px;padding:0 15px}.settings-card{padding:17px}.settings-intro h2{font-size:23px}.settings-aside{grid-template-columns:1fr}.settings-actions{align-items:stretch}.settings-actions>*{width:100%}.shortcut-settings{grid-template-columns:1fr}}

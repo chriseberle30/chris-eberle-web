@@ -875,15 +875,19 @@
   function renderReports() {
     if (!$("#branch-report")) return;
     const start = monthStart();
-    const orders = data.orders.filter((x) => new Date(x.creada) >= start);
-    const monthPayments = orders.flatMap((order) => (order.pagos || [])
+    const allOrders = data.orders;
+    const orders = allOrders.filter((x) => new Date(x.creada) >= start);
+    // Cobros del mes: incluir pagos realizados este mes aunque la orden sea anterior.
+    const monthPayments = allOrders.flatMap((order) => (order.pagos || [])
       .filter((p) => new Date(p.creado) >= start)
       .map((p) => ({ ...p, negocio: order.negocio })));
+    const deliveredThisMonth = allOrders.filter((order) =>
+      order.estado === "Entregado" && order.entregada && new Date(order.entregada) >= start
+    );
     const sales = data.sales.filter((x) => new Date(x.creado) >= start);
     const explicitCollected = monthPayments.reduce((sum, row) => sum + Number(row.importe || 0), 0);
     // Al entregar una orden se considera cobrada al 100%; solo suma lo que faltaba para no duplicar pagos.
-    const deliveryCollections = data.orders
-      .filter((order) => order.estado === "Entregado" && order.entregada && new Date(order.entregada) >= start)
+    const deliveryCollections = deliveredThisMonth
       .reduce((sum, order) => {
         const paidBeforeDelivery = (order.pagos || [])
           .filter((payment) => new Date(payment.creado) <= new Date(order.entregada))
@@ -904,6 +908,58 @@
     $("#report-profit").textContent = money(profit);
     $("#report-sales").textContent = money(sales.reduce((sum, row) => sum + Number(row.total || 0), 0));
 
+    // Mix de cobros por medio: ventas + pagos explícitos + saldo que se cierra al entregar.
+    const paymentTotals = new Map();
+    const addPayment = (method, value) => {
+      const key = String(method || "No especificado").trim() || "No especificado";
+      paymentTotals.set(key, (paymentTotals.get(key) || 0) + Number(value || 0));
+    };
+    monthPayments.forEach((payment) => addPayment(payment.medio, payment.importe));
+    sales.forEach((sale) => addPayment(sale.medio, sale.total));
+    if (deliveryCollections > 0) addPayment("Cierre al entregar · medio no registrado", deliveryCollections);
+    const paymentRows = [...paymentTotals.entries()].filter(([,value]) => value > 0).sort((a,b) => b[1]-a[1]);
+    const paymentMax = Math.max(1, ...paymentRows.map(([,value]) => value));
+    $("#report-payment-mix").innerHTML = paymentRows.map(([method,value]) =>
+      '<div class="report-bar-row"><div class="report-bar-label"><span>' + esc(method) + '</span><b>' + money(value) + '</b></div><div class="report-bar-track"><span style="width:' + Math.max(2, value/paymentMax*100) + '%"></span></div></div>'
+    ).join("") || '<p class="muted">Todavía no hay cobros registrados este mes.</p>';
+
+    // Flujo de caja registrado en los últimos siete días, agrupado por fecha local.
+    const today = new Date(); today.setHours(0,0,0,0);
+    const week = Array.from({length:7}, (_,index) => {
+      const day = new Date(today); day.setDate(today.getDate() - (6-index));
+      const key = day.getFullYear()+"-"+String(day.getMonth()+1).padStart(2,"0")+"-"+String(day.getDate()).padStart(2,"0");
+      const rows = data.cash.filter((item) => {
+        const d = new Date(item.creado);
+        return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0") === key;
+      });
+      return {day, income:rows.filter(x=>x.tipo==="Ingreso").reduce((sum,x)=>sum+Number(x.importe||0),0), expense:rows.filter(x=>x.tipo==="Egreso").reduce((sum,x)=>sum+Number(x.importe||0),0)};
+    });
+    const weekMax = Math.max(1, ...week.flatMap(x=>[x.income,x.expense]));
+    $("#report-daily-cash").innerHTML = week.map((item) =>
+      '<div class="week-day"><span>' + item.day.toLocaleDateString("es-AR",{weekday:"short"}).replace(".","") + '</span><div class="week-bars"><i class="week-income" style="height:' + (item.income?Math.max(3,item.income/weekMax*58):0) + 'px" title="Ingresos ' + money(item.income) + '"></i><i class="week-expense" style="height:' + (item.expense?Math.max(3,item.expense/weekMax*58):0) + 'px" title="Egresos ' + money(item.expense) + '"></i></div><small>' + item.day.getDate() + '/' + (item.day.getMonth()+1) + '</small></div>'
+    ).join("");
+
+    const modelCounts = new Map();
+    orders.forEach((order) => {
+      const model = String(order.modelo || "Modelo no informado").trim();
+      modelCounts.set(model, (modelCounts.get(model) || 0) + 1);
+    });
+    const topModels = [...modelCounts.entries()].sort((a,b)=>b[1]-a[1]).slice(0,5);
+    $("#report-top-models").innerHTML = topModels.map(([name,count],index) =>
+      '<div class="report-top-row"><span><i>' + (index+1) + '</i>' + esc(name) + '</span><b>' + count + ' órdenes</b></div>'
+    ).join("") || '<p class="muted">No hay órdenes creadas este mes.</p>';
+
+    const accessoryCounts = new Map();
+    sales.forEach((sale) => (sale.venta_items || []).forEach((line) => {
+      const stock = data.stockItems.find((item)=>String(item.id)===String(line.item_id));
+      const name = String(line.descripcion || line.nombre || line.concepto || stock?.nombre || "Artículo").trim();
+      accessoryCounts.set(name, (accessoryCounts.get(name) || 0) + Number(line.cantidad || 1));
+    }));
+    const topAccessories = [...accessoryCounts.entries()].sort((a,b)=>b[1]-a[1]).slice(0,5);
+    $("#report-top-accessories").innerHTML = topAccessories.map(([name,count],index) =>
+      '<div class="report-top-row"><span><i>' + (index+1) + '</i>' + esc(name) + '</span><b>' + count + ' u.</b></div>'
+    ).join("") || '<p class="muted">Las ventas del mes no tienen detalle de artículos.</p>';
+
     $("#pending-costs-list").innerHTML = data.orders
       .filter((x) => x.estado === "Entregado" && !x.costos_cargados)
       .sort((a,b) => new Date(b.entregada || b.creada) - new Date(a.entregada || a.creada))
@@ -917,8 +973,8 @@
       const branchCosted = rows.filter((x) => x.costos_cargados);
       const branchBilled = rows.reduce((sum,x) => sum + Number(x.total || 0),0);
       const branchExplicitPaid = payments.reduce((sum,x) => sum + Number(x.importe || 0),0);
-      const branchDeliveryPaid = rows
-        .filter((order) => order.estado === "Entregado" && order.entregada && new Date(order.entregada) >= start)
+      const branchDeliveryPaid = deliveredThisMonth
+        .filter((order) => order.negocio === branch)
         .reduce((sum, order) => {
           const paidBeforeDelivery = (order.pagos || [])
             .filter((payment) => new Date(payment.creado) <= new Date(order.entregada))

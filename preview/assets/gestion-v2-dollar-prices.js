@@ -147,7 +147,7 @@
     target.innerHTML = rows.map((price) => {
       const brand = String(price.marca || "iPhone"), model = String(price.modelo || "");
       const title = model.toLowerCase().startsWith(brand.toLowerCase()) ? model : (brand + " " + model).trim();
-      return '<article class="home-price-result"><div><b>' + esc(title) + '</b><small>' + esc(price.servicio) + (price.activo ? "" : " · En pausa") + '</small></div><strong><span>' + formatUSD(price.precio_usd) + '</span><small>' + money(getPriceArs(price)) + '</small></strong><button class="icon-copy" type="button" data-copy-price="' + price.id + '" aria-label="Copiar precio">Copiar</button></article>';
+      const shown=formatPriceDisplay(price); return '<article class="home-price-result"><div><b>' + esc(title) + '</b><small>' + esc(price.servicio) + (price.activo ? "" : " · En pausa") + '</small></div><strong><span>' + shown.main + '</span><small>' + shown.secondary + '</small></strong><button class="icon-copy" type="button" data-copy-price="' + price.id + '" aria-label="Copiar precio">Copiar</button></article>';
     }).join("") || '<p class="muted">No encontramos tarifas con esa búsqueda.</p>';
   }
   function updateBackupStatus() {
@@ -384,12 +384,14 @@
     });
   }
   function openPriceForm(price = null) {
-    const rate=getBlueRate(); const initialUsd=price?.precio_usd!=null?Number(price.precio_usd):(rate>0?Number(price?.precio||0)/rate:"");
-    const body=`<div class="form-grid">${formField("Marca","marca",price?.marca||"iPhone")}${formField("Modelo *","modelo",price?.modelo||"")} ${formField("Reparación *","servicio",price?.servicio||"")} ${formField("Precio base (USD) *","precio_usd",initialUsd,"number")}<div class="field span-2 price-usd-preview" id="price-usd-preview"></div><p class="muted span-2">Se convierte con el dólar blue · venta del Inicio. Las órdenes guardadas no cambian.</p></div>`;
-    openModal(price?"Editar tarifa":"Agregar tarifa","LISTA DE PRECIOS EN USD",body,actionButtons());
+    const rate=getBlueRate(), arsMode=data.settings.currencyMode==="ARS";
+    const initial=arsMode?(price?getPriceArs(price):""):(price?.precio_usd!=null?Number(price.precio_usd):(rate>0?Number(price?.precio||0)/rate:""));
+    const field=arsMode?"precio_ars":"precio_usd", label=arsMode?"Precio base (ARS) *":"Precio base (USD) *";
+    const body=`<div class="form-grid">${formField("Marca","marca",price?.marca||"iPhone")}${formField("Modelo *","modelo",price?.modelo||"")} ${formField("Reparación *","servicio",price?.servicio||"")} ${formField(label,field,initial,"number")}<div class="field span-2 price-usd-preview" id="price-usd-preview"></div><p class="muted span-2">Se guarda con equivalencia en USD y se convierte usando la cotización elegida en Configuración. Los importes históricos de órdenes no cambian.</p></div>`;
+    openModal(price?"Editar tarifa":"Agregar tarifa","LISTA DE PRECIOS · "+(arsMode?"ARS":"USD"),body,actionButtons());
     $("#modal-form").dataset.action="save-price"; $("#modal-form").dataset.id=price?.id||"";
-    const input=$("#f-precio_usd"); input.step="0.01"; input.min="0";
-    const updatePreview=()=>{const usd=Number(input.value),currentRate=getBlueRate();$("#price-usd-preview").textContent=input.value!==""&&usd>=0&&currentRate>0?formatUSD(usd)+" × "+money(currentRate)+" = "+money(Math.round(usd*currentRate)):"Esperando cotización blue para calcular el importe en pesos.";};
+    const input=$("#f-"+field); input.step="0.01"; input.min="0";
+    const updatePreview=()=>{const value=Number(input.value),currentRate=getBlueRate(),usd=arsMode?(currentRate>0?value/currentRate:0):value,ars=arsMode?value:Math.round(value*currentRate);$("#price-usd-preview").textContent=input.value!==""&&value>=0&&currentRate>0?formatUSD(usd)+" × "+money(currentRate)+" = "+money(ars):"Ingresá una cotización válida en Configuración o esperá la cotización automática.";};
     input.addEventListener("input",updatePreview); updatePreview();
   }
 
@@ -507,10 +509,10 @@
         const {error}=await sb.from("ordenes").update(costs).eq("id",form.dataset.id);if(error)throw error;notice("Costos guardados.");
       } else if (action === "save-price") {
         const existingPrice = data.prices.find((row) => String(row.id) === String(form.dataset.id));
-         const rate=getBlueRate(); const usd=Number(values.precio_usd);
-         if(!rate) throw new Error("No hay cotización blue disponible. Esperá a que cargue el dólar del Inicio.");
-         const price={marca:values.marca||"iPhone",modelo:values.modelo.trim(),servicio:values.servicio.trim(),precio:Math.round(usd*rate),precio_usd:usd,activo:existingPrice?existingPrice.activo:true};
-         if(!price.modelo||!price.servicio||!Number.isFinite(usd)||usd<0) throw new Error("Completá modelo, reparación y un precio válido en dólares.");
+         const rate=getBlueRate(), arsMode=data.settings.currencyMode==="ARS"; const entered=Number(arsMode?values.precio_ars:values.precio_usd);
+         if(!rate) throw new Error("Configurá una cotización válida antes de guardar precios.");
+         const usd=arsMode?entered/rate:entered; const price={marca:values.marca||"iPhone",modelo:values.modelo.trim(),servicio:values.servicio.trim(),precio:Math.round(usd*rate),precio_usd:usd,activo:existingPrice?existingPrice.activo:true};
+         if(!price.modelo||!price.servicio||!Number.isFinite(entered)||entered<0) throw new Error("Completá modelo, reparación y un precio válido.");
         const query = form.dataset.id ? sb.from("precios").update(price).eq("id", form.dataset.id) : sb.from("precios").insert(price);
         const { error } = await query; if (error) throw error; notice("Precio guardado.");
       } else if(action==="save-claim"){

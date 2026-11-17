@@ -40,3 +40,6 @@
   #view-inicio .dashboard-stats .stat-card b{font-size:18px!important}
   #view-inicio .dashboard-stats .stat-card span{font-size:9px!important;min-height:0!important}
 }
+
+/* Ajuste fino: encabezado de órdenes más bajo (el color de los botones lo define el color de marca elegido en Configuración) */
+#view-inicio .dashboard-recent .panel-heading{padding:14px 20px!important;min-height:0!important}

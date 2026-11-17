@@ -1828,3 +1828,38 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .shortcut-settings span{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--ink)}
 kbd{display:inline-grid;place-items:center;min-width:38px;padding:5px 8px;border:1px solid #d7dce5;border-bottom-width:2px;border-radius:6px;background:#f8fafc;font:700 11px ui-monospace,monospace;color:#344054}
 @media(max-width:700px){.shortcut-settings{grid-template-columns:1fr}.theme-swatch{padding:7px 9px}}
+
+
+/* Identidad completa según el color elegido en Personalización */
+.sidebar{
+  background:color-mix(in srgb,var(--blue) 31%,#101827) !important;
+  transition:background .2s ease;
+}
+.sidebar .brand-mark{
+  background:var(--blue) !important;
+  box-shadow:0 7px 18px color-mix(in srgb,var(--blue) 32%,transparent);
+}
+.sidebar .nav-item:hover{
+  background:color-mix(in srgb,var(--blue) 20%,transparent) !important;
+  color:#fff;
+}
+.sidebar .nav-item.active{
+  background:color-mix(in srgb,var(--blue) 29%,#ffffff0d) !important;
+  box-shadow:inset 3px 0 color-mix(in srgb,var(--blue) 70%,#fff) !important;
+  color:#fff;
+}
+.sidebar .connection-dot.ok{background:#45d6a0}
+.button.primary,
+#new-order,
+#home-new-order,
+#cash-add,
+#stock-add,
+#sale-add,
+#claim-add,
+#new-client,
+#new-price{
+  background:var(--blue) !important;
+  border-color:var(--blue) !important;
+  box-shadow:0 5px 14px color-mix(in srgb,var(--blue) 22%,transparent);
+}
+.mobile-nav button.active{color:var(--blue) !important}

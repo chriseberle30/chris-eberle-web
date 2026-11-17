@@ -2028,3 +2028,65 @@ kbd{border:1px solid #dce3ed;border-bottom-width:2px;border-radius:6px;backgroun
  .backup-settings-copy{flex-basis:calc(100% - 60px)}
  .backup-settings-row>.button{width:100%;min-height:43px}
 }
+
+
+/* Brand color consistency audit: remove legacy navy/blue accents from navigation */
+:root{
+  --brand-strong:var(--blue);
+  --brand-soft:color-mix(in srgb,var(--blue) 12%,white);
+  --brand-soft-dark:color-mix(in srgb,var(--blue) 28%,#111329);
+  --brand-deep:color-mix(in srgb,var(--blue) 42%,#090d1d);
+}
+.sidebar{
+  background:linear-gradient(160deg,var(--brand-soft-dark) 0%,var(--brand-deep) 100%)!important;
+  border-right-color:color-mix(in srgb,var(--blue) 22%,transparent)!important;
+}
+.sidebar-bottom{
+  background:color-mix(in srgb,var(--blue) 35%,#080b20)!important;
+  border:1px solid color-mix(in srgb,var(--blue) 24%,transparent);
+  border-radius:13px;
+}
+.sidebar .brand-mark{
+  background:var(--blue)!important;
+  color:#fff!important;
+  box-shadow:0 7px 18px color-mix(in srgb,var(--blue) 34%,transparent)!important;
+}
+.sidebar .nav-item.active{
+  background:color-mix(in srgb,var(--blue) 30%,#ffffff0b)!important;
+  box-shadow:inset 3px 0 color-mix(in srgb,var(--blue) 68%,white)!important;
+  color:#fff!important;
+}
+.sidebar .nav-item.active svg{color:#fff!important}
+.sidebar .nav-item:hover{background:color-mix(in srgb,var(--blue) 13%,transparent)!important}
+.sidebar .connection-dot.ok{background:#45d6a0!important}
+.button.primary,#new-order,#home-new-order,#orders-new-order,#cash-add,#stock-add,#sale-add,#claim-add,#new-client,#new-price{
+  background:var(--blue)!important;border-color:var(--blue)!important;
+  box-shadow:0 5px 14px color-mix(in srgb,var(--blue) 24%,transparent)!important;
+}
+.button.primary:hover{background:color-mix(in srgb,var(--blue) 88%,#000)!important;border-color:var(--blue)!important}
+.nav-item.active .nav-icon,.nav-item.active .icon{color:#fff!important}
+.mobile-nav button.active:not(.mobile-nav-home){
+  color:var(--blue)!important;background:color-mix(in srgb,var(--blue) 9%,white)!important;
+}
+.mobile-nav button.mobile-nav-home,.mobile-nav button.mobile-nav-home.active{
+  background:var(--blue)!important;color:#fff!important;
+  box-shadow:0 9px 22px color-mix(in srgb,var(--blue) 32%,transparent)!important;
+}
+.settings-icon,.settings-step,.branch-avatar,.preview-nav.active,.backup-settings-icon{
+  color:var(--blue)!important;
+}
+.settings-step,.branch-avatar,.backup-settings-icon{background:var(--brand-soft)!important}
+.dashboard-actions{
+  display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+  justify-items:center!important;align-items:center!important;
+}
+.dashboard-actions>#home-new-order{
+  width:min(100%,360px)!important;max-width:360px!important;
+  justify-self:center!important;margin-inline:auto!important;
+}
+.home-activity-icon{background:var(--brand-soft)!important;color:var(--blue)!important}
+.home-blue-icon{background:var(--brand-soft)!important;color:var(--blue)!important}
+@media(max-width:700px){
+  .dashboard-actions{grid-template-columns:minmax(0,1fr)!important}
+  .dashboard-actions>#home-new-order{width:min(100%,360px)!important}
+}

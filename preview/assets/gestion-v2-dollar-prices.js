@@ -14,7 +14,7 @@
   const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
   const date = (value) => value ? new Date(value).toLocaleString("es-AR", { dateStyle: "short", timeStyle: "short", hour12: false }) : "—";
   const stateClass = (state) => ({ "Listo":"ready", "En reparación":"repair", "Esperando repuesto":"waiting", "Pendiente":"delayed", "Recibido":"received", "Entregado":"closed", "No reparable":"unrepairable", "Cancelado":"closed" }[state] || "");
-  const data = { clients: [], orders: [], prices: [], trash: [], cash: [], stockItems: [], sales: [], claims: [], view: "inicio", busy: false, queryTimer: null };
+  const data = { clients: [], orders: [], prices: [], trash: [], cash: [], stockItems: [], sales: [], claims: [], view: "inicio", busy: false, queryTimer: null, settings: {} };
 
   function notice(message, error = false) {
     const box = $("#notice"); box.textContent = message; box.classList.toggle("error", error); box.hidden = false;
@@ -93,9 +93,11 @@
     return new Intl.NumberFormat("es-AR", { style:"currency", currency:"ARS", maximumFractionDigits:0 }).format(Number(value));
   }
   function getBlueRate() {
+    if (data.settings.rateSource === "manual") return Number(data.settings.manualRate) || 0;
     try { return Number(JSON.parse(localStorage.getItem("e30_blue_quote") || "{}").venta) || 0; } catch (_) { return 0; }
   }
   function formatUSD(value) { return "US$ " + new Intl.NumberFormat("es-AR", { minimumFractionDigits:2, maximumFractionDigits:2 }).format(Number(value) || 0); }
+  function formatPriceDisplay(price) { const ars=money(getPriceArs(price)), usd=formatUSD(price?.precio_usd); return data.settings.currencyMode === "ARS" ? {main:ars,secondary:usd} : {main:usd,secondary:ars}; }
   function getPriceArs(price) { const usd=Number(price?.precio_usd); const rate=getBlueRate(); return Number.isFinite(usd)&&usd>=0&&rate>0?Math.round(usd*rate):(Number(price?.precio)||0); }
   function renderBlueQuote(quote, stale = false) {
     if (!quote || !Number(quote.compra) || !Number(quote.venta)) return;
@@ -254,7 +256,7 @@
     $("#prices-list").innerHTML = rows.slice(0, renderPrices.limit || 80).map((price) => {
       const brand = String(price.marca || "iPhone"), model = String(price.modelo || "");
       const title = model.toLowerCase().startsWith(brand.toLowerCase()) ? model : `${brand} ${model}`.trim();
-      return `<article class="order-row price-row${price.activo ? "" : " paused"}"><div class="row-main price-device"><b>${esc(title)}</b><small>${esc(price.servicio)}${price.activo ? "" : " · En pausa"}</small></div><div class="money price-value"><b>${formatUSD(price.precio_usd)}</b><small>${money(getPriceArs(price))}</small></div><button class="icon-copy" type="button" data-copy-price="${price.id}" aria-label="Copiar precio"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg></button><div class="price-actions"><button class="button" data-edit-price="${price.id}">Editar</button><button class="button ${price.activo ? "danger" : ""}" data-toggle-price="${price.id}" data-active="${price.activo}">${price.activo ? "Pausar" : "Activar"}</button></div></article>`;
+      return `<article class="order-row price-row${price.activo ? "" : " paused"}"><div class="row-main price-device"><b>${esc(title)}</b><small>${esc(price.servicio)}${price.activo ? "" : " · En pausa"}</small></div><div class="money price-value"><b>${formatPriceDisplay(price).main}</b><small>${formatPriceDisplay(price).secondary}</small></div><button class="icon-copy" type="button" data-copy-price="${price.id}" aria-label="Copiar precio"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg></button><div class="price-actions"><button class="button" data-edit-price="${price.id}">Editar</button><button class="button ${price.activo ? "danger" : ""}" data-toggle-price="${price.id}" data-active="${price.activo}">${price.activo ? "Pausar" : "Activar"}</button></div></article>`;
     }).join("") + (rows.length > (renderPrices.limit || 80) ? `<button class="button more-prices" type="button" data-more-prices="1">Mostrar más (${rows.length - (renderPrices.limit || 80)} restantes)</button>` : "") || `<div class="empty-state">${data.prices.length ? "No encontramos precios con esa búsqueda o categoría." : 'Todavía no hay tarifas cargadas.<div class="empty-actions"><button class="button primary" data-empty-add-price>＋ Agregar tarifa</button><button class="button" data-empty-bulk-price>Carga masiva</button></div>'}</div>`;
   }
   function openBulkPriceImport() {
@@ -302,8 +304,11 @@
     openModal(client ? "Editar cliente" : "Nuevo cliente", "CLIENTES", body, actionButtons());
     $("#modal-form").dataset.action = "save-client"; $("#modal-form").dataset.id = client?.id || "";
   }
-  function getE30Settings(){try{return JSON.parse(localStorage.getItem("e30_settings")||"{}")}catch(e){return {}}}
-  function saveE30Settings(){const s={e30Name:$("#cfg-e30-name").value,i30Name:$("#cfg-i30-name").value,e30Address:$("#cfg-e30-address").value,i30Address:$("#cfg-i30-address").value,e30Phone:$("#cfg-e30-phone").value,i30Phone:$("#cfg-i30-phone").value,e30Social:$("#cfg-e30-social").value,i30Social:$("#cfg-i30-social").value,warrantyDays:Number($("#cfg-warranty-days").value||30),warrantyTerms:$("#cfg-warranty-terms").value};localStorage.setItem("e30_settings",JSON.stringify(s));notice("Configuración guardada en este dispositivo.");}
+  function getE30Settings(){try{return JSON.parse(localStorage.getItem("gestion30_settings")||"{}")}catch(e){return {}}}
+  function applySettingsToForm(){const s=data.settings;for(const [id,key] of [["cfg-e30-name","e30Name"],["cfg-i30-name","i30Name"],["cfg-e30-address","e30Address"],["cfg-i30-address","i30Address"],["cfg-e30-phone","e30Phone"],["cfg-i30-phone","i30Phone"],["cfg-e30-social","e30Social"],["cfg-i30-social","i30Social"],["cfg-warranty-days","warrantyDays"],["cfg-warranty-terms","warrantyTerms"],["cfg-currency-mode","currencyMode"],["cfg-rate-source","rateSource"],["cfg-manual-rate","manualRate"],["cfg-theme","theme"]])if(s[key]!=null)$("#"+id).value=s[key];$("#cfg-rate-source").value=s.rateSource||"blue";$("#cfg-currency-mode").value=s.currencyMode||"USD";$("#cfg-theme").value=s.theme||"light";$("#cfg-manual-rate-wrap").hidden=$("#cfg-rate-source").value!=="manual";}
+  function applyTheme(){const dark=data.settings.theme==="dark";document.body.classList.toggle("theme-dark",dark);$("#theme-toggle").textContent=dark?"☀ Activar modo claro":"☾ Activar modo noche";}
+  async function loadCloudSettings(){const {data:sessionData}=await sb.auth.getSession();const user=sessionData?.session?.user;if(!user)return;const {data:row,error}=await sb.from("business_settings").select("settings").eq("owner_id",user.id).maybeSingle();if(error){notice("No se pudieron sincronizar preferencias: "+error.message,true);return;}if(row?.settings){data.settings=row.settings;localStorage.setItem("gestion30_settings",JSON.stringify(data.settings));applySettingsToForm();applyTheme();renderPrices($("#price-search")?.value||"");renderHomePriceSearch($("#home-price-search")?.value||"");}}
+  async function saveE30Settings(){const s={e30Name:$("#cfg-e30-name").value,i30Name:$("#cfg-i30-name").value,e30Address:$("#cfg-e30-address").value,i30Address:$("#cfg-i30-address").value,e30Phone:$("#cfg-e30-phone").value,i30Phone:$("#cfg-i30-phone").value,e30Social:$("#cfg-e30-social").value,i30Social:$("#cfg-i30-social").value,warrantyDays:Number($("#cfg-warranty-days").value||30),warrantyTerms:$("#cfg-warranty-terms").value,currencyMode:$("#cfg-currency-mode").value,rateSource:$("#cfg-rate-source").value,manualRate:Number($("#cfg-manual-rate").value||0),theme:$("#cfg-theme").value};if(s.rateSource==="manual"&&s.manualRate<=0)return notice("Ingresá una cotización manual mayor a cero.",true);const {data:sessionData}=await sb.auth.getSession();const user=sessionData?.session?.user;if(!user)return notice("Iniciá sesión para guardar la configuración.",true);const {error}=await sb.from("business_settings").upsert({owner_id:user.id,settings:s,updated_at:new Date().toISOString()},{onConflict:"owner_id"});if(error)return notice("No se pudo guardar en la nube: "+error.message,true);data.settings=s;localStorage.setItem("gestion30_settings",JSON.stringify(s));applySettingsToForm();applyTheme();renderPrices($("#price-search")?.value||"");renderHomePriceSearch($("#home-price-search")?.value||"");notice("Configuración guardada y sincronizada en la nube.");}
   function openOrderForm(order = null) {
     const isEditing = Boolean(order?.id);
     const clientOptions = data.clients.map((client) => `<option value="${esc(client.id)}" ${String(client.id) === String(order?.cliente_id) ? "selected" : ""}>${esc(client.nombre)}${client.telefono ? ` · ${esc(client.telefono)}` : ""}</option>`).join("");
@@ -1043,15 +1048,15 @@
   function initialize() {
     $("#state-filter").insertAdjacentHTML("beforeend", Rules.ORDER_STATES.map((state) => `<option>${esc(state)}</option>`).join(""));
     bindEvents(); if(localStorage.getItem("e30_theme")==="dark"){document.body.classList.add("theme-dark");$("#theme-toggle").textContent="☀ Activar modo claro";}
-    const saved=getE30Settings(); for(const [id,key] of [["cfg-e30-name","e30Name"],["cfg-i30-name","i30Name"],["cfg-e30-address","e30Address"],["cfg-i30-address","i30Address"],["cfg-e30-phone","e30Phone"],["cfg-i30-phone","i30Phone"],["cfg-e30-social","e30Social"],["cfg-i30-social","i30Social"],["cfg-warranty-days","warrantyDays"],["cfg-warranty-terms","warrantyTerms"]])if(saved[key]!=null)$("#"+id).value=saved[key];
+    data.settings=getE30Settings();applySettingsToForm();applyTheme();$("#cfg-rate-source").addEventListener("change",()=>{$("#cfg-manual-rate-wrap").hidden=$("#cfg-rate-source").value!=="manual";});
     sb.auth.onAuthStateChange((event, session) => {
       if (event === "INITIAL_SESSION") return; // getSession() below owns the first load; avoid duplicate initial refresh.
-      if (session) { showApp(session); setTimeout(() => { refresh(); loadBlueQuote(); startRemotePrintReceiver(); }, 0); } else showLogin();
+      if (session) { showApp(session); setTimeout(() => { loadCloudSettings(); refresh(); loadBlueQuote(); startRemotePrintReceiver(); }, 0); } else showLogin();
     });
     sb.auth.getSession().then(({ data: sessionData, error }) => {
       if (error) return showLogin(error.message);
       if (!sessionData.session) return showLogin();
-      showApp(sessionData.session); refresh(); loadBlueQuote(); startRemotePrintReceiver();
+      showApp(sessionData.session); loadCloudSettings(); refresh(); loadBlueQuote(); startRemotePrintReceiver();
     }).catch((error) => showLogin(error.message));
   }
   initialize();

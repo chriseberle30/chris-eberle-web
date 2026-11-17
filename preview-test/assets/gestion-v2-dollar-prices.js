@@ -315,11 +315,12 @@
     for(const [id,value] of Object.entries(values)){const el=$("#"+id);if(el)el.value=value}
     const multi=s.multiBranch??Boolean(legacy.i30Name||legacy.i30Address||legacy.i30Phone);
     $("#cfg-multi-branch").checked=multi;$("#secondary-branch-settings").hidden=!multi;
-    if(s.primaryColor)document.documentElement.style.setProperty("--blue",s.primaryColor);
-    if(s.primaryColor)localStorage.setItem("e30_preview_primary_color",s.primaryColor);
+    const chosenColor=localStorage.getItem("e30_preview_primary_color")||s.primaryColor||"#7654c8";
+    document.documentElement.style.setProperty("--blue",chosenColor);
+    localStorage.setItem("e30_preview_primary_color",chosenColor);
     if(s.businessName)$("#preview-business-name").textContent=s.businessName;
     if(s.logoUrl)applyLogo(s.logoUrl);
-    document.querySelectorAll("[data-theme-color]").forEach(b=>{const active=b.dataset.themeColor===(s.primaryColor||"#4268ed");b.classList.toggle("active",active);b.setAttribute("aria-pressed",String(active))});
+    document.querySelectorAll("[data-theme-color]").forEach(b=>{const active=b.dataset.themeColor===chosenColor;b.classList.toggle("active",active);b.setAttribute("aria-pressed",String(active))});
   }
   function applyLogo(url){
     const mark=$(".brand-mark");if(!mark)return;

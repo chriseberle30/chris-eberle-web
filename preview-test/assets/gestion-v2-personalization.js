@@ -1,6 +1,6 @@
 (() => {
   "use strict";
-  const COLORS = ["#4268ed","#16845b","#7654c8","#d14d55","#d17a20","#168a9a","#c04491","#475467"];
+  const COLORS = ["#7654c8","#16845b","#7654c8","#d14d55","#d17a20","#168a9a","#c04491","#475467"];
   const $ = (s) => document.querySelector(s);
   function applyColor(color) {
     if (!COLORS.includes(color)) color = COLORS[0];
@@ -49,6 +49,8 @@
       if (notice) { notice.textContent = "Atajos: F2 nueva orden · F4 buscar precios · F8 buscar clientes · F9 movimiento de caja. No funcionan mientras escribís."; notice.classList.remove("error"); notice.hidden = false; }
     }
   });
-  const saved = localStorage.getItem("e30_preview_primary_color");
+  let saved = localStorage.getItem("e30_preview_primary_color");
+  // En esta demo, migrar el gris grafito anterior al violeta elegido como identidad inicial.
+  if (!saved || saved.toLowerCase() === "#475467") saved = "#7654c8";
   applyColor(COLORS.includes(saved) ? saved : COLORS[0]);
 })();

@@ -1,0 +1,39 @@
+/* E30 · capa visual (solo CSS). No cambia funciones ni la conexión.
+   Para quitarla: borrar la línea <link> que la carga. */
+:root{--gestion-visual-blue:#14104C;--line:#e6e9f1;--muted:#5f6679;--shadow:0 1px 2px #1018280a,0 6px 20px #1018280a}
+body{background:#f4f6fa}
+/* Tarjetas y paneles: más aire, bordes suaves, menos sombra */
+.panel,.stat-card,.login-card{border-radius:18px;border:1px solid var(--line);box-shadow:var(--shadow)}
+.panel{padding:20px}
+.stat-card{padding:16px 18px}
+.stat-card span{font-size:12.5px;font-weight:600;color:var(--muted)}
+.stat-card b{font-size:26px;letter-spacing:-.6px;font-weight:700}
+.stats-row{gap:12px}
+/* Títulos: jerarquía clara */
+.topbar h1{letter-spacing:-.4px}
+.panel-heading h2,h2{letter-spacing:-.3px;font-weight:700}
+.muted{color:var(--muted)}
+/* Botones: acción principal fuerte, el resto liviano */
+.button{border-radius:12px;min-height:44px;font-weight:600;transition:background .15s,border-color .15s,transform .1s}
+.button:active{transform:scale(.98)}
+.button.primary{background:var(--gestion-visual-blue);border-color:var(--gestion-visual-blue);color:#fff}
+.dashboard-actions{gap:10px}
+.dashboard-actions .button.primary{min-height:52px;font-size:16px;border-radius:14px}
+/* Menú lateral: ítem activo más claro */
+.nav-item{border-radius:11px}
+.nav-item.active{background:#ffffff1f;color:#fff}
+/* Entradas de formulario */
+input,select,textarea{border-radius:12px}
+input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #14104c26;border-color:#7d78b4}
+/* Lista de órdenes */
+.orders-list>*{border-radius:14px}
+/* Barra inferior del celular */
+.mobile-nav{background:#fffffff2;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 -6px 20px #1018280d}
+.mobile-nav button{min-height:48px;border-radius:12px;font-weight:600}
+.mobile-nav button.active{color:var(--gestion-visual-blue)}
+@media(max-width:760px){
+  .panel{padding:16px;border-radius:16px}
+  .stat-card b{font-size:22px}
+  .content{padding-bottom:92px}
+}
+@media(prefers-reduced-motion:reduce){.button{transition:none}}

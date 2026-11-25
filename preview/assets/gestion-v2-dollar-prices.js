@@ -11,6 +11,10 @@
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
   const money = (value) => new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(Number(value) || 0);
+  const orderMoney = (value, orderOrCurrency) => (typeof orderOrCurrency === "string" ? orderOrCurrency : orderOrCurrency?.moneda) === "USD" ? formatUSD(value) : money(value);
+  const currencySums = (rows, getter) => rows.reduce((sum, row) => { const value = Number(getter(row)) || 0; if ((row?.moneda || "ARS") === "USD") sum.usd += value; else sum.ars += value; return sum; }, { ars: 0, usd: 0 });
+  const formatCurrencySums = (sums) => `ARS ${money(sums.ars)} · USD ${formatUSD(sums.usd)}`;
+  const formatOrderSums = (rows, getter) => formatCurrencySums(currencySums(rows, getter));
   const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
   const date = (value) => value ? new Date(value).toLocaleString("es-AR", { dateStyle: "short", timeStyle: "short", hour12: false }) : "—";
   const stateClass = (state) => ({ "Listo":"ready", "En reparación":"repair", "Esperando repuesto":"waiting", "Pendiente":"delayed", "Recibido":"received", "Entregado":"closed", "No reparable":"unrepairable", "Cancelado":"closed" }[state] || "");
@@ -185,13 +189,13 @@
       const phone = formatPhone(order.telefono || order.clientes?.telefono || "");
       const model = order.modelo || "Equipo sin modelo"; const fault = order.falla || "Trabajo sin descripción";
       const balance = Rules.balance(order);
-      const totalLabel = Number(order.total || 0) > 0 ? money(order.total) : "A PRESUPUESTAR";
+      const totalLabel = Number(order.total || 0) > 0 ? orderMoney(order.total, order) : "A PRESUPUESTAR";
       return `<article class="order-row home-order-row" data-order="${order.id}">
         <span class="home-order-number">#${order.id}</span>
         <div class="row-main home-order-copy"><b class="home-device-model">${esc(model)}</b><span class="home-device-fault">${esc(fault)}</span></div>
         <div class="home-order-client"><b>${esc(client)}</b><small>${esc(phone || "Sin teléfono")}</small></div>
         <div class="home-order-meta"><button type="button" class="state-pill state-pill-action ${stateClass(order.estado)}" data-quick-state="${order.id}" aria-label="Cambiar estado de la orden ${order.id}">${esc(order.estado || "Pendiente")} <span aria-hidden="true">▾</span></button><span class="branch-pill">${esc(order.negocio || "")}</span></div>
-        <div class="home-order-balance"><b>${balance > 0 ? money(balance) : totalLabel}</b><small>${balance > 0 ? "Saldo pendiente" : (Number(order.total || 0) > 0 ? "Total" : "Sin presupuesto")}</small></div>
+        <div class="home-order-balance"><b>${balance > 0 ? orderMoney(balance, order) : totalLabel}</b><small>${balance > 0 ? "Saldo pendiente" : (Number(order.total || 0) > 0 ? "Total" : "Sin presupuesto")}</small></div>
         <time class="home-order-date">${esc(date(order.creada))}</time>
       </article>`;
     }).join("") || '<div class="empty-state">No hay órdenes activas. Cuando ingreses un equipo, aparecerá acá.</div>';
@@ -200,7 +204,7 @@
     const active = data.orders.filter((order) => !["Entregado", "No reparable", "Cancelado"].includes(order.estado));
     $("#stat-active").textContent = active.length;
     $("#stat-ready").textContent = active.filter((order) => order.estado === "Listo").length;
-    $("#stat-balance").textContent = money(active.reduce((sum, order) => sum + Rules.balance(order), 0));
+    $("#stat-balance").textContent = formatOrderSums(data.orders.filter(order => !["Cancelado", "No reparable"].includes(order.estado)), order => Rules.balance(order));
   }
   function formatPhone(value) {
     const digits = String(value || "").replace(/\D/g, "");
@@ -221,13 +225,13 @@
       const client = order.clientes?.nombre || order.cliente || order.gremio || "Cliente sin nombre";
       const phone = formatPhone(order.telefono || order.clientes?.telefono || "");
       const due = Rules.balance(order);
-      const totalLabel = Number(order.total || 0) > 0 ? money(order.total) : "A PRESUPUESTAR";
+      const totalLabel = Number(order.total || 0) > 0 ? orderMoney(order.total, order) : "A PRESUPUESTAR";
       return `<article class="order-row order-table-row" data-order="${order.id}">
         <b class="order-no">#${order.id}</b>
         <div class="row-main order-device"><b>${esc(order.modelo || "Equipo sin modelo")}</b><small>${esc(order.falla || "Trabajo sin descripción")}</small></div>
         <div class="order-client"><b>${esc(client)}</b><small>${esc(phone || "Sin teléfono")}</small></div>
         <div class="order-state"><span class="state-pill ${stateClass(order.estado)}">${esc(order.estado || "Pendiente")}</span><small>${esc(order.negocio || "")}</small></div>
-        <div class="money order-balance"><b>${totalLabel}</b><small>${due > 0 ? "Debe " + money(due) : (Number(order.total || 0) > 0 ? "Saldo cubierto" : "Sin presupuesto")}</small></div>
+        <div class="money order-balance"><b>${totalLabel}</b><small>${due > 0 ? "Debe " + orderMoney(due, order) : (Number(order.total || 0) > 0 ? "Saldo cubierto" : "Sin presupuesto")}</small></div>
         <time class="order-date">${esc(date(order.creada))}</time>
       </article>`;
     }).join("") || `<div class="empty-state">${rows.length ? "No hay resultados con estos filtros." : "Todavía no hay órdenes para mostrar."}</div>`;
@@ -315,6 +319,7 @@
     const body = `<div class="form-grid order-form-grid">
       ${!isEditing ? selectField("Tipo de trabajo", "tipo", ["Particular", "Gremio"], "Particular") : ""}
       ${selectField("Sucursal", "negocio", Rules.BRANCHES, order?.negocio || "E30")}
+      ${selectField("Moneda del trabajo", "moneda", ["ARS", "USD"], order?.moneda || "ARS")}
       ${isEditing ? selectField("Estado", "estado", Rules.ORDER_STATES, order?.estado || "Recibido", "span-2") : ""}
       <div class="field span-2" id="client-picker-wrap"><label for="f-cliente_id">Cliente *</label>
         <select id="f-cliente_id" name="cliente_id"><option value="">Elegí un cliente existente</option>${clientOptions}</select>
@@ -412,7 +417,7 @@
     const due = Rules.balance({ ...order, pagos: payments || [] });
     let photoUrl = ""; if (order.foto_path) { const signed = await sb.storage.from("ordenes-fotos").createSignedUrl(order.foto_path, 300); photoUrl = signed.data?.signedUrl || ""; }
     const stateOptions = Rules.ORDER_STATES.map((state) => `<option value="${esc(state)}" ${state === order.estado ? "selected" : ""}>${esc(state)}</option>`).join("");
-    const body = `<div class="detail-grid"><div class="detail-item"><small>Cliente</small><b>${esc(order.clientes?.nombre || order.cliente || order.gremio || "Sin nombre")}</b></div><div class="detail-item"><small>Equipo · sucursal</small><b>${esc(order.modelo)} · ${esc(order.negocio)}</b></div><div class="detail-item"><small>Estado</small><b>${esc(order.estado)}</b></div><div class="detail-item"><small>Total · saldo</small><b>${money(order.total)} · ${money(due)}</b></div><div class="detail-item"><small>Falla / trabajo</small><b>${esc(order.falla || "—")}</b></div><div class="detail-item"><small>Teléfono</small><b>${esc(order.telefono || order.clientes?.telefono || "—")}</b></div><div class="detail-item"><small>IMEI / serie</small><b>${esc(order.imei || "—")}</b></div><div class="detail-item"><small>Creada</small><b>${date(order.creada)}</b></div></div><div class="quick-actions">${due > 0 ? `<button class="button primary" data-payment="${order.id}" data-balance="${due}">＋ Registrar pago / seña</button>` : ""}<button class="button whatsapp-action" data-whatsapp-order="${order.id}">WhatsApp</button><button class="button" data-edit-order="${order.id}">Editar orden</button><button class="button" data-costs="${order.id}">Cargar costos</button><button class="button" data-add-photo="${order.id}">${order.foto_path ? "Cambiar foto" : "Agregar foto opcional"}</button><button class="button" data-ticket="${order.id}" data-ticket-type="recepcion">Imprimir recepción</button><button class="button" data-ticket="${order.id}" data-ticket-type="entrega">Imprimir entrega</button>${order.borrada ? `<button class="button" data-restore="${order.id}">Restaurar</button>` : `<button class="button danger" data-trash="${order.id}">Enviar a papelera</button>`}</div><div class="field state-editor"><label for="detail-state">Cambiar estado</label><select id="detail-state">${stateOptions}</select><button class="button primary" type="button" data-update-state="${order.id}">Guardar estado</button></div>${photoUrl ? `<div class="order-photo-preview"><img src="${esc(photoUrl)}" alt="Foto del equipo recibido"><small>Foto privada de la orden</small></div>` : ""}<h3 class="section-title">Pagos registrados</h3>${(payments || []).map((payment) => `<div class="payment-row"><span>${date(payment.creado)} · ${esc(payment.medio || "Efectivo")}</span><b>${money(payment.importe)}</b></div>`).join("") || `<p class="muted">Todavía no hay pagos registrados.</p>`}<h3 class="section-title">Historial de la reparación</h3>${(history || []).map((entry) => `<div class="history-item"><b>${esc(entry.evento)}</b>${entry.detalle ? ` · ${esc(entry.detalle)}` : ""}<small>${date(entry.creado)}</small></div>`).join("") || `<p class="muted">Sin eventos de historial.</p>`}`;
+    const body = `<div class="detail-grid"><div class="detail-item"><small>Cliente</small><b>${esc(order.clientes?.nombre || order.cliente || order.gremio || "Sin nombre")}</b></div><div class="detail-item"><small>Equipo · sucursal</small><b>${esc(order.modelo)} · ${esc(order.negocio)}</b></div><div class="detail-item"><small>Estado</small><b>${esc(order.estado)}</b></div><div class="detail-item"><small>Total · saldo · ${esc(order.moneda || "ARS")}</small><b>${orderMoney(order.total, order)} · ${orderMoney(due, order)}</b></div><div class="detail-item"><small>Falla / trabajo</small><b>${esc(order.falla || "—")}</b></div><div class="detail-item"><small>Teléfono</small><b>${esc(order.telefono || order.clientes?.telefono || "—")}</b></div><div class="detail-item"><small>IMEI / serie</small><b>${esc(order.imei || "—")}</b></div><div class="detail-item"><small>Creada</small><b>${date(order.creada)}</b></div></div><div class="quick-actions">${due > 0 ? `<button class="button primary" data-payment="${order.id}" data-balance="${due}">＋ Registrar pago / seña</button>` : ""}<button class="button whatsapp-action" data-whatsapp-order="${order.id}">WhatsApp</button><button class="button" data-edit-order="${order.id}">Editar orden</button><button class="button" data-costs="${order.id}">Cargar costos</button><button class="button" data-add-photo="${order.id}">${order.foto_path ? "Cambiar foto" : "Agregar foto opcional"}</button><button class="button" data-ticket="${order.id}" data-ticket-type="recepcion">Imprimir recepción</button><button class="button" data-ticket="${order.id}" data-ticket-type="entrega">Imprimir entrega</button>${order.borrada ? `<button class="button" data-restore="${order.id}">Restaurar</button>` : `<button class="button danger" data-trash="${order.id}">Enviar a papelera</button>`}</div><div class="field state-editor"><label for="detail-state">Cambiar estado</label><select id="detail-state">${stateOptions}</select><button class="button primary" type="button" data-update-state="${order.id}">Guardar estado</button></div>${photoUrl ? `<div class="order-photo-preview"><img src="${esc(photoUrl)}" alt="Foto del equipo recibido"><small>Foto privada de la orden</small></div>` : ""}<h3 class="section-title">Pagos registrados</h3>${(payments || []).map((payment) => `<div class="payment-row"><span>${date(payment.creado)} · ${esc(payment.medio || "Efectivo")}</span><b>${orderMoney(payment.importe, order)}</b></div>`).join("") || `<p class="muted">Todavía no hay pagos registrados.</p>`}<h3 class="section-title">Historial de la reparación</h3>${(history || []).map((entry) => `<div class="history-item"><b>${esc(entry.evento)}</b>${entry.detalle ? ` · ${esc(entry.detalle)}` : ""}<small>${date(entry.creado)}</small></div>`).join("") || `<p class="muted">Sin eventos de historial.</p>`}`;
     openModal(`Orden #${order.id}`, "DETALLE DE REPARACIÓN", body, `<button class="button" type="button" data-close>Cerrar</button>`);
     $("#modal-form").dataset.action = "dismiss";
   }
@@ -421,11 +426,11 @@
     const { data: linked, error } = await sb.from("ordenes").select("id,cliente_id,cliente,modelo,estado,total,negocio,creada,borrada").eq("cliente_id", client.id).order("creada", { ascending: false }).limit(1000);
     if (error) return notice(`No se pudo cargar el historial del cliente: ${error.message}`, true);
     const orders = linked || [];
-    const body = `<div class="detail-grid"><div class="detail-item"><small>Teléfono</small><b>${esc(client.telefono || "—")}</b></div><div class="detail-item"><small>Email</small><b>${esc(client.email || "—")}</b></div></div><p>${esc(client.notas || "Sin notas")}</p><h3 class="section-title">Historial de reparaciones · ${orders.length}</h3>${orders.map((order) => `<div class="history-item" data-open-order="${order.id}"><b>#${order.id} · ${esc(order.modelo || "Equipo")}</b> · ${esc(order.borrada ? "En papelera" : order.estado)} · ${money(order.total)}<small>${date(order.creada)} · ${esc(order.negocio)}</small></div>`).join("") || `<p class="muted">Este cliente todavía no tiene órdenes asociadas.</p>`}<div class="quick-actions"><button class="button" data-edit-client="${esc(client.id)}">Editar cliente</button><button class="button primary" data-client-new-order="${esc(client.id)}">＋ Crear orden</button></div>`;
+    const body = `<div class="detail-grid"><div class="detail-item"><small>Teléfono</small><b>${esc(client.telefono || "—")}</b></div><div class="detail-item"><small>Email</small><b>${esc(client.email || "—")}</b></div></div><p>${esc(client.notas || "Sin notas")}</p><h3 class="section-title">Historial de reparaciones · ${orders.length}</h3>${orders.map((order) => `<div class="history-item" data-open-order="${order.id}"><b>#${order.id} · ${esc(order.modelo || "Equipo")}</b> · ${esc(order.borrada ? "En papelera" : order.estado)} · ${orderMoney(order.total, order)}<small>${date(order.creada)} · ${esc(order.negocio)}</small></div>`).join("") || `<p class="muted">Este cliente todavía no tiene órdenes asociadas.</p>`}<div class="quick-actions"><button class="button" data-edit-client="${esc(client.id)}">Editar cliente</button><button class="button primary" data-client-new-order="${esc(client.id)}">＋ Crear orden</button></div>`;
     openModal(client.nombre, "CLIENTE E HISTORIAL", body, `<button class="button" type="button" data-close>Cerrar</button>`);
   }
   function openCostsForm(order) {
-    const body = `<p class="muted">Completá estos datos cuando tengas un rato. No hace falta cargarlos al recibir el equipo.</p><div class="form-grid">
+    const body = `<p class="muted">Completá estos datos cuando tengas un rato. No hace falta cargarlos al recibir el equipo. Los importes están expresados en ${esc(order.moneda || "ARS")}.</p><div class="form-grid>
       ${formField("Costo del repuesto ($)", "costo_repuesto", order.costo_repuesto ?? 0, "number")}
       ${formField("Mano de obra ($)", "costo_mano_obra", order.costo_mano_obra ?? 0, "number")}
       ${formField("Otros gastos ($)", "costo_otros", order.costo_otros ?? 0, "number")}
@@ -456,7 +461,8 @@
     input.addEventListener("change",async()=>{const file=input.files?.[0];if(!file)return;try{await storeOrderPhoto(orderId,file);notice("Foto comprimida y guardada (máximo 256 KB).");await refresh();await openOrder(orderId);}catch(error){notice("No se pudo guardar la foto: "+(error.message||error),true);}},{once:true});input.click();
   }
   function openPayment(orderId, balance) {
-    const body = `<div class="form-grid">${formField("Importe del pago *", "importe", balance, "number")}${selectField("Medio de pago", "medio", Rules.PAYMENT_METHODS, "Efectivo")}<p class="muted span-2">Saldo actual: ${money(balance)}. El registro queda asociado a la orden.</p></div>`;
+    const order = data.orders.find(row => String(row.id) === String(orderId)) || data.currentOrder || { moneda: "ARS" };
+    const body = `<div class="form-grid">${formField("Importe del pago *", "importe", balance, "number")}${selectField("Medio de pago", "medio", Rules.PAYMENT_METHODS, "Efectivo")}<p class="muted span-2">Saldo actual: ${orderMoney(balance, order)} · moneda ${esc(order.moneda || "ARS")}. El pago queda asociado a la orden.</p></div>`;
     openModal("Registrar pago", `ORDEN #${orderId}`, body, actionButtons("Cancelar", "Registrar pago"));
     $("#modal-form").dataset.action = "save-payment"; $("#modal-form").dataset.id = orderId;
   }
@@ -485,7 +491,7 @@
         if (tipo === "Gremio" && !values.gremio?.trim()) throw new Error("Ingresá el nombre del técnico o comercio.");
         
         const valid = Rules.validateOrder({ ...values, sena: action === "create-order" ? values.sena : 0 });
-        const payload = { cliente_id: tipo === "Particular" ? client.id : null, cliente: tipo === "Particular" ? client.nombre : values.gremio.trim(), telefono: tipo === "Particular" ? client.telefono : values.nuevo_telefono || null, negocio: valid.negocio, tipo, gremio: tipo === "Gremio" ? values.gremio.trim() : null, marca: null, modelo: valid.modelo, falla: valid.falla, estado: values.estado || "Recibido", total: valid.total, notas: values.notas || null, estado_ingreso: values.estado_ingreso?.trim() || null, imei: values.imei || null, garantia_dias: values.garantia_dias === "Sin garantía" ? 0 : Number(values.garantia_dias || 30), garantia_condiciones: getE30Settings().warrantyTerms || "La garantía cubre el trabajo realizado y el repuesto instalado. No cubre golpes, humedad ni manipulación de terceros.", trabajo_realizado: values.trabajo_realizado || null };
+        const payload = { cliente_id: tipo === "Particular" ? client.id : null, cliente: tipo === "Particular" ? client.nombre : values.gremio.trim(), telefono: tipo === "Particular" ? client.telefono : values.nuevo_telefono || null, negocio: valid.negocio, moneda: valid.moneda, tipo, gremio: tipo === "Gremio" ? values.gremio.trim() : null, marca: null, modelo: valid.modelo, falla: valid.falla, estado: values.estado || "Recibido", total: valid.total, notas: values.notas || null, estado_ingreso: values.estado_ingreso?.trim() || null, imei: values.imei || null, garantia_dias: values.garantia_dias === "Sin garantía" ? 0 : Number(values.garantia_dias || 30), garantia_condiciones: getE30Settings().warrantyTerms || "La garantía cubre el trabajo realizado y el repuesto instalado. No cubre golpes, humedad ni manipulación de terceros.", trabajo_realizado: values.trabajo_realizado || null };
         if (action === "create-order") {
           const result = await sb.rpc("e30_crear_orden", { p_orden: payload, p_sena: valid.sena, p_medio: "Efectivo" });
           if (result.error) throw result.error;
@@ -496,7 +502,7 @@
           const existing = await sb.from("ordenes").select("pagos(importe)").eq("id", form.dataset.id).single();
           if (existing.error) throw existing.error;
           const paidAmount = (existing.data.pagos || []).reduce((sum, payment) => sum + Number(payment.importe || 0), 0);
-          if (valid.total < paidAmount) throw new Error(`El total no puede quedar debajo de lo ya pagado (${money(paidAmount)}).`);
+          if (valid.total < paidAmount) throw new Error(`El total no puede quedar debajo de lo ya pagado (${orderMoney(paidAmount, data.currentOrder)}).`);
           payload.entregada = payload.estado === "Entregado" ? (data.currentOrder?.entregada || new Date().toISOString()) : null;
           const result = await sb.from("ordenes").update(payload).eq("id", form.dataset.id);
           if (result.error) throw result.error;
@@ -770,9 +776,9 @@
       <hr class="ticket-rule">
       <span class="ticket-label">RESUMEN DE CUENTA</span>
       <div class="ticket-money">
-        <div class="ticket-money-row"><span>Total</span><strong>${money(order.total)}</strong></div>
-        <div class="ticket-money-row"><span>Pagado / seña</span><strong>${money(paid)}</strong></div>
-        <div class="ticket-money-row ticket-balance"><span>Saldo</span><strong>${money(due)}</strong></div>
+        <div class="ticket-money-row"><span>Total</span><strong>${orderMoney(order.total, order)}</strong></div>
+        <div class="ticket-money-row"><span>Pagado / seña</span><strong>${orderMoney(paid, order)}</strong></div>
+        <div class="ticket-money-row ticket-balance"><span>Saldo</span><strong>${orderMoney(due, order)}</strong></div>
       </div>
       <section class="ticket-section"><span class="ticket-label">GARANTÍA Y CONDICIONES</span>
         <p class="ticket-terms">${esc(terms)}${isDelivery && warrantyEnd ? `<br><strong>Vencimiento de garantía: ${warrantyEnd}</strong>` : ""}</p>
@@ -848,7 +854,7 @@
     await printTicketWithQZ();
   }
 
-  function renderSales(){if(!$("#sales-list"))return;const start=monthStart();const rows=data.sales.filter(x=>new Date(x.creado)>=start);$("#sales-total").textContent=money(rows.reduce((a,x)=>a+Number(x.total),0));$("#sales-units").textContent=rows.reduce((a,x)=>a+(x.venta_items||[]).reduce((n,i)=>n+Number(i.cantidad),0),0);$("#sales-margin").textContent=money(rows.reduce((a,x)=>a+Number(x.total)-Number(x.costo_total),0));$("#sales-list").innerHTML=data.sales.map(x=>"<article class=\"order-row sales-row\"><div class=\"row-main\"><b>Venta #"+x.id+" · "+esc(x.concepto||"Venta")+"</b><small>"+date(x.creado)+" · "+esc(x.cliente||"Consumidor final")+" · "+esc(x.medio)+"</small></div><span class=\"branch-pill\">"+esc(x.sucursal)+"</span><b class=\"money\">"+money(x.total)+"</b><button class=\"button button-small\" type=\"button\" data-sale-ticket=\""+x.id+"\">Imprimir ticket</button></article>").join("")||"<div class=\"empty-state\">Todavía no hay ventas.</div>";}
+  function renderSales(){if(!$("#sales-list"))return;const start=monthStart();const rows=data.sales.filter(x=>new Date(x.creado)>=start);$("#sales-total").textContent=money(rows.reduce((a,x)=>a+Number(x.total),0));$("#sales-units").textContent=rows.reduce((a,x)=>a+(x.venta_items||[]).reduce((n,i)=>n+Number(i.cantidad),0),0);$("#sales-margin").textContent=money(rows.reduce((a,x)=>a+Number(x.total)-Number(x.costo_total),0));$("#sales-list").innerHTML=data.sales.map(x=>"<article class=\"order-row sales-row\"><div class=\"row-main\"><b>Venta #"+x.id+" · "+esc(x.concepto||"Venta")+"</b><small>"+date(x.creado)+" · "+esc(x.cliente||"Consumidor final")+" · "+esc(x.medio)+"</small></div><span class=\"branch-pill\">"+esc(x.sucursal)+"</span><b class=\"money\">"+orderMoney(x.total, x)+"</b><button class=\"button button-small\" type=\"button\" data-sale-ticket=\""+x.id+"\">Imprimir ticket</button></article>").join("")||"<div class=\"empty-state\">Todavía no hay ventas.</div>";}
   function openCashForm(){const body="<div class=\"form-grid\">"+selectField("Tipo","tipo",["Egreso","Ingreso"],"Egreso")+selectField("Sucursal","sucursal",Rules.BRANCHES,"E30")+formField("Categoría","categoria","Gastos del local")+selectField("Medio","medio",Rules.PAYMENT_METHODS,"Efectivo")+formField("Concepto *","concepto")+formField("Importe *","importe","","number")+"</div>";openModal("Registrar movimiento","CAJA",body,actionButtons("Cancelar","Guardar movimiento"));$("#modal-form").dataset.action="save-cash";}
   function openStockForm(item=null){const body="<div class=\"form-grid\">"+formField("Nombre *","nombre",item?.nombre||"")+formField("Categoría","categoria",item?.categoria||"Accesorios")+formField("SKU / código de barras","sku",item?.sku||"")+formField("Cantidad inicial","cantidad",item?.cantidad??0,"number")+formField("Costo unitario","costo",item?.costo??0,"number")+formField("Precio de venta","precio",item?.precio??0,"number")+formField("Stock mínimo","minimo",item?.minimo??0,"number")+"</div>";openModal(item?"Editar artículo":"Nuevo artículo","INVENTARIO",body,actionButtons());$("#modal-form").dataset.action="save-stock";$("#modal-form").dataset.id=item?.id||"";const sku=$("#f-sku");const scan=document.createElement("button");scan.type="button";scan.className="button";scan.textContent="Escanear código de barras";scan.addEventListener("click",startStockBarcodeScanner);sku.parentElement.appendChild(scan);}
   async function startStockBarcodeScanner(){
@@ -876,69 +882,35 @@
     if (!$("#branch-report")) return;
     const start = monthStart();
     const orders = data.orders.filter((x) => new Date(x.creada) >= start);
-    const monthPayments = orders.flatMap((order) => (order.pagos || [])
-      .filter((p) => new Date(p.creado) >= start)
-      .map((p) => ({ ...p, negocio: order.negocio })));
+    // Los cobros son exclusivamente pagos registrados, asociados a la moneda de su orden.
+    const monthPayments = data.orders.flatMap((order) => (order.pagos || []).filter((p) => new Date(p.creado) >= start).map((p) => ({ ...p, negocio: order.negocio, moneda: order.moneda || "ARS" })));
     const sales = data.sales.filter((x) => new Date(x.creado) >= start);
-    const explicitCollected = monthPayments.reduce((sum, row) => sum + Number(row.importe || 0), 0);
-    // Al entregar una orden se considera cobrada al 100%; solo suma lo que faltaba para no duplicar pagos.
-    const deliveryCollections = data.orders
-      .filter((order) => order.estado === "Entregado" && order.entregada && new Date(order.entregada) >= start)
-      .reduce((sum, order) => {
-        const paidBeforeDelivery = (order.pagos || [])
-          .filter((payment) => new Date(payment.creado) <= new Date(order.entregada))
-          .reduce((total, payment) => total + Number(payment.importe || 0), 0);
-        return sum + Math.max(0, Number(order.total || 0) - paidBeforeDelivery);
-      }, 0);
-    const collected = explicitCollected + deliveryCollections;
-    const billed = orders.reduce((sum, row) => sum + Number(row.total || 0), 0);
-    const balance = orders.reduce((sum, row) => sum + Rules.balance(row), 0);
+    const billed = currencySums(orders, row => row.total);
+    const collected = currencySums(monthPayments, row => row.importe);
+    const balance = currencySums(orders, row => Rules.balance(row));
     const costedOrders = orders.filter((x) => x.costos_cargados);
-    const cost = costedOrders.reduce((sum, row) => sum + Number(row.costo || 0), 0);
-    const profit = costedOrders.reduce((sum, row) => sum + Number(row.total || 0) - Number(row.costo || 0), 0);
+    const cost = currencySums(costedOrders, row => row.costo);
+    const profit = currencySums(costedOrders, row => Number(row.total || 0) - Number(row.costo || 0));
     $("#report-orders").textContent = String(orders.length);
-    $("#report-billed").textContent = money(billed);
-    $("#report-revenue").textContent = money(collected);
-    $("#report-balance").textContent = money(balance);
-    $("#report-cost").textContent = money(cost);
-    $("#report-profit").textContent = money(profit);
+    $("#report-billed").textContent = formatCurrencySums(billed);
+    $("#report-revenue").textContent = formatCurrencySums(collected);
+    $("#report-balance").textContent = formatCurrencySums(balance);
+    $("#report-cost").textContent = formatCurrencySums(cost);
+    $("#report-profit").textContent = formatCurrencySums(profit);
     $("#report-sales").textContent = money(sales.reduce((sum, row) => sum + Number(row.total || 0), 0));
-
-    $("#pending-costs-list").innerHTML = data.orders
-      .filter((x) => x.estado === "Entregado" && !x.costos_cargados)
-      .sort((a,b) => new Date(b.entregada || b.creada) - new Date(a.entregada || a.creada))
-      .map(x => `<article class="order-row"><div class="row-main"><b>Orden #${x.id} · ${esc(x.modelo || "Equipo")}</b><small>${esc(x.cliente || x.gremio || "Cliente")} · ${esc(x.negocio)} · Entregada ${date(x.entregada)}</small></div><span class="state-pill pending">Costos pendientes</span><button class="button" data-costs="${x.id}">Completar costos</button></article>`)
-      .join("") || `<div class="empty-state">No hay costos pendientes de completar.</div>`;
-
-    $("#branch-report").innerHTML = Rules.BRANCHES.map((branch) => {
-      const rows = orders.filter((x) => x.negocio === branch);
-      const payments = monthPayments.filter((x) => x.negocio === branch);
-      const branchSales = sales.filter((x) => x.sucursal === branch);
-      const branchCosted = rows.filter((x) => x.costos_cargados);
-      const branchBilled = rows.reduce((sum,x) => sum + Number(x.total || 0),0);
-      const branchExplicitPaid = payments.reduce((sum,x) => sum + Number(x.importe || 0),0);
-      const branchDeliveryPaid = rows
-        .filter((order) => order.estado === "Entregado" && order.entregada && new Date(order.entregada) >= start)
-        .reduce((sum, order) => {
-          const paidBeforeDelivery = (order.pagos || [])
-            .filter((payment) => new Date(payment.creado) <= new Date(order.entregada))
-            .reduce((total, payment) => total + Number(payment.importe || 0), 0);
-          return sum + Math.max(0, Number(order.total || 0) - paidBeforeDelivery);
-        }, 0);
-      const branchPaid = branchExplicitPaid + branchDeliveryPaid;
-      const branchBalance = rows.reduce((sum,x) => sum + Rules.balance(x),0);
-      const branchCost = branchCosted.reduce((sum,x) => sum + Number(x.costo || 0),0);
-      const branchProfit = branchCosted.reduce((sum,x) => sum + Number(x.total || 0) - Number(x.costo || 0),0);
+    $("#pending-costs-list").innerHTML = data.orders.filter(x => x.estado === "Entregado" && !x.costos_cargados).sort((a,b) => new Date(b.entregada || b.creada) - new Date(a.entregada || a.creada)).map(x => `<article class="order-row"><div class="row-main"><b>Orden #${x.id} · ${esc(x.modelo || "Equipo")}</b><small>${esc(x.cliente || x.gremio || "Cliente")} · ${esc(x.negocio)} · ${orderMoney(x.total, x)} · Entregada ${date(x.entregada)}</small></div><span class="state-pill pending">Costos pendientes</span><button class="button" data-costs="${x.id}">Completar costos</button></article>`).join("") || `<div class="empty-state">No hay costos pendientes de completar.</div>`;
+    $("#branch-report").innerHTML = Rules.BRANCHES.map(branch => {
+      const rows = orders.filter(x => x.negocio === branch);
+      const payments = monthPayments.filter(x => x.negocio === branch);
+      const branchSales = sales.filter(x => x.sucursal === branch);
+      const branchCosted = rows.filter(x => x.costos_cargados);
+      const branchBilled = currencySums(rows, x => x.total);
+      const branchPaid = currencySums(payments, x => x.importe);
+      const branchBalance = currencySums(rows, x => Rules.balance(x));
+      const branchCost = currencySums(branchCosted, x => x.costo);
+      const branchProfit = currencySums(branchCosted, x => Number(x.total || 0) - Number(x.costo || 0));
       const sold = branchSales.reduce((sum,x) => sum + Number(x.total || 0),0);
-      return `<article class="order-row report-row">
-        <div class="row-main"><b>${branch}</b><small>${rows.length} órdenes creadas · ${branchCosted.length} con costos completos</small></div>
-        <div class="row-main"><small>Total acordado</small><b>${money(branchBilled)}</b></div>
-        <div class="row-main"><small>Cobrado este mes</small><b>${money(branchPaid)}</b></div>
-        <div class="row-main"><small>Saldo pendiente</small><b>${money(branchBalance)}</b></div>
-        <div class="row-main"><small>Costos cargados</small><b>${money(branchCost)}</b></div>
-        <div class="row-main"><small>Ganancia estimada</small><b>${money(branchProfit)}</b></div>
-        <div class="row-main"><small>Ventas accesorios</small><b>${money(sold)}</b></div>
-      </article>`;
+      return `<article class="order-row report-row"><div class="row-main"><b>${branch}</b><small>${rows.length} órdenes creadas · ${branchCosted.length} con costos completos</small></div><div class="row-main"><small>Total acordado</small><b>${formatCurrencySums(branchBilled)}</b></div><div class="row-main"><small>Cobrado real este mes</small><b>${formatCurrencySums(branchPaid)}</b></div><div class="row-main"><small>Saldo pendiente</small><b>${formatCurrencySums(branchBalance)}</b></div><div class="row-main"><small>Costos cargados</small><b>${formatCurrencySums(branchCost)}</b></div><div class="row-main"><small>Ganancia estimada</small><b>${formatCurrencySums(branchProfit)}</b></div><div class="row-main"><small>Ventas accesorios (ARS)</small><b>${money(sold)}</b></div></article>`;
     }).join("");
   }
   function openClaimForm(claim=null){const orderOpts=data.orders.filter(x=>x.estado==="Entregado"||Number(x.garantia_dias)>0).map(x=>String(x.id)+" · "+x.modelo+" · "+(x.cliente||x.gremio||"Cliente"));const body="<div class=\"form-grid\">"+selectField("Orden *","orden_id",orderOpts,claim?String(claim.orden_id)+" · "+(claim.ordenes?.modelo||""):"") +formField("Motivo del reclamo *","motivo",claim?.motivo||"","text","span-2")+selectField("Estado","estado",["Abierto","En revisión","Aprobado","Rechazado","Resuelto"],claim?.estado||"Abierto")+formField("Diagnóstico","diagnostico",claim?.diagnostico||"","text","span-2")+formField("Resolución","resolucion",claim?.resolucion||"","text","span-2")+"</div>";openModal(claim?"Reclamo #"+claim.id:"Nuevo reclamo","GARANTÍA",body,actionButtons());$("#modal-form").dataset.action="save-claim";$("#modal-form").dataset.id=claim?.id||"";}

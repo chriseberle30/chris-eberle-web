@@ -32,9 +32,11 @@
     if (!falla) throw new Error("Describí la falla.");
     const total = amount(input.total);
     const deposit = amount(input.sena || 0);
+    const moneda = clean(input.moneda || "ARS");
+    if (!["ARS", "USD"].includes(moneda)) throw new Error("Elegí una moneda válida.");
     if (!Number.isFinite(total) || total < 0) throw new Error("El total debe ser cero o mayor.");
     if (!Number.isFinite(deposit) || deposit < 0 || deposit > total) throw new Error("La seña debe estar entre cero y el total.");
-    return { negocio: branch, modelo, falla, total, sena: deposit };
+    return { negocio: branch, modelo, falla, total, sena: deposit, moneda };
   }
   function validatePayment(input, balance) {
     const importe = amount(input.importe);
@@ -44,7 +46,7 @@
     if (!PAYMENT_METHODS.includes(medio)) throw new Error("Elegí un medio de pago válido.");
     return { importe, medio };
   }
-  function paid(order) { if (order.estado === "Entregado") return Math.max(0, Number(order.total) || 0); return (order.pagos || []).reduce((sum, item) => sum + (Number(item.importe) || 0), 0); }
+  function paid(order) { return (order.pagos || []).reduce((sum, item) => sum + (Number(item.importe) || 0), 0); }
   function balance(order) { return Math.max(0, (Number(order.total) || 0) - paid(order)); }
   function searchText(row) { return [row.id, row.nombre, row.cliente, row.telefono, row.modelo, row.falla, row.gremio].filter(Boolean).join(" ").toLocaleLowerCase("es-AR"); }
   return { BRANCHES, ORDER_STATES, PAYMENT_METHODS, validateClient, validateOrder, validatePayment, paid, balance, searchText, normalizedPhone };

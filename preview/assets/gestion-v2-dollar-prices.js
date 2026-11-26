@@ -758,7 +758,10 @@
       "No nos responsabilizamos por pérdida de datos. Se recomienda hacer una copia de seguridad antes de intervenir."
     ];
     const trackingUrl = order.tracking_token ? (() => { const u = new URL("seguimiento.html", location.href); u.searchParams.set("t", order.tracking_token); return u.href; })() : "";
-    const equipo = [order.marca && !/^apple$/i.test(String(order.marca).trim()) ? order.marca : "", order.modelo].filter(Boolean).join(" ");
+    const marcaEquipo = String(order.marca || "").trim();
+    const modeloEquipo = String(order.modelo || "").trim();
+    const marcaYaIncluida = marcaEquipo && modeloEquipo.toLocaleLowerCase("es-AR").startsWith(marcaEquipo.toLocaleLowerCase("es-AR"));
+    const equipo = [marcaEquipo && !/^apple$/i.test(marcaEquipo) && !marcaYaIncluida ? marcaEquipo : "", modeloEquipo].filter(Boolean).join(" ");
     const orderDate = date(isDelivery ? (order.entregada || new Date().toISOString()) : order.creada);
     $("#print-area").innerHTML = `<div class="ticket">
       <div class="ticket-brand">${esc(output === "pdf" && order.negocio === "i30" ? "i30 | iPhone Service" : brand)}</div>
